@@ -1,0 +1,24 @@
+apiVersion: intent.security.nimbus.com/v1
+kind: SecurityIntent
+metadata:
+  name: audit-tcp-network-activity-ubuntu-5
+  namespace: multiubuntu
+spec:
+  selector:
+    match:
+      any:
+        - resources:
+            names: ["ubuntu-5-deployment"]
+            kinds: ["Deployment"]
+            namespaces: ["multiubuntu"]
+            matchLabels:
+              container: "ubuntu-5"
+    cel:
+      - "object.spec.network.matchProtocols.any(protocol, protocol == 'tcp')"
+  intent:
+    action: Audit
+    mode: strict
+    type: network
+    resource:
+      - key: "protocols"
+        val: ["udp"]
