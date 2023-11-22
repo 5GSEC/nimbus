@@ -1,0 +1,23 @@
+apiVersion: intent.security.nimbus.com/v1
+kind: SecurityIntent
+metadata:
+  name: block-net-raw-capability-ubuntu-1
+  namespace: multiubuntu
+spec:
+  selector:
+    match:
+      any:
+        - resources:
+            kinds: ["Deployment"]
+            matchLabels:
+              container: "ubuntu-1"
+            namespaces: ["multiubuntu"]
+    cel:
+      - "object.spec.capabilities.matchCapabilities.any(capability, capability == 'net_raw')"
+  intent:
+    action: Block
+    mode: strict
+    type: system
+    resource:
+      - key: "capabilities"
+        val: ["net_raw"]

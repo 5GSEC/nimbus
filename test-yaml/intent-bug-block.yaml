@@ -1,0 +1,35 @@
+#apiVersion: intent.security.nimbus.com/v1
+#kind: SecurityIntent
+#metadata:
+#  name: hsp-cve-2020-8559-bug-block
+#  namespace: default
+#spec:
+#  selector:
+#    cel:
+#      - "object.metadata.labels['kubernetes.io/arch'] == 'amd64'" # CEL 표현식으로 노드 선택
+#  intent:
+#    action: block
+#    mode: strict
+#    type: system
+#    resource:
+#      - key: "commands"
+#        val: [ "mv", "cp", "kill" ]
+#        valcel: "pattern: /**/{command}"
+
+apiVersion: intent.security.nimbus.com/v1
+kind: SecurityIntent
+metadata:
+  name: bug-block-hsp
+  namespace: default
+spec:
+  selector:
+    cel:
+      - "object.metadata.labels['kubernetes.io/arch'] == 'amd64'"
+  intent:
+    action: block
+    mode: strict
+    type: system
+    resource:
+      - key: "commands"
+        val: [ "mv", "cp", "kill" ]
+        valcel: "pattern: /usr/bin/{command}"

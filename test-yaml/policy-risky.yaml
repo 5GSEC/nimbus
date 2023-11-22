@@ -1,0 +1,21 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: cnp-adjusted-network-policy
+  namespace: multiubuntu
+spec:
+  endpointSelector:
+    matchLabels:
+      group: "group-1"
+      container: "ubuntu-1"
+  egress:
+    - toCIDR:
+        - 10.0.0.0/8
+        - 192.168.0.0/16
+        - 172.16.0.0/12
+      toPorts:
+        - ports:
+            - port: "1"
+              protocol: TCP
+            - port: "65535"
+              protocol: TCP
