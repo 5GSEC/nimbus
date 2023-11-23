@@ -42,9 +42,6 @@ spec:
     - containerPort: 6379
 ```
 
-
-
-
 ### Verify redis pods before applying policies
 ```
 $ kubectl get pod -o wide
@@ -170,5 +167,5 @@ You can see that the policy was applied, so access to port 6379 on the endpoint 
 
 
 ```
-$ kubectl delete kubectl delete -f ./test-yaml/intent-redis.yaml
+$ kubectl delete -f ./test-yaml/intent-redis.yaml
 ```
