@@ -6,7 +6,7 @@ domain: security.nimbus.com
 layout:
 - go.kubebuilder.io/v4
 projectName: nimbus
-repo: git.cclab-inu.com/b0m313/nimbus
+repo: github.com/5GSEC/nimbus
 resources:
 - api:
     crdVersion: v1
@@ -15,6 +15,6 @@ resources:
   domain: security.nimbus.com
   group: intent
   kind: SecurityIntent
-  path: git.cclab-inu.com/b0m313/nimbus/api/v1
+  path: github.com/5GSEC/nimbus/api/v1
   version: v1
 version: "3"

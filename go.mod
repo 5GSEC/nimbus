@@ -1,4 +1,4 @@
-module git.cclab-inu.com/b0m313/nimbus
+module github.com/5GSEC/nimbus
 
 go 1.20
 

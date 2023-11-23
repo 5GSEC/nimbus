@@ -30,7 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	intentv1 "git.cclab-inu.com/b0m313/nimbus/api/v1"
+	intentv1 "github.com/5GSEC/nimbus/api/v1"
 	ciliumv2 "github.com/cilium/cilium/pkg/k8s/apis/cilium.io/v2"
 	"github.com/cilium/cilium/pkg/policy/api"
 	kubearmorhostpolicyv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorHostPolicy/api/security.kubearmor.com/v1"
@@ -259,9 +259,11 @@ func PolicyController(ctx context.Context, intent *intentv1.SecurityIntent, c cl
 			log.Error(err, "Failed handling network policy")
 			return err
 		}
-		if err := handleKubeArmorNetworkPolicy(ctx, intent, c); err != nil {
-			log.Error(err, "Failed handling KubeArmor network policy")
-			return err
+		if containsProtocolResource(intent) {
+			if err := handleKubeArmorNetworkPolicy(ctx, intent, c); err != nil {
+				log.Error(err, "Failed handling KubeArmor network policy")
+				return err
+			}
 		}
 	default:
 		log.Info("Encountered unknown policy type", "type", intent.Spec.Intent.Type)
