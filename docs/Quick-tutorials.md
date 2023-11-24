@@ -2,16 +2,6 @@
 
 ## Deploy test pod
 
-```
-$ cd nimbus
-~/nimbus$ pwd
-/home/cclab/nimbus
-~/nimbus$ ls
-api  bin  config  Dockerfile  Getting-Started.md  go.mod  go.sum  hack  internal  main.go  Makefile  PROJECT  Quick-tutorials.md  README.md  test-yaml
-```
-
-c
-
 busybox-pod
 
 ```
@@ -37,7 +27,7 @@ redis-pod
 ```
 $ kubectl apply -f ./test-yaml/redis-pod.yaml
 ```
-```
+```yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -51,9 +41,6 @@ spec:
     ports:
     - containerPort: 6379
 ```
-
-
-
 
 ### Verify redis pods before applying policies
 ```
@@ -175,6 +162,10 @@ spec:
 ### Test for policy enforcement
 ```
 $ kubectl exec -it busybox -- telnet <redis-pod-ip> 6379
-
 ```
 You can see that the policy was applied, so access to port 6379 on the endpoint specified as 'app: redis' is blocked.
+
+
+```
+$ kubectl delete -f ./test-yaml/intent-redis.yaml
+```

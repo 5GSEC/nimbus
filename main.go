@@ -32,8 +32,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
-	intentv1 "git.cclab-inu.com/b0m313/nimbus/api/v1"
-	"git.cclab-inu.com/b0m313/nimbus/internal/controller"
+	intentv1 "github.com/5GSEC/nimbus/api/v1"
+	"github.com/5GSEC/nimbus/internal/controller"
 
 	ciliumv2 "github.com/cilium/cilium/pkg/k8s/apis/cilium.io/v2"
 	kubearmorhostpolicyv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorHostPolicy/api/security.kubearmor.com/v1"
