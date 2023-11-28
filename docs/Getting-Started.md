@@ -74,7 +74,7 @@ $ make install
 ### 3. Run Operators
 Run the operator in your local environment
 ```
-// $ make run
+$ make build
 $ make run
 ```
 <br><br>
