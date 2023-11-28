@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controller
+package controllers
 
 import (
 	"fmt"
@@ -39,21 +39,24 @@ import (
 // These tests use Ginkgo (BDD-style Go testing framework). Refer to
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
-var cfg *rest.Config
-var k8sClient client.Client
-var testEnv *envtest.Environment
+var cfg *rest.Config             // cfg will hold the Kubernetes rest configuration.
+var k8sClient client.Client      // k8sClient is the Kubernetes client for the test environment.
+var testEnv *envtest.Environment // testEnv is the environment for running the tests.
 
+// TestControllers is the entry point for testing the controllers package.
 func TestControllers(t *testing.T) {
-	RegisterFailHandler(Fail)
+	RegisterFailHandler(Fail) // Register a Ginkgo fail handler.
 
-	RunSpecs(t, "Controller Suite")
+	RunSpecs(t, "Controller Suite") // Run the Ginkgo specs for the 'Controller Suite'.
 }
 
 var _ = BeforeSuite(func() {
-	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
+	// Setup for the test suite, executed before any specs are run.
+	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true))) // Set up the logger.
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
+		// CRDDirectoryPaths specifies the paths to the CRD manifests.
 		CRDDirectoryPaths:     []string{filepath.Join("..", "..", "config", "crd", "bases")},
 		ErrorIfCRDPathMissing: true,
 
@@ -67,24 +70,26 @@ var _ = BeforeSuite(func() {
 	}
 
 	var err error
-	// cfg is defined in this file globally.
-	cfg, err = testEnv.Start()
-	Expect(err).NotTo(HaveOccurred())
-	Expect(cfg).NotTo(BeNil())
+	cfg, err = testEnv.Start()        // Start the test environment.
+	Expect(err).NotTo(HaveOccurred()) // Assert that starting the environment does not produce an error.
+	Expect(cfg).NotTo(BeNil())        // Assert that the config is not nil.
 
+	// Add the intentv1 API scheme to the runtime scheme.
 	err = intentv1.AddToScheme(scheme.Scheme)
-	Expect(err).NotTo(HaveOccurred())
+	Expect(err).NotTo(HaveOccurred()) // Assert that adding the scheme does not produce an error.
 
-	//+kubebuilder:scaffold:scheme
+	// Scaffold additional schemes here if needed.
 
+	// Initialize the Kubernetes client for the test environment.
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
-	Expect(err).NotTo(HaveOccurred())
-	Expect(k8sClient).NotTo(BeNil())
+	Expect(err).NotTo(HaveOccurred()) // Assert that creating the client does not produce an error.
+	Expect(k8sClient).NotTo(BeNil())  // Assert that the client is not nil.
 
 })
 
 var _ = AfterSuite(func() {
+	// Teardown for the test suite, executed after all specs have run.
 	By("tearing down the test environment")
-	err := testEnv.Stop()
-	Expect(err).NotTo(HaveOccurred())
+	err := testEnv.Stop()             // Stop the test environment.
+	Expect(err).NotTo(HaveOccurred()) // Assert that stopping the environment does not produce an error.
 })

@@ -33,20 +33,21 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	intentv1 "github.com/5GSEC/nimbus/api/v1"
-	"github.com/5GSEC/nimbus/internal/controller"
+	"github.com/5GSEC/nimbus/controller"
 
 	ciliumv2 "github.com/cilium/cilium/pkg/k8s/apis/cilium.io/v2"
 	kubearmorhostpolicyv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorHostPolicy/api/security.kubearmor.com/v1"
 	kubearmorpolicyv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorPolicy/api/security.kubearmor.com/v1"
 	//+kubebuilder:scaffold:imports
 )
-
+// Global variable for registering schemes.
 var (
-	scheme   = runtime.NewScheme()
-	setupLog = ctrl.Log.WithName("setup")
+	scheme   = runtime.NewScheme()        // Scheme registers the API types that the client and server should know.
+	setupLog = ctrl.Log.WithName("setup") // Logger specifically for setup.
 )
 
 func init() {
+	// In init, various Kubernetes and custom resources are added to the scheme.
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(intentv1.AddToScheme(scheme))
@@ -57,10 +58,13 @@ func init() {
 	//+kubebuilder:scaffold:scheme
 }
 
+
 func main() {
+	// Flags for the command line parameters like metrics address, leader election, etc.
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
+
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
@@ -72,8 +76,10 @@ func main() {
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
+	// Setting the logger with the provided options.
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
+	// Creating a new manager which will manage all the controllers.
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		Metrics:                metricsserver.Options{BindAddress: metricsAddr},
@@ -97,13 +103,26 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controller.SecurityIntentReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+	// Setting up the GeneralController and PolicyController.
+	generalController, err := general.NewGeneralController(mgr.GetClient())
+	if err != nil {
+		setupLog.Error(err, "unable to create GeneralController")
+		os.Exit(1)
+	}
+
+	policyController := policy.NewPolicyController(mgr.GetClient(), mgr.GetScheme())
+
+	// Setting up the SecurityIntentReconciler controller with the manager.
+	if err = (&controllers.SecurityIntentReconciler{
+		Client:            mgr.GetClient(),
+		Scheme:            mgr.GetScheme(),
+		GeneralController: generalController,
+		PolicyController:  policyController,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "SecurityIntent")
 		os.Exit(1)
 	}
+
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
@@ -115,6 +134,7 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Starting the manager.
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
