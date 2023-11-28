@@ -33,13 +33,16 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	intentv1 "github.com/5GSEC/nimbus/api/v1"
-	"github.com/5GSEC/nimbus/controller"
+	"github.com/5GSEC/nimbus/controllers"
+	general "github.com/5GSEC/nimbus/controllers/general"
+	policy "github.com/5GSEC/nimbus/controllers/policy"
 
 	ciliumv2 "github.com/cilium/cilium/pkg/k8s/apis/cilium.io/v2"
 	kubearmorhostpolicyv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorHostPolicy/api/security.kubearmor.com/v1"
 	kubearmorpolicyv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorPolicy/api/security.kubearmor.com/v1"
 	//+kubebuilder:scaffold:imports
 )
+
 // Global variable for registering schemes.
 var (
 	scheme   = runtime.NewScheme()        // Scheme registers the API types that the client and server should know.
@@ -57,7 +60,6 @@ func init() {
 	utilruntime.Must(ciliumv2.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
-
 
 func main() {
 	// Flags for the command line parameters like metrics address, leader election, etc.
