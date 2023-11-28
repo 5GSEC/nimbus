@@ -17,7 +17,7 @@ best implementation method available given the deployment.
   single policy thus providing multi-layer defense. For example, an intent such
   as "Do not allow privilege escalation" could get translated in to admission
   controller policy and system policy as handled by runtime security engines
-  such as [KubeArmor](www.kubearmor.io).
+  such as [KubeArmor](https://www.kubearmor.io).
 * An intent could take into consideration runtime behavior and then handle
   intent implementation. For e.g., an intent could be "Do not allow privilege
   flags for pods that are publicly reachable".
