@@ -54,12 +54,13 @@ $ kustomize version
 
 Commands to run Nimbus operators:
 
-### 1. Generate code
-Generate the necessary code based on the API definition
+### 1. Apply API group resources 
+Apply API group resources 
     
 ```
 $ make generate
 ```
+
 
 ### 2. Install CRD
 Install Custom Resource Definitions in a Kubernetes Cluster
@@ -68,9 +69,12 @@ Install Custom Resource Definitions in a Kubernetes Cluster
 $ make install
 ```
 
+📌  Steps 1 and 2 are required if you have a completely clean environment, as they allow the server to find the requested resources.
+
 ### 3. Run Operators
 Run the operator in your local environment
 ```
+$ make build
 $ make run
 ```
 <br><br>

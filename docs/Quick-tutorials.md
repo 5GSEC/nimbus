@@ -5,7 +5,7 @@
 busybox-pod
 
 ```
-$ kubectl apply -f ./test-yaml/busybox-pod.yaml
+$ kubectl apply -f ./test-yaml/env/busybox-pod.yaml
 ```
 
 ```yaml
@@ -25,7 +25,7 @@ spec:
 
 redis-pod
 ```
-$ kubectl apply -f ./test-yaml/redis-pod.yaml
+$ kubectl apply -f ./test-yaml/env/redis-pod.yaml
 ```
 ```yaml
 apiVersion: v1
@@ -65,7 +65,7 @@ $ make run
 
 ### Create and apply intent file
 ```
-$ kubectl apply -f ./test-yaml/intent-redis.yaml
+$ kubectl apply -f ./test-yaml/intents/network/intent-redis.yaml
 ```
 ```yaml
 apiVersion: intent.security.nimbus.com/v1
@@ -167,5 +167,5 @@ You can see that the policy was applied, so access to port 6379 on the endpoint 
 
 
 ```
-$ kubectl delete -f ./test-yaml/intent-redis.yaml
+$ kubectl delete -f ./test-yaml/intents/network/intent-redis.yaml
 ```

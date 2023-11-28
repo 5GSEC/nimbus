@@ -3,6 +3,9 @@ module github.com/5GSEC/nimbus
 go 1.20
 
 require (
+	github.com/cilium/cilium v1.14.3
+	github.com/kubearmor/KubeArmor/pkg/KubeArmorHostPolicy v0.0.0-20230616113436-0f9e047493a0
+	github.com/kubearmor/KubeArmor/pkg/KubeArmorPolicy v0.0.0-20230622041458-52e38e236598
 	github.com/onsi/ginkgo/v2 v2.11.0
 	github.com/onsi/gomega v1.27.10
 	k8s.io/apimachinery v0.28.3
@@ -15,7 +18,6 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
-	github.com/cilium/cilium v1.14.3 // indirect
 	github.com/cilium/ebpf v0.10.1-0.20230626090016-654491c8a500 // indirect
 	github.com/cilium/proxy v0.0.0-20230623092907-8fddead4e52c // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -54,8 +56,6 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/kubearmor/KubeArmor/pkg/KubeArmorHostPolicy v0.0.0-20230616113436-0f9e047493a0 // indirect
-	github.com/kubearmor/KubeArmor/pkg/KubeArmorPolicy v0.0.0-20230622041458-52e38e236598 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
