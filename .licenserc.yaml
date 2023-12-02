@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+header:
+  license:
+    spdx-id: Apache-2.0
+    copyright-owner: Nimbus
+    content: |
+      SPDX-License-Identifier: Apache-2.0
+
+  paths:
+    - "**/*.go"
+    - "**/*.sh"
+    - "**/Dockerfile"
+    - "**/Makefile"
+
+  comment: on-failure
+
+dependency:
+  files:
+    - go.mod
