@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
 
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
