@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
 # KubeArmor is an open source software that enables you to protect your cloud workload at run-time.
 # To learn more about KubeArmor visit:
 # https://www.accuknox.com/kubearmor/

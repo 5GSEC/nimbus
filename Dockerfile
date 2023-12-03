@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
 # Build the manager binary
 FROM golang:1.20 as builder
 ARG TARGETOS
@@ -14,7 +17,7 @@ RUN go mod download
 # Copy the go source
 COPY main.go main.go
 COPY api/ api/
-COPY controller/ controller/
+COPY controllers/ controllers/
 
 # Build
 # the GOARCH has not a default value to allow the binary be built according to the host where the command
