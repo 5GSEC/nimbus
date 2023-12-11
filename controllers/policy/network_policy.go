@@ -84,21 +84,6 @@ func (npc *NetworkPolicyController) DeletePolicy(ctx context.Context, intent *in
 }
 
 // Additional helper functions for policy creation and deletion.
-func createCiliumNetworkPolicy(ctx context.Context, intent *intentv1.SecurityIntent) *ciliumv2.CiliumNetworkPolicy {
-	return utils.BuildCiliumNetworkPolicySpec(ctx, intent).(*ciliumv2.CiliumNetworkPolicy)
-}
-
-func createKubeArmorNetworkPolicy(ctx context.Context, intent *intentv1.SecurityIntent) *kubearmorpolicyv1.KubeArmorPolicy {
-	return utils.BuildKubeArmorPolicySpec(ctx, intent, "policy").(*kubearmorpolicyv1.KubeArmorPolicy)
-}
-
-func applyCiliumNetworkPolicy(ctx context.Context, c client.Client, policy *ciliumv2.CiliumNetworkPolicy) {
-	utils.ApplyOrUpdatePolicy(ctx, c, policy, policy.Name)
-}
-
-func applyKubeArmorNetworkPolicy(ctx context.Context, c client.Client, policy *kubearmorpolicyv1.KubeArmorPolicy) {
-	utils.ApplyOrUpdatePolicy(ctx, c, policy, policy.Name)
-}
 
 // containsProtocolResource checks for the presence of protocol resources in SecurityIntent.
 func containsProtocolResource(intent *intentv1.SecurityIntent) bool {
