@@ -1,17 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2023 Authors of Nimbus
 
+package controllers
+
 import (
 	"context"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"	
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	general "github.com/5GSEC/nimbus/Nimbus/controllers/general"
 	"github.com/5GSEC/nimbus/Nimbus/api/v1"
+	general "github.com/5GSEC/nimbus/Nimbus/controllers/general"
 )
 
 type SecurityIntentReconciler struct {
