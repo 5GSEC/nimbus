@@ -1,4 +1,4 @@
-module github.com/5GSEC/nimbus
+module github.com/5GSEC/nimbus/Nimbus
 
 go 1.20
 
