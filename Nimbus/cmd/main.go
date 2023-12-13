@@ -4,11 +4,15 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
-	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
-	// to ensure that exec-entrypoint and run can make use of them.
+	// Importing all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
+	// to ensure that exec-entrypoint and run can utilize them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -19,11 +23,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
-	intentv1 "github.com/5GSEC/nimbus/api/v1"
-	"github.com/5GSEC/nimbus/controllers"
-	general "github.com/5GSEC/nimbus/controllers/general"
-	policy "github.com/5GSEC/nimbus/controllers/policy"
+	// Importing custom API types and controllers
+	intentv1 "github.com/5GSEC/nimbus/Nimbus/api/v1"
+	"github.com/5GSEC/nimbus/Nimbus/controllers"
+	cleanup "github.com/5GSEC/nimbus/Nimbus/controllers/cleanup"
+	general "github.com/5GSEC/nimbus/Nimbus/controllers/general"
+	policy "github.com/5GSEC/nimbus/Nimbus/controllers/policy"
 
+	// Importing third-party Kubernetes resource types
 	ciliumv2 "github.com/cilium/cilium/pkg/k8s/apis/cilium.io/v2"
 	kubearmorhostpolicyv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorHostPolicy/api/security.kubearmor.com/v1"
 	kubearmorpolicyv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorPolicy/api/security.kubearmor.com/v1"
@@ -39,9 +46,7 @@ var (
 func init() {
 	// In init, various Kubernetes and custom resources are added to the scheme.
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-
 	utilruntime.Must(intentv1.AddToScheme(scheme))
-
 	utilruntime.Must(kubearmorpolicyv1.AddToScheme(scheme))
 	utilruntime.Must(kubearmorhostpolicyv1.AddToScheme(scheme))
 	utilruntime.Must(ciliumv2.AddToScheme(scheme))
@@ -49,7 +54,7 @@ func init() {
 }
 
 func main() {
-	// Flags for the command line parameters like metrics address, leader election, etc.
+	// Flags for command line parameters such as metrics address, leader election, etc.
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
@@ -88,14 +93,14 @@ func main() {
 		// LeaderElectionReleaseOnCancel: true,
 	})
 	if err != nil {
-		setupLog.Error(err, "unable to start manager")
+		setupLog.Error(err, "Unable to start manager")
 		os.Exit(1)
 	}
 
 	// Setting up the GeneralController and PolicyController.
 	generalController, err := general.NewGeneralController(mgr.GetClient())
 	if err != nil {
-		setupLog.Error(err, "unable to create GeneralController")
+		setupLog.Error(err, "Unable to create GeneralController")
 		os.Exit(1)
 	}
 
@@ -106,27 +111,61 @@ func main() {
 		Client:            mgr.GetClient(),
 		Scheme:            mgr.GetScheme(),
 		GeneralController: generalController,
-		PolicyController:  policyController,
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "SecurityIntent")
+		setupLog.Error(err, "Unable to create controller", "controller", "SecurityIntent")
 		os.Exit(1)
 	}
 
+	if err = (&controllers.SecurityIntentBindingReconciler{
+		Client:            mgr.GetClient(),
+		Scheme:            mgr.GetScheme(),
+		GeneralController: generalController,
+		PolicyController:  policyController,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "Unable to create controller", "controller", "SecurityIntentBinding")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
+	// Setting up health checks for the manager.
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
-		setupLog.Error(err, "unable to set up health check")
+		setupLog.Error(err, "Unable to set up health check")
 		os.Exit(1)
 	}
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
-		setupLog.Error(err, "unable to set up ready check")
+		setupLog.Error(err, "Unable to set up ready check")
 		os.Exit(1)
 	}
 
-	// Starting the manager.
-	setupLog.Info("starting manager")
+	// Creating channels for handling termination signals.
+	sigs := make(chan os.Signal, 1)
+	cleanupDone := make(chan bool)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	// Separate goroutine to wait for termination signal.
+	go func() {
+		<-sigs // Waiting for termination signal
+		setupLog.Info("Received termination signal, performing cleanup...")
+
+		// Calling the Cleanup function
+		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		defer cancel()
+		err := cleanup.Cleanup(ctx, mgr.GetClient(), setupLog)
+
+		if err != nil {
+			setupLog.Error(err, "Cleanup failed")
+		}
+
+		cleanupDone <- true // Signaling cleanup completion
+	}()
+
+	// Starting the manager
+	setupLog.Info("Starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-		setupLog.Error(err, "problem running manager")
+		setupLog.Error(err, "Problem running manager")
 		os.Exit(1)
 	}
+
+	<-cleanupDone // Waiting for cleanup completion
+	setupLog.Info("Cleanup completed")
 }
