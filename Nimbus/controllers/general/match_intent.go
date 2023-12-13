@@ -43,7 +43,7 @@ func MatchIntentAndBinding(ctx context.Context, client client.Client, binding *i
 	}
 
 	if len(matchedIntents) > 0 {
-		log.Info("Matched SecurityIntents for Binding", "BindingName", binding.Name, "MatchedIntents", matchedIntents)
+		log.Info("Matched SecurityIntents for Binding", "BindingName", binding.Name)
 	}
 	return &BindingInfo{
 		Intent:  matchedIntents,
