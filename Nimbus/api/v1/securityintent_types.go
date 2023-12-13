@@ -15,7 +15,7 @@ type SecurityIntentSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	Intent   Intent   `json:"intent"`   // Define the details of the security policy.
+	Intent Intent `json:"intent"` // Define the details of the security policy.
 }
 
 // Intent defines the security policy details
@@ -35,6 +35,11 @@ type Resource struct {
 	Syscalls     []Syscalls     `json:"syscalls,omitempty"`
 	FromCIDRSet  []CIDRSet      `json:"fromCIDRSet,omitempty"`
 	ToPorts      []ToPort       `json:"toPorts,omitempty"`
+}
+
+// Network defines the network-related policies
+type Network struct {
+	MatchProtocols []MatchProtocol `json:"matchProtocols,omitempty"`
 }
 
 // Process defines the process-related policies
