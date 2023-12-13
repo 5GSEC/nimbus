@@ -5,7 +5,6 @@ package policy
 
 import (
 	"context"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -13,8 +12,7 @@ import (
 	utils "github.com/5GSEC/nimbus/controllers/utils"
 
 	intentv1 "github.com/5GSEC/nimbus/api/v1"
-	kubearmorhostpolicyv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorHostPolicy/api/security.kubearmor.com/v1"
-	kubearmorpolicyv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorPolicy/api/security.kubearmor.com/v1"
+	kubearmorv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorController/api/security.kubearmor.com/v1"
 )
 
 // SystemPolicyController is a struct to handle system policies.
@@ -77,22 +75,22 @@ func (spc *SystemPolicyController) DeletePolicy(ctx context.Context, intent *int
 }
 
 // createKubeArmorHostPolicy(): Creates a KubeArmorHostPolicy object based on the given SecurityIntent
-func createKubeArmorHostPolicy(ctx context.Context, intent *intentv1.SecurityIntent) *kubearmorhostpolicyv1.KubeArmorHostPolicy {
-	return utils.BuildKubeArmorPolicySpec(ctx, intent, "host").(*kubearmorhostpolicyv1.KubeArmorHostPolicy)
+func createKubeArmorHostPolicy(ctx context.Context, intent *intentv1.SecurityIntent) *kubearmorv1.KubeArmorHostPolicy {
+	return utils.BuildKubeArmorPolicySpec(ctx, intent, "host").(*kubearmorv1.KubeArmorHostPolicy)
 }
 
 // createKubeArmorPolicy creates a KubeArmorPolicy object based on the given SecurityIntent
-func createKubeArmorPolicy(ctx context.Context, intent *intentv1.SecurityIntent) *kubearmorpolicyv1.KubeArmorPolicy {
-	return utils.BuildKubeArmorPolicySpec(ctx, intent, "policy").(*kubearmorpolicyv1.KubeArmorPolicy)
+func createKubeArmorPolicy(ctx context.Context, intent *intentv1.SecurityIntent) *kubearmorv1.KubeArmorPolicy {
+	return utils.BuildKubeArmorPolicySpec(ctx, intent, "policy").(*kubearmorv1.KubeArmorPolicy)
 }
 
 // applyKubeArmorPolicy applies a KubeArmorPolicy to the Kubernetes cluster
-func applyKubeArmorPolicy(ctx context.Context, c client.Client, policy *kubearmorpolicyv1.KubeArmorPolicy) error {
+func applyKubeArmorPolicy(ctx context.Context, c client.Client, policy *kubearmorv1.KubeArmorPolicy) error {
 	return utils.ApplyOrUpdatePolicy(ctx, c, policy, policy.Name)
 }
 
 // applyKubeArmorHostPolicy applies a KubeArmorHostPolicy to the Kubernetes cluster
-func applyKubeArmorHostPolicy(ctx context.Context, c client.Client, policy *kubearmorhostpolicyv1.KubeArmorHostPolicy) error {
+func applyKubeArmorHostPolicy(ctx context.Context, c client.Client, policy *kubearmorv1.KubeArmorHostPolicy) error {
 	return utils.ApplyOrUpdatePolicy(ctx, c, policy, policy.Name)
 }
 
