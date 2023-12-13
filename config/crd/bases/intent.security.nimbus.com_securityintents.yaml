@@ -104,7 +104,19 @@ spec:
                             type: object
                           type: array
                         network:
-                          items: {}
+                          items:
+                            description: Network defines the network-related policies
+                            properties:
+                              matchProtocols:
+                                items:
+                                  description: MatchProtocol defines a protocol for
+                                    network policies
+                                  properties:
+                                    protocol:
+                                      type: string
+                                  type: object
+                                type: array
+                            type: object
                           type: array
                         process:
                           items:

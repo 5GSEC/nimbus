@@ -39,152 +39,174 @@ spec:
                 properties:
                   action:
                     type: string
-                  mode:
+                  description:
                     type: string
                   resource:
                     items:
                       description: Resource defines the resources that the security
                         policy applies to
                       properties:
-                        attrs:
+                        capabilities:
                           items:
-                            type: string
+                            description: Capabilities defines the capabilities-related
+                              policies
+                            properties:
+                              matchCapabilities:
+                                items:
+                                  description: MatchCapability defines a capability
+                                    for capabilities policies
+                                  properties:
+                                    capability:
+                                      type: string
+                                  type: object
+                                type: array
+                            type: object
                           type: array
-                        key:
-                          type: string
-                        val:
+                        file:
                           items:
-                            type: string
+                            description: File defines the file-related policies
+                            properties:
+                              matchDirectories:
+                                items:
+                                  description: MatchDirectory defines a directory
+                                    for process or file policies
+                                  properties:
+                                    dir:
+                                      type: string
+                                    fromSource:
+                                      items:
+                                        description: FromSource defines a source path
+                                          for directory-based policies
+                                        properties:
+                                          path:
+                                            type: string
+                                        type: object
+                                      type: array
+                                  type: object
+                                type: array
+                              matchPaths:
+                                items:
+                                  description: MatchPath defines a path for process
+                                    or file policies
+                                  properties:
+                                    path:
+                                      type: string
+                                  type: object
+                                type: array
+                            type: object
                           type: array
-                        valcel:
-                          type: string
+                        fromCIDRSet:
+                          items:
+                            description: CIDRSet defines CIDR ranges for network policies
+                            properties:
+                              cidr:
+                                type: string
+                            type: object
+                          type: array
+                        network:
+                          items:
+                            description: Network defines the network-related policies
+                            properties:
+                              matchProtocols:
+                                items:
+                                  description: MatchProtocol defines a protocol for
+                                    network policies
+                                  properties:
+                                    protocol:
+                                      type: string
+                                  type: object
+                                type: array
+                            type: object
+                          type: array
+                        process:
+                          items:
+                            description: Process defines the process-related policies
+                            properties:
+                              matchDirectories:
+                                items:
+                                  description: MatchDirectory defines a directory
+                                    for process or file policies
+                                  properties:
+                                    dir:
+                                      type: string
+                                    fromSource:
+                                      items:
+                                        description: FromSource defines a source path
+                                          for directory-based policies
+                                        properties:
+                                          path:
+                                            type: string
+                                        type: object
+                                      type: array
+                                  type: object
+                                type: array
+                              matchPaths:
+                                items:
+                                  description: MatchPath defines a path for process
+                                    or file policies
+                                  properties:
+                                    path:
+                                      type: string
+                                  type: object
+                                type: array
+                              matchPatterns:
+                                items:
+                                  description: MatchPattern defines a pattern for
+                                    process policies
+                                  properties:
+                                    pattern:
+                                      type: string
+                                  type: object
+                                type: array
+                            type: object
+                          type: array
+                        syscalls:
+                          items:
+                            description: Syscalls defines the syscalls-related policies
+                            properties:
+                              matchSyscalls:
+                                items:
+                                  description: MatchSyscall defines a syscall for
+                                    syscall policies
+                                  properties:
+                                    syscalls:
+                                      items:
+                                        type: string
+                                      type: array
+                                  type: object
+                                type: array
+                            type: object
+                          type: array
+                        toPorts:
+                          items:
+                            description: ToPort defines ports and protocols for network
+                              policies
+                            properties:
+                              ports:
+                                items:
+                                  description: Port defines a network port and its
+                                    protocol
+                                  properties:
+                                    port:
+                                      type: string
+                                    protocol:
+                                      type: string
+                                  type: object
+                                type: array
+                            type: object
+                          type: array
                       type: object
                     type: array
                   type:
                     type: string
                 required:
                 - action
-                - mode
+                - description
                 - resource
                 - type
                 type: object
-              selector:
-                description: Selector defines the selection criteria for resources
-                properties:
-                  cel:
-                    items:
-                      type: string
-                    type: array
-                  match:
-                    description: Match defines the resource filters to be used
-                    properties:
-                      all:
-                        items:
-                          description: ResourceFilter is used for filtering resources,
-                            subjects, roles, and cluster roles
-                          properties:
-                            resources:
-                              description: Resources defines the properties for selecting
-                                Kubernetes resources
-                              properties:
-                                kinds:
-                                  items:
-                                    type: string
-                                  type: array
-                                matchLabels:
-                                  additionalProperties:
-                                    type: string
-                                  type: object
-                                names:
-                                  items:
-                                    type: string
-                                  type: array
-                                namespaces:
-                                  items:
-                                    type: string
-                                  type: array
-                                operations:
-                                  items:
-                                    type: string
-                                  type: array
-                              required:
-                              - kinds
-                              type: object
-                            roles:
-                              items:
-                                type: string
-                              type: array
-                            subjects:
-                              items:
-                                description: Subject defines the subject for filtering
-                                properties:
-                                  kind:
-                                    type: string
-                                  name:
-                                    type: string
-                                required:
-                                - kind
-                                type: object
-                              type: array
-                          type: object
-                        type: array
-                      any:
-                        items:
-                          description: ResourceFilter is used for filtering resources,
-                            subjects, roles, and cluster roles
-                          properties:
-                            resources:
-                              description: Resources defines the properties for selecting
-                                Kubernetes resources
-                              properties:
-                                kinds:
-                                  items:
-                                    type: string
-                                  type: array
-                                matchLabels:
-                                  additionalProperties:
-                                    type: string
-                                  type: object
-                                names:
-                                  items:
-                                    type: string
-                                  type: array
-                                namespaces:
-                                  items:
-                                    type: string
-                                  type: array
-                                operations:
-                                  items:
-                                    type: string
-                                  type: array
-                              required:
-                              - kinds
-                              type: object
-                            roles:
-                              items:
-                                type: string
-                              type: array
-                            subjects:
-                              items:
-                                description: Subject defines the subject for filtering
-                                properties:
-                                  kind:
-                                    type: string
-                                  name:
-                                    type: string
-                                required:
-                                - kind
-                                type: object
-                              type: array
-                          type: object
-                        type: array
-                    type: object
-                required:
-                - cel
-                type: object
             required:
             - intent
-            - selector
             type: object
           status:
             description: SecurityIntentStatus defines the observed state of SecurityIntent

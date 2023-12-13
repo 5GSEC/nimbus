@@ -1,0 +1,27 @@
+# permissions for end users to view securityintentbindings.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: securityintentbinding-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: nimbus
+    app.kubernetes.io/part-of: nimbus
+    app.kubernetes.io/managed-by: kustomize
+  name: securityintentbinding-viewer-role
+rules:
+- apiGroups:
+  - intent.security.nimbus.com
+  resources:
+  - securityintentbindings
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - intent.security.nimbus.com
+  resources:
+  - securityintentbindings/status
+  verbs:
+  - get
