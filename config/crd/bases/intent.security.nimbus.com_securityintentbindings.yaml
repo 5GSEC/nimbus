@@ -1,0 +1,116 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.13.0
+  name: securityintentbindings.intent.security.nimbus.com
+spec:
+  group: intent.security.nimbus.com
+  names:
+    kind: SecurityIntentBinding
+    listKind: SecurityIntentBindingList
+    plural: securityintentbindings
+    singular: securityintentbinding
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: SecurityIntentBinding is the Schema for the securityintentbindings
+          API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: SecurityIntentBindingSpec defines the desired state of SecurityIntentBinding
+            properties:
+              intentRequests:
+                items:
+                  description: IntentRequest defines the request for a specific SecurityIntent
+                  properties:
+                    description:
+                      type: string
+                    intentName:
+                      type: string
+                    mode:
+                      type: string
+                    type:
+                      type: string
+                  required:
+                  - description
+                  - intentName
+                  - mode
+                  - type
+                  type: object
+                type: array
+              selector:
+                description: Foo is an example field of SecurityIntentBinding. Edit
+                  securityintentbinding_types.go to remove/update
+                properties:
+                  all:
+                    items:
+                      description: ResourceFilter is used for filtering resources
+                      properties:
+                        resources:
+                          description: Resources defines the properties for selecting
+                            Kubernetes resources
+                          properties:
+                            kind:
+                              type: string
+                            matchLabels:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            namespace:
+                              type: string
+                          type: object
+                      type: object
+                    type: array
+                  any:
+                    items:
+                      description: ResourceFilter is used for filtering resources
+                      properties:
+                        resources:
+                          description: Resources defines the properties for selecting
+                            Kubernetes resources
+                          properties:
+                            kind:
+                              type: string
+                            matchLabels:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            namespace:
+                              type: string
+                          type: object
+                      type: object
+                    type: array
+                  cel:
+                    items:
+                      type: string
+                    type: array
+                type: object
+            required:
+            - intentRequests
+            - selector
+            type: object
+          status:
+            description: SecurityIntentBindingStatus defines the observed state of
+              SecurityIntentBinding
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
