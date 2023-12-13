@@ -5,7 +5,7 @@
 busybox-pod
 
 ```
-$ kubectl apply -f ./test-yaml/env/busybox-pod.yaml
+$ kubectl apply -f ./test/env/busybox-pod.yaml
 ```
 
 ```yaml
@@ -25,7 +25,7 @@ spec:
 
 redis-pod
 ```
-$ kubectl apply -f ./test-yaml/env/redis-pod.yaml
+$ kubectl apply -f ./test/env/redis-pod.yaml
 ```
 ```yaml
 apiVersion: v1
@@ -63,9 +63,9 @@ You want to enforce a policy that blocks all external traffic from accessing por
 $ make run
 ```
 
-### Create and apply intent file
+### Create and apply Securityintent and SecurityintentBinding file
 ```
-$ kubectl apply -f ./test-yaml/intents/network/intent-redis.yaml
+$ kubectl apply -f ./test/v2/intents/network/intent-redis.yaml
 ```
 ```yaml
 apiVersion: intent.security.nimbus.com/v1
@@ -74,78 +74,76 @@ metadata:
   name: redis-ingress-deny-traffic
   namespace: default
 spec:
-  selector:
-    match:
-      any:
-        - resources:
-            names: ["redis-pod"]
-            namespaces: ["default"]
-            kinds: ["Pod"]
-            matchLabels:
-              app: "redis"
-    cel:
-      - "object.spec.template.spec.containers.all(container, container.ports.any(port, port.number == 6379))"
-  intent: 
-    action: block
-    mode: strict
+  intent:
+    description: "Block port 6379"
+    action: Block
     type: network
-    resource: 
-      - key: "ingress"
-        val: ["0.0.0.0/0-6379"]
+    resource:
+      - fromCIDRSet:
+          - cidr: 0.0.0.0/0
+        toPorts:
+          - ports:
+            - port: "6379"
+              protocol: tcp
 
 ```
-<details>
-  <summary>make run</summary>
-  cclab@kubearmor:~/nimbus$ make run
-make: go: Permission denied
-test -s /home/cclab/nimbus/bin/controller-gen && /home/cclab/nimbus/bin/controller-gen --version | grep -q v0.13.0 || \
-GOBIN=/home/cclab/nimbus/bin go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.13.0
-/home/cclab/nimbus/bin/controller-gen rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
-/home/cclab/nimbus/bin/controller-gen object:headerFile="hack/boilerplate.go.txt" paths="./..."
-go fmt ./...
-go vet ./...
-go: downloading github.com/onsi/ginkgo/v2 v2.11.0
-go: downloading github.com/onsi/gomega v1.27.10
-go run ./main.go
-2023-11-14T15:56:47Z	INFO	setup	starting manager
-2023-11-14T15:56:47Z	INFO	controller-runtime.metrics	Starting metrics server
-2023-11-14T15:56:47Z	INFO	starting server	{"kind": "health probe", "addr": "[::]:8081"}
-2023-11-14T15:56:47Z	INFO	controller-runtime.metrics	Serving metrics server	{"bindAddress": ":8080", "secure": false}
-2023-11-14T15:56:47Z	INFO	Starting EventSource	{"controller": "securityintent", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "SecurityIntent", "source": "kind source: *v1.SecurityIntent"}
-2023-11-14T15:56:47Z	INFO	Starting Controller	{"controller": "securityintent", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "SecurityIntent"}
-2023-11-14T15:56:47Z	INFO	Starting workers	{"controller": "securityintent", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "SecurityIntent", "worker count": 1}
-2023-11-14T16:00:00Z	INFO	SecurityIntent object fetched	{"controller": "securityintent", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "SecurityIntent", "SecurityIntent": {"name":"redis-ingress-deny-traffic","namespace":"default"}, "namespace": "default", "name": "redis-ingress-deny-traffic", "reconcileID": "f1f990e8-35d2-4dfb-8107-164a916cfb2f", "intent": "redis-ingress-deny-traffic"}
-2023-11-14T16:00:00Z	INFO	Applied CiliumNetworkPolicy	{"controller": "securityintent", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "SecurityIntent", "SecurityIntent": {"name":"redis-ingress-deny-traffic","namespace":"default"}, "namespace": "default", "name": "redis-ingress-deny-traffic", "reconcileID": "f1f990e8-35d2-4dfb-8107-164a916cfb2f", "policy": {"namespace": "default", "name": "redis-ingress-deny-traffic"}}
-2023-11-14T16:00:00Z	INFO	Successfully reconciled SecurityIntent	{"controller": "securityintent", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "SecurityIntent", "SecurityIntent": {"name":"redis-ingress-deny-traffic","namespace":"default"}, "namespace": "default", "name": "redis-ingress-deny-traffic", "reconcileID": "f1f990e8-35d2-4dfb-8107-164a916cfb2f", "intent": "redis-ingress-deny-traffic"}
-</details>
 
+```
+$ kubectl apply -f ./test/v2/bindings/network/binding-redis.yaml
+```
+```yaml
+apiVersion: intent.security.nimbus.com/v1
+kind: SecurityIntentBinding
+metadata:
+  name: net-redis-ingress-deny
+  namespace: default
+spec:
+  selector:
+      any:
+        - resources:
+            kind: Pod
+            namespace: default
+            matchLabels:
+              app: "redis"
+  intentRequests:
+    - type: network
+      intentName: redis-ingress-deny-traffic
+      description: "Don’t allow any outside traffic to the Redis port"
+      mode: strict
 
+```
 
-### Verify SecurityIntent creation
+### Verify SecurityIntent and SecurityIntentBinding
 ```
 $ kubectl get SecurityIntent
 NAME                         AGE
-redis-ingress-deny-traffic   2m
+redis-ingress-deny-traffic   26s
+
+```
+```
+$ kubectl get SecurityIntentBinding
+NAME                     AGE
+net-redis-ingress-deny   25s
 
 ```
 
 ### Verify Cilium Network Policy Creation
 ```
-$ kubectl get CiliumNetworkPolicies
-NAME                         AGE
-redis-ingress-deny-traffic   2m19s
+$ kubectl get cnp
+NAME                     AGE
+net-redis-ingress-deny   38s
 ```
 ```
-$ kubectl get CiliumNetworkPolicies redis-ingress-deny-traffic -o yaml
+$ kubectl get cnp net-redis-ingress-deny -o yaml
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  creationTimestamp: "2023-11-14T16:00:00Z"
+  creationTimestamp: "2023-12-12T18:11:36Z"
   generation: 1
-  name: redis-ingress-deny-traffic
+  name: net-redis-ingress-deny
   namespace: default
-  resourceVersion: "89051"
-  uid: 1c3e4e7e-697f-4fbc-a3a8-3a91af6380e6
+  resourceVersion: "3415520"
+  uid: 0b1d9071-16e8-405f-bd92-b3774c41a9df
 spec:
   endpointSelector:
     matchLabels:

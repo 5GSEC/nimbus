@@ -1,0 +1,18 @@
+apiVersion: intent.security.nimbus.com/v1
+kind: SecurityIntentBinding
+metadata:
+  name: net-redis-ingress-deny
+  namespace: default
+spec:
+  selector:
+      any:
+        - resources:
+            kind: Pod
+            namespace: default
+            matchLabels:
+              app: "redis"
+  intentRequests:
+    - type: network
+      intentName: redis-ingress-deny-traffic
+      description: "Don’t allow any outside traffic to the Redis port"
+      mode: strict
