@@ -15,7 +15,7 @@ import (
 )
 
 // Constant for the finalizer name used in the SecurityIntent resource.
-const securityIntentFinalizer = "finalizer.securityintent.intent.security.nimbus.com"
+// const securityIntentFinalizer = "finalizer.securityintent.intent.security.nimbus.com"
 
 // PolicyController struct handles different types of policies.
 type PolicyController struct {
