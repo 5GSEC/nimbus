@@ -36,18 +36,18 @@ func Cleanup(ctx context.Context, k8sClient client.Client, logger logr.Logger) e
 
 	// Iterating over each SecurityIntent to delete associated policies.
 	for _, binding := range securityIntentBindings.Items {
-
+		bindingCopy := binding
 		bindingInfo := &general.BindingInfo{
-			Binding: &binding,
+			Binding: &bindingCopy,
 		}
-
+	
 		// Deleting network policies associated with the current SecurityIntent.
 		if err := npc.DeletePolicy(ctx, bindingInfo); err != nil {
-			logger.Error(err, "Failed to delete network policy for SecurityIntentBinding", "Name", binding.Name)
+			logger.Error(err, "Failed to delete network policy for SecurityIntentBinding", "Name", bindingCopy.Name)
 			return err
 		}
-		if err := k8sClient.Delete(ctx, &binding); err != nil {
-			logger.Error(err, "Failed to delete SecurityIntentBinding", "Name", binding.Name)
+		if err := k8sClient.Delete(ctx, &bindingCopy); err != nil {
+			logger.Error(err, "Failed to delete SecurityIntentBinding", "Name", bindingCopy.Name)
 			continue
 		}
 	}
