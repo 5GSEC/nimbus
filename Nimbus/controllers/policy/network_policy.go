@@ -50,9 +50,9 @@ func (npc *NetworkPolicyController) HandlePolicy(ctx context.Context, bindingInf
 // DeletePolicy removes the network policy associated with the SecurityIntent resource.
 func (npc *NetworkPolicyController) DeletePolicy(ctx context.Context, bindingInfo *general.BindingInfo) error {
 	log := log.FromContext(ctx)
-	var err error
 
-	err = utils.DeletePolicy(ctx, npc.Client, "CiliumNetworkPolicy", bindingInfo.Binding.Name, bindingInfo.Binding.Namespace)
+	// Modified line: Merged variable declaration with assignment
+	err := utils.DeletePolicy(ctx, npc.Client, "CiliumNetworkPolicy", bindingInfo.Binding.Name, bindingInfo.Binding.Namespace)
 	if err != nil {
 		log.Error(err, "Failed to delete Cilium Network Policy", "Name", bindingInfo.Binding.Name)
 		return err
