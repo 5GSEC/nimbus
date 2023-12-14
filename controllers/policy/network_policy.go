@@ -12,7 +12,7 @@ import (
 
 	intentv1 "github.com/5GSEC/nimbus/api/v1"
 	ciliumv2 "github.com/cilium/cilium/pkg/k8s/apis/cilium.io/v2"
-	kubearmorpolicyv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorPolicy/api/security.kubearmor.com/v1"
+	kubearmorv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorController/api/security.kubearmor.com/v1"
 
 	utils "github.com/5GSEC/nimbus/controllers/utils"
 )
@@ -45,7 +45,7 @@ func (npc *NetworkPolicyController) HandlePolicy(ctx context.Context, intent *in
 
 	// If SecurityIntent contains protocol resources, build and apply/update KubeArmor Network Policy.
 	if containsProtocolResource(intent) {
-		armorNetPolicy := utils.BuildKubeArmorPolicySpec(ctx, intent, utils.GetPolicyType(utils.IsHostPolicy(intent))).(*kubearmorpolicyv1.KubeArmorPolicy)
+		armorNetPolicy := utils.BuildKubeArmorPolicySpec(ctx, intent, utils.GetPolicyType(utils.IsHostPolicy(intent))).(*kubearmorv1.KubeArmorPolicy)
 		err = utils.ApplyOrUpdatePolicy(ctx, npc.Client, armorNetPolicy, armorNetPolicy.Name)
 		if err != nil {
 			log.Error(err, "Failed to apply KubeArmor Network Policy", "Name", armorNetPolicy.Name)
@@ -82,8 +82,6 @@ func (npc *NetworkPolicyController) DeletePolicy(ctx context.Context, intent *in
 	log.Info("Deleted Network Policy", "PolicyName", intent.Name)
 	return nil
 }
-
-// Additional helper functions for policy creation and deletion.
 
 // containsProtocolResource checks for the presence of protocol resources in SecurityIntent.
 func containsProtocolResource(intent *intentv1.SecurityIntent) bool {
