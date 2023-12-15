@@ -32,8 +32,7 @@ import (
 
 	// Importing third-party Kubernetes resource types
 	ciliumv2 "github.com/cilium/cilium/pkg/k8s/apis/cilium.io/v2"
-	kubearmorhostpolicyv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorHostPolicy/api/security.kubearmor.com/v1"
-	kubearmorpolicyv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorPolicy/api/security.kubearmor.com/v1"
+	kubearmorv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorController/api/security.kubearmor.com/v1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -46,9 +45,9 @@ var (
 func init() {
 	// In init, various Kubernetes and custom resources are added to the scheme.
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+
 	utilruntime.Must(intentv1.AddToScheme(scheme))
-	utilruntime.Must(kubearmorpolicyv1.AddToScheme(scheme))
-	utilruntime.Must(kubearmorhostpolicyv1.AddToScheme(scheme))
+	utilruntime.Must(kubearmorv1.AddToScheme(scheme))
 	utilruntime.Must(ciliumv2.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }

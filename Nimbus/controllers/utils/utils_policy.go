@@ -18,35 +18,38 @@ import (
 
 	ciliumv2 "github.com/cilium/cilium/pkg/k8s/apis/cilium.io/v2"
 	"github.com/cilium/cilium/pkg/policy/api"
-	kubearmorhostpolicyv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorHostPolicy/api/security.kubearmor.com/v1"
-	kubearmorpolicyv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorPolicy/api/security.kubearmor.com/v1"
+	kubearmorv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorController/api/security.kubearmor.com/v1"
 )
 
 // ---------------------------------------------------
 // -------- Creation of Policy Specifications --------
 // ---------------------------------------------------
 
+// BuildKubeArmorPolicySpec creates a policy specification (either KubeArmorPolicy or KubeArmorHostPolicy)
+// based on the provided SecurityIntent and the type of policy.
 // BuildKubeArmorPolicySpec creates a KubeArmor policy specification based on the provided SecurityIntentBinding.
-func BuildKubeArmorPolicySpec(ctx context.Context, bindingInfo *general.BindingInfo) *kubearmorpolicyv1.KubeArmorPolicy {
+func BuildKubeArmorPolicySpec(ctx context.Context, bindingInfo *general.BindingInfo) *kubearmorv1.KubeArmorPolicy {
 	log := log.FromContext(ctx)
 	log.Info("Creating KubeArmorPolicy", "BindingName", bindingInfo.Binding.Name)
 
 	intent := bindingInfo.Intent[0]
 
-	return &kubearmorpolicyv1.KubeArmorPolicy{
+	return &kubearmorv1.KubeArmorPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      bindingInfo.Binding.Name,
 			Namespace: bindingInfo.Binding.Namespace,
 		},
-		Spec: kubearmorpolicyv1.KubeArmorPolicySpec{
-			Selector: kubearmorpolicyv1.SelectorType{
+		Spec: kubearmorv1.KubeArmorPolicySpec{
+			Selector: kubearmorv1.SelectorType{
 				MatchLabels: extractMatchLabels(bindingInfo),
 			},
 			Process:      extractToKubeArmorPolicyProcessType(bindingInfo),
 			File:         extractToKubeArmorPolicyFileType(bindingInfo),
 			Capabilities: extractToKubeArmorPolicyCapabilitiesType(bindingInfo),
 			Network:      extractToKubeArmorPolicyNetworkType(bindingInfo),
-			Action:       kubearmorpolicyv1.ActionType(intent.Spec.Intent.Action),
+			// TODO: To discuss
+			//Network:      convertToKubeArmorHostPolicyNetworkType(extractNetworkPolicy(intent)),
+			Action: kubearmorv1.ActionType(intent.Spec.Intent.Action),
 		},
 	}
 }
@@ -71,6 +74,23 @@ func BuildCiliumNetworkPolicySpec(ctx context.Context, bindingInfo *general.Bind
 	}
 	return policy
 }
+
+// TODO: To discuss
+//func convertToKubeArmorHostPolicyNetworkType(slice []interface{}) kubearmorv1.MatchHostNetworkProtocolType {
+//	var result kubearmorv1.MatchHostNetworkProtocolType
+//	for _, item := range slice {
+//		str, ok := item.(string)
+//		if !ok {
+//			continue // or appropriate error handling
+//		}
+//		// Requires explicit type conversion to MatchNetworkProtocolStringType
+//		protocol := kubearmorv1.MatchNetworkProtocolStringType(str)
+//		result.MatchProtocols = append(result.MatchProtocols, kubearmorv1.MatchNetworkProtocolType{
+//			Protocol: protocol,
+//		})
+//	}
+//	return result
+//}
 
 // --------------------------------------
 // -------- Utility Functions  ----------
@@ -101,36 +121,36 @@ func extractMatchLabels(bindingInfo *general.BindingInfo) map[string]string {
 	return processedLabels
 }
 
-func extractToKubeArmorPolicyProcessType(bindingInfo *general.BindingInfo) kubearmorpolicyv1.ProcessType {
+func extractToKubeArmorPolicyProcessType(bindingInfo *general.BindingInfo) kubearmorv1.ProcessType {
 	intent := bindingInfo.Intent[0]
 
-	var processType kubearmorpolicyv1.ProcessType
+	var processType kubearmorv1.ProcessType
 	for _, resource := range intent.Spec.Intent.Resource {
 		for _, process := range resource.Process {
 			for _, match := range process.MatchPaths {
 				if path := match.Path; path != "" && strings.HasPrefix(path, "/") {
-					processType.MatchPaths = append(processType.MatchPaths, kubearmorpolicyv1.ProcessPathType{
-						Path: kubearmorpolicyv1.MatchPathType(path),
+					processType.MatchPaths = append(processType.MatchPaths, kubearmorv1.ProcessPathType{
+						Path: kubearmorv1.MatchPathType(path),
 					})
 				}
 			}
 			for _, dir := range process.MatchDirectories {
-				var fromSources []kubearmorpolicyv1.MatchSourceType
+				var fromSources []kubearmorv1.MatchSourceType
 				for _, source := range dir.FromSource {
-					fromSources = append(fromSources, kubearmorpolicyv1.MatchSourceType{
-						Path: kubearmorpolicyv1.MatchPathType(source.Path),
+					fromSources = append(fromSources, kubearmorv1.MatchSourceType{
+						Path: kubearmorv1.MatchPathType(source.Path),
 					})
 				}
 				if dir.Directory != "" || len(fromSources) > 0 {
-					processType.MatchDirectories = append(processType.MatchDirectories, kubearmorpolicyv1.ProcessDirectoryType{ // Adjusted type here
-						Directory:  kubearmorpolicyv1.MatchDirectoryType(dir.Directory),
+					processType.MatchDirectories = append(processType.MatchDirectories, kubearmorv1.ProcessDirectoryType{ // Adjusted type here
+						Directory:  kubearmorv1.MatchDirectoryType(dir.Directory),
 						FromSource: fromSources,
 					})
 				}
 			}
 			for _, pattern := range process.MatchPatterns {
 				if pattern.Pattern != "" {
-					processType.MatchPatterns = append(processType.MatchPatterns, kubearmorpolicyv1.ProcessPatternType{
+					processType.MatchPatterns = append(processType.MatchPatterns, kubearmorv1.ProcessPatternType{
 						Pattern: pattern.Pattern,
 					})
 				}
@@ -140,31 +160,31 @@ func extractToKubeArmorPolicyProcessType(bindingInfo *general.BindingInfo) kubea
 	return processType
 }
 
-func extractToKubeArmorPolicyFileType(bindingInfo *general.BindingInfo) kubearmorpolicyv1.FileType {
+func extractToKubeArmorPolicyFileType(bindingInfo *general.BindingInfo) kubearmorv1.FileType {
 	intent := bindingInfo.Intent[0]
 
-	var fileType kubearmorpolicyv1.FileType
+	var fileType kubearmorv1.FileType
 
 	for _, resource := range intent.Spec.Intent.Resource {
 		for _, file := range resource.File {
 			for _, path := range file.MatchPaths {
 				if path.Path != "" {
-					fileType.MatchPaths = append(fileType.MatchPaths, kubearmorpolicyv1.FilePathType{
-						Path: kubearmorpolicyv1.MatchPathType(path.Path),
+					fileType.MatchPaths = append(fileType.MatchPaths, kubearmorv1.FilePathType{
+						Path: kubearmorv1.MatchPathType(path.Path),
 					})
 				}
 			}
 
 			for _, dir := range file.MatchDirectories {
-				var fromSources []kubearmorpolicyv1.MatchSourceType
+				var fromSources []kubearmorv1.MatchSourceType
 				for _, source := range dir.FromSource {
-					fromSources = append(fromSources, kubearmorpolicyv1.MatchSourceType{
-						Path: kubearmorpolicyv1.MatchPathType(source.Path),
+					fromSources = append(fromSources, kubearmorv1.MatchSourceType{
+						Path: kubearmorv1.MatchPathType(source.Path),
 					})
 				}
 				if dir.Directory != "" || len(fromSources) > 0 {
-					fileType.MatchDirectories = append(fileType.MatchDirectories, kubearmorpolicyv1.FileDirectoryType{
-						Directory:  kubearmorpolicyv1.MatchDirectoryType(dir.Directory),
+					fileType.MatchDirectories = append(fileType.MatchDirectories, kubearmorv1.FileDirectoryType{
+						Directory:  kubearmorv1.MatchDirectoryType(dir.Directory),
 						FromSource: fromSources,
 					})
 				}
@@ -175,44 +195,44 @@ func extractToKubeArmorPolicyFileType(bindingInfo *general.BindingInfo) kubearmo
 	return fileType
 }
 
-func extractToKubeArmorPolicyCapabilitiesType(bindingInfo *general.BindingInfo) kubearmorpolicyv1.CapabilitiesType {
-	var capabilitiesType kubearmorpolicyv1.CapabilitiesType
+func extractToKubeArmorPolicyCapabilitiesType(bindingInfo *general.BindingInfo) kubearmorv1.CapabilitiesType {
+	var capabilitiesType kubearmorv1.CapabilitiesType
 	intent := bindingInfo.Intent[0]
 
 	if len(intent.Spec.Intent.Resource) > 0 && len(intent.Spec.Intent.Resource[0].Capabilities) > 0 {
 		for _, capability := range intent.Spec.Intent.Resource[0].Capabilities {
 			for _, matchCapability := range capability.MatchCapabilities {
 				if matchCapability.Capability != "" {
-					capabilitiesType.MatchCapabilities = append(capabilitiesType.MatchCapabilities, kubearmorpolicyv1.MatchCapabilitiesType{
-						Capability: kubearmorpolicyv1.MatchCapabilitiesStringType(matchCapability.Capability),
+					capabilitiesType.MatchCapabilities = append(capabilitiesType.MatchCapabilities, kubearmorv1.MatchCapabilitiesType{
+						Capability: kubearmorv1.MatchCapabilitiesStringType(matchCapability.Capability),
 					})
 				}
 			}
 		}
 	} else {
-		capabilitiesType.MatchCapabilities = append(capabilitiesType.MatchCapabilities, kubearmorpolicyv1.MatchCapabilitiesType{
+		capabilitiesType.MatchCapabilities = append(capabilitiesType.MatchCapabilities, kubearmorv1.MatchCapabilitiesType{
 			Capability: "lease",
 		})
 	}
 	return capabilitiesType
 }
 
-func extractToKubeArmorPolicyNetworkType(bindingInfo *general.BindingInfo) kubearmorpolicyv1.NetworkType {
-	var networkType kubearmorpolicyv1.NetworkType
+func extractToKubeArmorPolicyNetworkType(bindingInfo *general.BindingInfo) kubearmorv1.NetworkType {
+	var networkType kubearmorv1.NetworkType
 	intent := bindingInfo.Intent[0]
 
 	if len(intent.Spec.Intent.Resource) > 0 && len(intent.Spec.Intent.Resource[0].Network) > 0 {
 		for _, network := range intent.Spec.Intent.Resource[0].Network {
 			for _, matchProtocol := range network.MatchProtocols {
 				if matchProtocol.Protocol != "" {
-					networkType.MatchProtocols = append(networkType.MatchProtocols, kubearmorpolicyv1.MatchNetworkProtocolType{
-						Protocol: kubearmorpolicyv1.MatchNetworkProtocolStringType(matchProtocol.Protocol),
+					networkType.MatchProtocols = append(networkType.MatchProtocols, kubearmorv1.MatchNetworkProtocolType{
+						Protocol: kubearmorv1.MatchNetworkProtocolStringType(matchProtocol.Protocol),
 					})
 				}
 			}
 		}
 	} else {
-		networkType.MatchProtocols = append(networkType.MatchProtocols, kubearmorpolicyv1.MatchNetworkProtocolType{
+		networkType.MatchProtocols = append(networkType.MatchProtocols, kubearmorv1.MatchNetworkProtocolType{
 			Protocol: "raw",
 		})
 	}
@@ -254,7 +274,6 @@ func removeReservedPrefixes(key string) string {
 	}
 	return strings.TrimSpace(key)
 }
-
 
 // getIngressDenyRules generates ingress deny rules from SecurityIntent specified in BindingInfo.
 func getIngressDenyRules(bindingInfo *general.BindingInfo) []api.IngressDenyRule {
@@ -319,17 +338,17 @@ func ApplyOrUpdatePolicy(ctx context.Context, c client.Client, policy client.Obj
 	var policySpec interface{}
 
 	switch p := policy.(type) {
-	case *kubearmorpolicyv1.KubeArmorPolicy:
-		existingPolicy = &kubearmorpolicyv1.KubeArmorPolicy{}
+	case *kubearmorv1.KubeArmorPolicy:
+		existingPolicy = &kubearmorv1.KubeArmorPolicy{}
 		policySpec = p.Spec
-	case *kubearmorhostpolicyv1.KubeArmorHostPolicy:
-		existingPolicy = &kubearmorhostpolicyv1.KubeArmorHostPolicy{}
+	case *kubearmorv1.KubeArmorHostPolicy:
+		existingPolicy = &kubearmorv1.KubeArmorHostPolicy{}
 		policySpec = p.Spec
 	case *ciliumv2.CiliumNetworkPolicy:
 		existingPolicy = &ciliumv2.CiliumNetworkPolicy{}
 		policySpec = p.Spec
 	default:
-		return fmt.Errorf("Unsupported policy type")
+		return fmt.Errorf("unsupported policy type")
 	}
 
 	err := c.Get(ctx, types.NamespacedName{Name: policyName, Namespace: policy.GetNamespace()}, existingPolicy)
@@ -362,6 +381,7 @@ func ApplyOrUpdatePolicy(ctx context.Context, c client.Client, policy client.Obj
 	}
 	return nil
 }
+
 // ----------------------------------------
 // ----------- Delete Policy  -------------
 // ----------------------------------------
@@ -375,9 +395,9 @@ func DeletePolicy(ctx context.Context, c client.Client, policyType, name, namesp
 
 	switch policyType {
 	case "KubeArmorPolicy":
-		policy = &kubearmorpolicyv1.KubeArmorPolicy{}
+		policy = &kubearmorv1.KubeArmorPolicy{}
 	case "KubeArmorHostPolicy":
-		policy = &kubearmorhostpolicyv1.KubeArmorHostPolicy{}
+		policy = &kubearmorv1.KubeArmorHostPolicy{}
 	case "CiliumNetworkPolicy":
 		policy = &ciliumv2.CiliumNetworkPolicy{}
 	default:

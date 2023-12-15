@@ -16,6 +16,7 @@ permissions: read-all
 
 jobs:
   release-nimbus-image:
+    if: github.repository == '5GSEC/nimbus'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source code
