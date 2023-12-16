@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: intent.security.nimbus.com/v1
+kind: SecurityIntent
+metadata:
+  name: do-not-allow-priv-escalation
+  namespace: multiubuntu
+spec:
+  selector:
+    match: #check with kyverno format
+    cel:
+      - xxx
+  intent: 
+    action: block
+    mode: best-effort
+    type: system
+    resource: 
+      - key: “capabilities”
+      val: [ “privilege”, “CAP_SYSADMIN” ]

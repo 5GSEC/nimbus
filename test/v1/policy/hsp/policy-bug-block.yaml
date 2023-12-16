@@ -1,0 +1,41 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+#apiVersion: security.kubearmor.com/v1
+#kind: KubeArmorHostPolicy
+#metadata:
+#  name: hsp-cve-2020-8559-bug-block
+#spec:
+#  tags: ["CVE", "unvalidated-redirect-requests-attack", "CVE-2020-8559"]
+#  message: "Alert! move, copy and kill command executed on host machine"
+#  nodeSelector:
+#    matchLabels:
+#      kubernetes.io/arch: amd64
+#  process:
+#    severity: 7
+#    matchPatterns:
+#    - pattern: /**/mv
+#    - pattern: /**/cp
+#    - pattern: /**/kill
+#    action: Block
+
+apiVersion: security.kubearmor.com/v1
+kind: KubeArmorHostPolicy
+metadata:
+  name: hsp-cve-2020-8559-bug-block
+spec:
+  tags: ["CVE", "unvalidated-redirect-requests-attack", "CVE-2020-8559"]
+  message: "Alert! move, copy and kill command executed in test folder"
+  nodeSelector:
+    matchLabels:
+      kubernetes.io/arch: amd64
+  process:
+    severity: 7
+    matchPatterns:
+    - pattern: /usr/bin/mv
+    - pattern: /usr/bin/cp
+    - pattern: /usr/bin/kill
+    action: Block
+
+
+

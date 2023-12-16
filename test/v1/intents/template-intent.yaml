@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: intent.security.nimbus.com/v1
+kind: SecurityIntent
+metadata:
+  name: [intent-name]
+  namespace: [intent-namespace]
+spec:
+  selector:
+    match:
+      any:
+        - resources:
+            names: [target-name]
+            kinds: [target-kind]
+            namespaces: [target-namespace]
+            matchLabels:
+              [key: value]
+    cel:
+    - xxxx 
+  intent:
+    action: block/audit/allow
+    mode: strict
+    type: system/network
+    resource: []
+      - matchPaths:
+        - path: /etc/shadow
+        - path: /etc/subuid
+        - path: /etc/subgid
+      - matchCapabilities:
+        - capability: net_raw
+      - matchSyscalls:
+        - syscall:
+          - unlink
+      - key: "ingress"
+        val: ["0.0.0.0/0-6379"]

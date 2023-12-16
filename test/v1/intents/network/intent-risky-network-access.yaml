@@ -1,0 +1,44 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+#kind: SecurityIntent
+#metadata:
+#  name: risky-network-access
+#  namespace: multiubuntu
+#spec:
+#  selector:
+#  cel:
+#    - “object.spec.template.spec.containers.all(container, !has(container.ports) || container.ports.all(port, !has(port.hostPort) || port.hostPort == 0))”
+#  intent: 
+#    action: allow
+#    mode: strict
+#    type: network
+#    resource: 
+#      - key: “egress”
+#        val: [ “10.0.0.0/8-1:65535” “192.168.0.0/16-1:65535” “172.16.0.0/12-1:65535”]
+
+apiVersion: intent.security.nimbus.com/v1
+kind: SecurityIntent
+metadata:
+  name: risky-network-access
+  namespace: multiubuntu
+spec:
+  selector:
+    match:
+      any:
+        - resources:
+            names: ["ubuntu-1-deployment"]
+            namespaces: ["multiubuntu"]
+            kinds: ["Deployment"]
+            matchLabels:
+              group: "group-1"
+              container: "ubuntu-1"
+    cel:
+      - "object.spec.template.spec.containers.all(container, !has(container.ports) || container.ports.all(port, !has(port.hostPort) || port.hostPort == 0))"
+  intent: 
+    action: allow
+    mode: strict
+    type: network
+    resource: 
+      - key: "egress"
+        val: [ "10.0.0.0/8-1:65535", "192.168.0.0/16-1:65535", "172.16.0.0/12-1:65535"]

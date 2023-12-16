@@ -1,0 +1,14 @@
+apiVersion: intent.security.nimbus.com/v1
+kind: SecurityIntent
+metadata:
+  name: group-1-proc-path-sleep-block
+  namespace: multiubuntu
+spec:
+  intent:
+    description: "block the execution of '/bin/sleep'"
+    action: Block
+    type: system
+    resource:
+      - process:
+          - matchPaths:
+            - path: "/bin/sleep"

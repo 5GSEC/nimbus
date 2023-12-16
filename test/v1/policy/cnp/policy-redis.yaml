@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: cnp-redis-ingress-deny-traffic-to-port-6379
+  namespace: default
+spec:
+  description: "Don’t allow any outside traffic to the Redis port"
+  endpointSelector:
+    matchLabels:
+      app: redis 
+  ingressDeny:
+    - fromCIDRSet:
+        - cidr: 0.0.0.0/0	
+      toPorts:
+        - ports:
+            - port: "6379"
