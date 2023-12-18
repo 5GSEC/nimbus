@@ -15,9 +15,9 @@ COPY go.sum go.sum
 RUN go mod download
 
 # Copy the go source
-COPY Nimbus/cmd/main.go Nimbus/cmd/main.go
-COPY Nimbus/api/ Nimbus/api/
-COPY Nimbus/ontrollers/ Nimbus/controllers/
+COPY cmd/main.go cmd/main.go
+COPY pkg/api/ pkg/api/
+COPY pkg/controllers/ pkg/controllers/
 
 # Build
 # the GOARCH has not a default value to allow the binary be built according to the host where the command

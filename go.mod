@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/cilium/cilium v1.14.3
 	github.com/go-logr/logr v1.3.0
-	github.com/kubearmor/KubeArmor/pkg/KubeArmorController v0.0.0-20231215052929-bc6c2f17fe38
+	github.com/kubearmor/KubeArmor/pkg/KubeArmorController v0.0.0-20231218054902-8b18cac961c0
 	github.com/onsi/ginkgo/v2 v2.11.0
 	github.com/onsi/gomega v1.27.10
 	k8s.io/apimachinery v0.28.3
