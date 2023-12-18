@@ -20,10 +20,10 @@ type SecurityIntentSpec struct {
 
 // Intent defines the security policy details
 type Intent struct {
-	Description string     `json:"description"` // Define the description
-	Action      string     `json:"action"`      // Define the action of the policy
-	Type        string     `json:"type"`        // Defines the type of the policy
-	Resource    []Resource `json:"resource"`    // Define the resources to which the security policy applies
+	Description string     `json:"description,omitempty"` // Define the description
+	Action      string     `json:"action"`                // Define the action of the policy
+	Type        string     `json:"type"`                  // Defines the type of the policy
+	Resource    []Resource `json:"resource"`              // Define the resources to which the security policy applies
 }
 
 // Resource defines the resources that the security policy applies to
