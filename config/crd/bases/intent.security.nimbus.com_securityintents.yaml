@@ -201,7 +201,6 @@ spec:
                     type: string
                 required:
                 - action
-                - description
                 - resource
                 - type
                 type: object
