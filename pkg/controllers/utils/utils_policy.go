@@ -6,10 +6,11 @@ package utils
 import (
 	"context"
 	"fmt"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
 	"reflect"
 	"strings"
+
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 
 	general "github.com/5GSEC/nimbus/pkg/controllers/general"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -144,6 +145,7 @@ func extractToKubeArmorPolicyProcessType(bindingInfo *general.BindingInfo) kubea
 				if dir.Directory != "" || len(fromSources) > 0 {
 					processType.MatchDirectories = append(processType.MatchDirectories, kubearmorv1.ProcessDirectoryType{ // Adjusted type here
 						Directory:  kubearmorv1.MatchDirectoryType(dir.Directory),
+						Recursive:  dir.Recursive,
 						FromSource: fromSources,
 					})
 				}
@@ -185,6 +187,7 @@ func extractToKubeArmorPolicyFileType(bindingInfo *general.BindingInfo) kubearmo
 				if dir.Directory != "" || len(fromSources) > 0 {
 					fileType.MatchDirectories = append(fileType.MatchDirectories, kubearmorv1.FileDirectoryType{
 						Directory:  kubearmorv1.MatchDirectoryType(dir.Directory),
+						Recursive:  dir.Recursive,
 						FromSource: fromSources,
 					})
 				}

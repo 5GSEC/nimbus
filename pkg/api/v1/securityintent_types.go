@@ -94,6 +94,7 @@ type MatchPath struct {
 // MatchDirectory defines a directory for process or file policies
 type MatchDirectory struct {
 	Directory  string       `json:"dir,omitempty"`
+	Recursive  bool         `json:"recursive,omitempty"`
 	FromSource []FromSource `json:"fromSource,omitempty"`
 }
 

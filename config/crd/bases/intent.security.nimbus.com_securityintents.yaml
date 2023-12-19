@@ -82,6 +82,8 @@ spec:
                                             type: string
                                         type: object
                                       type: array
+                                    recursive:
+                                      type: boolean
                                   type: object
                                 type: array
                               matchPaths:
@@ -138,6 +140,8 @@ spec:
                                             type: string
                                         type: object
                                       type: array
+                                    recursive:
+                                      type: boolean
                                   type: object
                                 type: array
                               matchPaths:
