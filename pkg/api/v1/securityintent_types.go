@@ -83,7 +83,8 @@ type Port struct {
 
 // MatchProtocol defines a protocol for network policies
 type MatchProtocol struct {
-	Protocol string `json:"protocol,omitempty"`
+	Protocol   string       `json:"protocol,omitempty"`
+	FromSource []FromSource `json:"fromSource,omitempty"`
 }
 
 // MatchPath defines a path for process or file policies
@@ -127,6 +128,7 @@ type SecurityIntentStatus struct {
 
 // SecurityIntent is the Schema for the securityintents API
 // +kubebuilder:object:root=true
+// +kubebuilder:resource: shortName="sit"
 // +kubebuilder:subresource:status
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 

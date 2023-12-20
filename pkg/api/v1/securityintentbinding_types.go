@@ -54,6 +54,7 @@ type SecurityIntentBindingStatus struct {
 }
 
 //+kubebuilder:object:root=true
+// +kubebuilder:resource: shortName="sib"
 //+kubebuilder:subresource:status
 
 // SecurityIntentBinding is the Schema for the securityintentbindings API
