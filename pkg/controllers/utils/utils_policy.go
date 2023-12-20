@@ -228,14 +228,15 @@ func extractToKubeArmorPolicyNetworkType(bindingInfo *general.BindingInfo) kubea
 		for _, network := range intent.Spec.Intent.Resource[0].Network {
 			for _, matchProtocol := range network.MatchProtocols {
 				var fromSources []kubearmorv1.MatchSourceType
-				for _, source := range network.FromSource {
+				for _, source := range matchProtocol.FromSource {
 					fromSources = append(fromSources, kubearmorv1.MatchSourceType{
 						Path: kubearmorv1.MatchPathType(source.Path),
 					})
 				}
 				if matchProtocol.Protocol != "" {
 					networkType.MatchProtocols = append(networkType.MatchProtocols, kubearmorv1.MatchNetworkProtocolType{
-						Protocol: kubearmorv1.MatchNetworkProtocolStringType(matchProtocol.Protocol),
+						Protocol:   kubearmorv1.MatchNetworkProtocolStringType(matchProtocol.Protocol),
+						FromSource: fromSources,
 					})
 				}
 			}
