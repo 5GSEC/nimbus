@@ -11,6 +11,8 @@ spec:
     kind: SecurityIntentBinding
     listKind: SecurityIntentBindingList
     plural: securityintentbindings
+    shortNames:
+    - sib
     singular: securityintentbinding
   scope: Namespaced
   versions:
