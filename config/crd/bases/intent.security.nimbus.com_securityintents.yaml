@@ -114,6 +114,15 @@ spec:
                                   description: MatchProtocol defines a protocol for
                                     network policies
                                   properties:
+                                    fromSource:
+                                      items:
+                                        description: FromSource defines a source path
+                                          for directory-based policies
+                                        properties:
+                                          path:
+                                            type: string
+                                        type: object
+                                      type: array
                                     protocol:
                                       type: string
                                   type: object

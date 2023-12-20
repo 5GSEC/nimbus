@@ -83,7 +83,8 @@ type Port struct {
 
 // MatchProtocol defines a protocol for network policies
 type MatchProtocol struct {
-	Protocol string `json:"protocol,omitempty"`
+	Protocol   string       `json:"protocol,omitempty"`
+	FromSource []FromSource `json:"fromSource,omitempty"`
 }
 
 // MatchPath defines a path for process or file policies
