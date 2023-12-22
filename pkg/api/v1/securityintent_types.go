@@ -3,9 +3,7 @@
 
 package v1
 
-import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-)
+import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -15,107 +13,50 @@ type SecurityIntentSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	Intent Intent `json:"intent"` // Define the details of the security policy.
+	Intents []Intent `json:"intent"` // Define the details of the security policy.
 }
 
 // Intent defines the security policy details
 type Intent struct {
-	Description string     `json:"description,omitempty"` // Define the description
-	Action      string     `json:"action"`                // Define the action of the policy
-	Type        string     `json:"type"`                  // Defines the type of the policy
-	Resource    []Resource `json:"resource"`              // Define the resources to which the security policy applies
+	Description string       `json:"description,omitempty"` // Define the description
+	Group       string       `json:"type"`                  // Defines the type of the policy
+	ID          string       `json:"resource"`              // Define the resources to which the security policy applies
+	Params      IntentParams `json:"params"`
 }
 
 // Resource defines the resources that the security policy applies to
-type Resource struct {
-	Network      []Network      `json:"network,omitempty"`
-	Process      []Process      `json:"process,omitempty"`
-	File         []File         `json:"file,omitempty"`
-	Capabilities []Capabilities `json:"capabilities,omitempty"`
-	Syscalls     []Syscalls     `json:"syscalls,omitempty"`
-	FromCIDRSet  []CIDRSet      `json:"fromCIDRSet,omitempty"`
-	ToPorts      []ToPort       `json:"toPorts,omitempty"`
+type IntentParams struct {
+	File ProtectFile `json:"protectFile,omitempty"`
+	Port ProtectPort `json:"protectPort,omitempty"`
+
+	// Only Owner can access file
+	OwnerOnly File `json:"ownerOnly,omitempty"`
+
+	// File cannot be accessed by anybody
+	BlockAsset File
+
+	// BlockRawSocket: does not have parameters
 }
 
-// Network defines the network-related policies
-type Network struct {
-	MatchProtocols []MatchProtocol `json:"matchProtocols,omitempty"`
+// ProtectFile will ensure only AllowBinaries can access the File
+type ProtectFile struct {
+	File          string `json:"port,omitempty"`
+	AllowBinaries File   `json:"allowBinaries,omitempty"`
 }
 
-// Process defines the process-related policies
-type Process struct {
-	MatchPaths       []MatchPath      `json:"matchPaths,omitempty"`
-	MatchDirectories []MatchDirectory `json:"matchDirectories,omitempty"`
-	MatchPatterns    []MatchPattern   `json:"matchPatterns,omitempty"`
+// ProtectPort will ensure only AllowBinaries can access Port
+type ProtectPort struct {
+	Port          string `json:"port,omitempty"`
+	AllowBinaries File   `json:"allowBinaries,omitempty"`
 }
 
 // File defines the file-related policies
 type File struct {
-	MatchPaths       []MatchPath      `json:"matchPaths,omitempty"`
-	MatchDirectories []MatchDirectory `json:"matchDirectories,omitempty"`
-}
-
-// Capabilities defines the capabilities-related policies
-type Capabilities struct {
-	MatchCapabilities []MatchCapability `json:"matchCapabilities,omitempty"`
-}
-
-// Syscalls defines the syscalls-related policies
-type Syscalls struct {
-	MatchSyscalls []MatchSyscall `json:"matchSyscalls,omitempty"`
-}
-
-// CIDRSet defines CIDR ranges for network policies
-type CIDRSet struct {
-	CIDR string `json:"cidr,omitempty"`
-}
-
-// ToPort defines ports and protocols for network policies
-type ToPort struct {
-	Ports []Port `json:"ports,omitempty"`
-}
-
-// Port defines a network port and its protocol
-type Port struct {
-	Port     string `json:"port,omitempty"`
-	Protocol string `json:"protocol,omitempty"`
-}
-
-// MatchProtocol defines a protocol for network policies
-type MatchProtocol struct {
-	Protocol   string       `json:"protocol,omitempty"`
-	FromSource []FromSource `json:"fromSource,omitempty"`
+	MatchPaths []MatchPath `json:"matchPaths,omitempty"`
 }
 
 // MatchPath defines a path for process or file policies
 type MatchPath struct {
-	Path string `json:"path,omitempty"`
-}
-
-// MatchDirectory defines a directory for process or file policies
-type MatchDirectory struct {
-	Directory  string       `json:"dir,omitempty"`
-	Recursive  bool         `json:"recursive,omitempty"`
-	FromSource []FromSource `json:"fromSource,omitempty"`
-}
-
-// MatchPattern defines a pattern for process policies
-type MatchPattern struct {
-	Pattern string `json:"pattern,omitempty"`
-}
-
-// MatchSyscall defines a syscall for syscall policies
-type MatchSyscall struct {
-	Syscalls []string `json:"syscalls,omitempty"`
-}
-
-// MatchCapability defines a capability for capabilities policies
-type MatchCapability struct {
-	Capability string `json:"capability,omitempty"`
-}
-
-// FromSource defines a source path for directory-based policies
-type FromSource struct {
 	Path string `json:"path,omitempty"`
 }
 
