@@ -14,7 +14,6 @@ import (
 
 	intentv1 "github.com/5GSEC/nimbus/pkg/api/v1"
 	general "github.com/5GSEC/nimbus/pkg/controllers/general"
-	policy "github.com/5GSEC/nimbus/pkg/controllers/policy"
 )
 
 // SecurityIntentBindingReconciler reconciles a SecurityIntentBinding object
@@ -22,33 +21,6 @@ type SecurityIntentBindingReconciler struct {
 	client.Client
 	Scheme            *runtime.Scheme
 	GeneralController *general.GeneralController
-	PolicyController  *policy.PolicyController
-}
-
-func NewSecurityIntentBindingReconciler(client client.Client, scheme *runtime.Scheme) *SecurityIntentBindingReconciler {
-	if client == nil {
-		fmt.Println("SecurityIntentBindingReconciler: Client is nil")
-		return nil
-	}
-
-	generalController, err := general.NewGeneralController(client)
-	if err != nil {
-		fmt.Println("SecurityIntentBindingReconciler: Failed to initialize GeneralController:", err)
-		return nil
-	}
-
-	policyController := policy.NewPolicyController(client, scheme)
-	if policyController == nil {
-		fmt.Println("SecurityIntentBindingReconciler: Failed to initialize PolicyController")
-		return nil
-	}
-
-	return &SecurityIntentBindingReconciler{
-		Client:            client,
-		Scheme:            scheme,
-		GeneralController: generalController,
-		PolicyController:  policyController,
-	}
 }
 
 //+kubebuilder:rbac:groups=intent.security.nimbus.com,resources=securityintentbindings,verbs=get;list;watch;create;update;patch;delete
@@ -81,20 +53,10 @@ func (r *SecurityIntentBindingReconciler) Reconcile(ctx context.Context, req ctr
 	if binding != nil {
 		log.Info("SecurityIntentBinding resource found", "Name", req.Name, "Namespace", req.Namespace)
 
-		bindingInfo, err := general.MatchIntentAndBinding(ctx, r.Client, binding)
+		_, err := general.MatchIntentAndBinding(ctx, r.Client, binding)
 		if err != nil {
 			log.Error(err, "Failed to match SecurityIntent with SecurityIntentBinding", "BindingName", binding.Name)
 			return ctrl.Result{}, err
-		}
-
-		if bindingInfo != nil {
-			err = r.PolicyController.Reconcile(ctx, bindingInfo)
-			if err != nil {
-				log.Error(err, "Failed to apply policy for SecurityIntentBinding", "BindingName", binding.Name)
-				return ctrl.Result{}, err
-			}
-		} else {
-			log.Info("No matching SecurityIntent found for SecurityIntentBinding", "BindingName", binding.Name)
 		}
 	} else {
 		log.Info("SecurityIntentBinding resource not found", "Name", req.Name, "Namespace", req.Namespace)

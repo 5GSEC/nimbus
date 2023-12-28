@@ -37,187 +37,46 @@ spec:
             description: SecurityIntentSpec defines the desired state of SecurityIntent
             properties:
               intent:
-                description: Intent defines the security policy details
+                description: Intent defines a security intention that can be used
+                  to generate multiple security policies.
                 properties:
                   action:
+                    description: Action defines how the security policy will be enforced.
                     type: string
                   description:
+                    description: Description is human-readable explanation of the
+                      intent's purpose.
                     type: string
-                  resource:
+                  id:
+                    description: ID is predefined in Security Intent pool. It uniquely
+                      identifies a specific security intent.
+                    type: string
+                  mode:
+                    description: Mode defines the enforcement behavior of the intent.
+                      Defaults to best-effort.
+                    type: string
+                  params:
+                    additionalProperties:
+                      items:
+                        type: string
+                      type: array
+                    description: Params are key-value pairs that allows fine-tuning
+                      of intents to specific requirements.
+                    type: object
+                  severity:
+                    description: Severity defines the potential impact of a security
+                      violation related to the intent. Defaults to Low.
+                    type: string
+                  tags:
+                    description: Tags are additional metadata for categorization and
+                      grouping of intents. Facilitates searching, filtering, and management
+                      of security policies.
                     items:
-                      description: Resource defines the resources that the security
-                        policy applies to
-                      properties:
-                        capabilities:
-                          items:
-                            description: Capabilities defines the capabilities-related
-                              policies
-                            properties:
-                              matchCapabilities:
-                                items:
-                                  description: MatchCapability defines a capability
-                                    for capabilities policies
-                                  properties:
-                                    capability:
-                                      type: string
-                                  type: object
-                                type: array
-                            type: object
-                          type: array
-                        file:
-                          items:
-                            description: File defines the file-related policies
-                            properties:
-                              matchDirectories:
-                                items:
-                                  description: MatchDirectory defines a directory
-                                    for process or file policies
-                                  properties:
-                                    dir:
-                                      type: string
-                                    fromSource:
-                                      items:
-                                        description: FromSource defines a source path
-                                          for directory-based policies
-                                        properties:
-                                          path:
-                                            type: string
-                                        type: object
-                                      type: array
-                                    recursive:
-                                      type: boolean
-                                  type: object
-                                type: array
-                              matchPaths:
-                                items:
-                                  description: MatchPath defines a path for process
-                                    or file policies
-                                  properties:
-                                    path:
-                                      type: string
-                                  type: object
-                                type: array
-                            type: object
-                          type: array
-                        fromCIDRSet:
-                          items:
-                            description: CIDRSet defines CIDR ranges for network policies
-                            properties:
-                              cidr:
-                                type: string
-                            type: object
-                          type: array
-                        network:
-                          items:
-                            description: Network defines the network-related policies
-                            properties:
-                              matchProtocols:
-                                items:
-                                  description: MatchProtocol defines a protocol for
-                                    network policies
-                                  properties:
-                                    fromSource:
-                                      items:
-                                        description: FromSource defines a source path
-                                          for directory-based policies
-                                        properties:
-                                          path:
-                                            type: string
-                                        type: object
-                                      type: array
-                                    protocol:
-                                      type: string
-                                  type: object
-                                type: array
-                            type: object
-                          type: array
-                        process:
-                          items:
-                            description: Process defines the process-related policies
-                            properties:
-                              matchDirectories:
-                                items:
-                                  description: MatchDirectory defines a directory
-                                    for process or file policies
-                                  properties:
-                                    dir:
-                                      type: string
-                                    fromSource:
-                                      items:
-                                        description: FromSource defines a source path
-                                          for directory-based policies
-                                        properties:
-                                          path:
-                                            type: string
-                                        type: object
-                                      type: array
-                                    recursive:
-                                      type: boolean
-                                  type: object
-                                type: array
-                              matchPaths:
-                                items:
-                                  description: MatchPath defines a path for process
-                                    or file policies
-                                  properties:
-                                    path:
-                                      type: string
-                                  type: object
-                                type: array
-                              matchPatterns:
-                                items:
-                                  description: MatchPattern defines a pattern for
-                                    process policies
-                                  properties:
-                                    pattern:
-                                      type: string
-                                  type: object
-                                type: array
-                            type: object
-                          type: array
-                        syscalls:
-                          items:
-                            description: Syscalls defines the syscalls-related policies
-                            properties:
-                              matchSyscalls:
-                                items:
-                                  description: MatchSyscall defines a syscall for
-                                    syscall policies
-                                  properties:
-                                    syscalls:
-                                      items:
-                                        type: string
-                                      type: array
-                                  type: object
-                                type: array
-                            type: object
-                          type: array
-                        toPorts:
-                          items:
-                            description: ToPort defines ports and protocols for network
-                              policies
-                            properties:
-                              ports:
-                                items:
-                                  description: Port defines a network port and its
-                                    protocol
-                                  properties:
-                                    port:
-                                      type: string
-                                    protocol:
-                                      type: string
-                                  type: object
-                                type: array
-                            type: object
-                          type: array
-                      type: object
+                      type: string
                     type: array
-                  type:
-                    type: string
                 required:
                 - action
-                - resource
-                - type
+                - id
                 type: object
             required:
             - intent

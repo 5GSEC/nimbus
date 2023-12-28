@@ -16,8 +16,8 @@ type SecurityIntentBindingSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of SecurityIntentBinding. Edit securityintentbinding_types.go to remove/update
-	Selector       Selector        `json:"selector"`
-	IntentRequests []IntentRequest `json:"intentRequests"`
+	Selector Selector        `json:"selector"`
+	Intents  []IntentRequest `json:"intents"`
 }
 
 // Selector defines the selection criteria for resources
@@ -41,10 +41,7 @@ type Resources struct {
 
 // IntentRequest defines the request for a specific SecurityIntent
 type IntentRequest struct {
-	Type        string `json:"type"`
-	IntentName  string `json:"intentName"`
-	Description string `json:"description"`
-	Mode        string `json:"mode"`
+	Name string `json:"name"`
 }
 
 // SecurityIntentBindingStatus defines the observed state of SecurityIntentBinding

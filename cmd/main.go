@@ -26,9 +26,8 @@ import (
 	// Importing custom API types and controllers
 	intentv1 "github.com/5GSEC/nimbus/pkg/api/v1"
 	"github.com/5GSEC/nimbus/pkg/controllers"
-	cleanup "github.com/5GSEC/nimbus/pkg/controllers/cleanup"
-	general "github.com/5GSEC/nimbus/pkg/controllers/general"
-	policy "github.com/5GSEC/nimbus/pkg/controllers/policy"
+	"github.com/5GSEC/nimbus/pkg/controllers/cleanup"
+	"github.com/5GSEC/nimbus/pkg/controllers/general"
 
 	// Importing third-party Kubernetes resource types
 	ciliumv2 "github.com/cilium/cilium/pkg/k8s/apis/cilium.io/v2"
@@ -103,8 +102,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	policyController := policy.NewPolicyController(mgr.GetClient(), mgr.GetScheme())
-
 	// Setting up the SecurityIntentReconciler controller with the manager.
 	if err = (&controllers.SecurityIntentReconciler{
 		Client:            mgr.GetClient(),
@@ -119,7 +116,6 @@ func main() {
 		Client:            mgr.GetClient(),
 		Scheme:            mgr.GetScheme(),
 		GeneralController: generalController,
-		PolicyController:  policyController,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "Unable to create controller", "controller", "SecurityIntentBinding")
 		os.Exit(1)
