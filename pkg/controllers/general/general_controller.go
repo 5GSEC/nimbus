@@ -58,7 +58,7 @@ func (gc *GeneralController) Reconcile(ctx context.Context, req ctrl.Request) (*
 
 	intent, err := gc.WatcherIntent.Reconcile(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("Error in WatcherIntent.Reconcile: %v", err)
+		return nil, fmt.Errorf("error in WatcherIntent.Reconcile: %v", err)
 	}
 
 	if intent != nil {
@@ -71,13 +71,13 @@ func (gc *GeneralController) Reconcile(ctx context.Context, req ctrl.Request) (*
 
 	binding, err := gc.WatcherBinding.Reconcile(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("Error in WatcherBinding.Reconcile: %v", err)
+		return nil, fmt.Errorf("error in WatcherBinding.Reconcile: %v", err)
 	}
 
 	if binding != nil {
 		bindingInfo, err := MatchIntentAndBinding(ctx, gc.Client, binding)
 		if err != nil {
-			return nil, fmt.Errorf("Error in MatchIntentAndBinding: %v", err)
+			return nil, fmt.Errorf("error in MatchIntentAndBinding: %v", err)
 		}
 		return bindingInfo, nil
 	}

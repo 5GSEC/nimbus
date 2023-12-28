@@ -37,7 +37,7 @@ func MatchIntentAndBinding(ctx context.Context, client client.Client, binding *i
 		err := client.Get(ctx, types.NamespacedName{Name: intentReq.Name, Namespace: binding.Namespace}, intent)
 		if err != nil {
 			log.Error(err, "Failed to get SecurityIntent", "IntentName", intentReq.Name, "Namespace", binding.Namespace)
-			return nil, fmt.Errorf("Failed to get SecurityIntent '%s' in namespace '%s': %v", intentReq.Name, binding.Namespace, err)
+			return nil, fmt.Errorf("failed to get SecurityIntent '%s' in namespace '%s': %v", intentReq.Name, binding.Namespace, err)
 		}
 		matchedIntents = append(matchedIntents, intent)
 	}
