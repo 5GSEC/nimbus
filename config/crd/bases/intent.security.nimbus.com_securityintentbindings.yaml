@@ -37,23 +37,14 @@ spec:
           spec:
             description: SecurityIntentBindingSpec defines the desired state of SecurityIntentBinding
             properties:
-              intentRequests:
+              intents:
                 items:
                   description: IntentRequest defines the request for a specific SecurityIntent
                   properties:
-                    description:
-                      type: string
-                    intentName:
-                      type: string
-                    mode:
-                      type: string
-                    type:
+                    name:
                       type: string
                   required:
-                  - description
-                  - intentName
-                  - mode
-                  - type
+                  - name
                   type: object
                 type: array
               selector:
@@ -104,7 +95,7 @@ spec:
                     type: array
                 type: object
             required:
-            - intentRequests
+            - intents
             - selector
             type: object
           status:

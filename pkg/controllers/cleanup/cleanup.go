@@ -10,8 +10,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	intentv1 "github.com/5GSEC/nimbus/pkg/api/v1"
-	general "github.com/5GSEC/nimbus/pkg/controllers/general"
-	policy "github.com/5GSEC/nimbus/pkg/controllers/policy"
 )
 
 // Cleanup is a function to clean up SecurityIntent resources.
@@ -32,20 +30,9 @@ func Cleanup(ctx context.Context, k8sClient client.Client, logger logr.Logger) e
 		return nil
 	}
 
-	npc := policy.NewNetworkPolicyController(k8sClient, nil)
-
 	// Iterating over each SecurityIntent to delete associated policies.
 	for _, binding := range securityIntentBindings.Items {
 		bindingCopy := binding
-		bindingInfo := &general.BindingInfo{
-			Binding: &bindingCopy,
-		}
-
-		// Deleting network policies associated with the current SecurityIntent.
-		if err := npc.DeletePolicy(ctx, bindingInfo); err != nil {
-			logger.Error(err, "Failed to delete network policy for SecurityIntentBinding", "Name", bindingCopy.Name)
-			return err
-		}
 		if err := k8sClient.Delete(ctx, &bindingCopy); err != nil {
 			logger.Error(err, "Failed to delete SecurityIntentBinding", "Name", bindingCopy.Name)
 			continue
