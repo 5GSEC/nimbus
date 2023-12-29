@@ -54,7 +54,7 @@ type SecurityIntentStatus struct {
 
 // SecurityIntent is the Schema for the securityintents API
 // +kubebuilder:object:root=true
-// +kubebuilder:resource: shortName="sit"
+// +kubebuilder:resource: shortName="si"
 // +kubebuilder:subresource:status
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
