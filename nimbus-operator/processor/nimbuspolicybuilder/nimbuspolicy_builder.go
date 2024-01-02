@@ -143,46 +143,52 @@ func fetchBindingByName(ctx context.Context, client client.Client, name string, 
 func processSecurityIntentParams(rule *v1.Rule, param v1.SecurityIntentParams) {
 	// Processes MatchProtocols.
 	for _, mp := range param.MatchProtocols {
-		rule.MatchProtocols = append(rule.MatchProtocols, v1.MatchProtocol{Protocol: mp.Protocol})
+		rule.MatchProtocols = append(rule.MatchProtocols, v1.MatchProtocol(mp))
+
 	}
 
 	// Processes MatchPaths.
 	for _, mp := range param.MatchPaths {
-		rule.MatchPaths = append(rule.MatchPaths, v1.MatchPath{Path: mp.Path})
+		rule.MatchPaths = append(rule.MatchPaths, v1.MatchPath(mp))
 	}
 
 	// Processes MatchDirectories.
 	for _, md := range param.MatchDirectories {
-		rule.MatchDirectories = append(rule.MatchDirectories, v1.MatchDirectory{Directory: md.Directory})
+		rule.MatchDirectories = append(rule.MatchDirectories, v1.MatchDirectory{
+			Directory:  md.Directory,
+			FromSource: []v1.NimbusFromSource{},
+		})
 	}
 
 	// Processes MatchPatterns.
 	for _, mp := range param.MatchPatterns {
-		rule.MatchPatterns = append(rule.MatchPatterns, v1.MatchPattern{Pattern: mp.Pattern})
+		rule.MatchPatterns = append(rule.MatchPatterns, v1.MatchPattern(mp))
 	}
 
 	// Processes MatchCapabilities.
 	for _, mc := range param.MatchCapabilities {
-		rule.MatchCapabilities = append(rule.MatchCapabilities, v1.MatchCapability{Capability: mc.Capability})
+		rule.MatchCapabilities = append(rule.MatchCapabilities, v1.MatchCapability(mc))
 	}
 
 	// Processes MatchSyscalls.
 	for _, ms := range param.MatchSyscalls {
-		rule.MatchSyscalls = append(rule.MatchSyscalls, v1.MatchSyscall{Syscalls: ms.Syscalls})
+		rule.MatchSyscalls = append(rule.MatchSyscalls, v1.MatchSyscall(ms))
 	}
 
 	// Processes FromCIDRSet.
 	for _, fcs := range param.FromCIDRSet {
-		rule.FromCIDRSet = append(rule.FromCIDRSet, v1.CIDRSet{CIDR: fcs.CIDR})
+		rule.FromCIDRSet = append(rule.FromCIDRSet, v1.CIDRSet(fcs))
 	}
 
 	// Processes ToPorts.
 	for _, tp := range param.ToPorts {
 		var ports []v1.Port
 		for _, p := range tp.Ports {
-			ports = append(ports, v1.Port{Port: p.Port, Protocol: p.Protocol})
+			ports = append(ports, v1.Port(p))
 		}
-		rule.ToPorts = append(rule.ToPorts, v1.ToPort{Ports: ports})
+		rule.ToPorts = append(rule.ToPorts, v1.ToPort{
+			Ports: ports,
+		})
 	}
 }
 
