@@ -13,8 +13,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1 "github.com/5GSEC/nimbus/nimbus-operator/api/v1"
-	"github.com/5GSEC/nimbus/nimbus-operator/nimbuspolicybuilder/intentbinder"
-	"github.com/5GSEC/nimbus/nimbus-operator/nimbuspolicybuilder/nimbuspolicybuilder"
+	"github.com/5GSEC/nimbus/nimbus-operator/processor/intentbinder"
+	"github.com/5GSEC/nimbus/nimbus-operator/processor/nimbuspolicybuilder"
 	watcher "github.com/5GSEC/nimbus/nimbus-operator/receiver/watcher"
 )
 

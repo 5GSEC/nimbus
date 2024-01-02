@@ -1,10 +1,9 @@
-module github.com/5GSEC/nimbus
+module github.com/5GSEC/nimbus/nimbus-operator
 
 go 1.20
 
 require (
 	github.com/cilium/cilium v1.14.3
-	github.com/go-logr/logr v1.3.0
 	github.com/kubearmor/KubeArmor/pkg/KubeArmorController v0.0.0-20231218054902-8b18cac961c0
 	github.com/onsi/ginkgo/v2 v2.11.0
 	github.com/onsi/gomega v1.27.10
@@ -15,6 +14,7 @@ require (
 
 require (
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
+	github.com/go-logr/logr v1.3.0 // indirect
 	github.com/stoewer/go-strcase v1.2.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230803162519-f966b187b2e5 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230803162519-f966b187b2e5 // indirect

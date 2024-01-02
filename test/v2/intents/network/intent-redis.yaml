@@ -1,17 +1,18 @@
 apiVersion: intent.security.nimbus.com/v1
 kind: SecurityIntent
 metadata:
-  name: redis-ingress-deny-traffic
-  namespace: default
+  name:  deny-any-to-redis-port
+  namespace:  default
 spec:
   intent:
-    description: "Block port 6379"
+    id: net-port-exec
+    description: "Don’t allow any outside traffic to the Redis port"
     action: Block
-    type: network
-    resource:
+    mode: Strict
+    params:                    
       - fromCIDRSet:
-          - cidr: 0.0.0.0/0
-        toPorts:
-          - ports:
-            - port: "6379"
-              protocol: tcp
+        - cidr: 0.0.0.0/0
+      - toPorts:
+        - ports:
+          - port: "6379"
+            protocol: tcp

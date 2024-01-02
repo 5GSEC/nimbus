@@ -7,6 +7,32 @@ rules:
 - apiGroups:
   - intent.security.nimbus.com
   resources:
+  - nimbuspolicies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - intent.security.nimbus.com
+  resources:
+  - nimbuspolicies/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - intent.security.nimbus.com
+  resources:
+  - nimbuspolicies/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - intent.security.nimbus.com
+  resources:
   - securityintentbindings
   verbs:
   - create

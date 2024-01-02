@@ -61,7 +61,6 @@ func MatchAndBindIntents(ctx context.Context, client client.Client, req ctrl.Req
 	matchedBindingNames = append(matchedBindingNames, bindings.Name)
 	matchedBindingNamespaces = append(matchedBindingNamespaces, bindings.Namespace)
 
-	log.Info("Matching completed")
 	log.Info("Matching completed", "Matched Intent Names", matchedIntentNames, "Matched Binding Names", matchedBindingNames)
 	return NewBindingInfo(matchedIntentNames, matchedIntentNamespaces, matchedBindingNames, matchedBindingNamespaces), nil
 }

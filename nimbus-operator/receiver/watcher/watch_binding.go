@@ -48,7 +48,6 @@ func (wb *WatcherBinding) Reconcile(ctx context.Context, req ctrl.Request) (*v1.
 
 	if err != nil {
 		if errors.IsNotFound(err) {
-			log.Info("SecurityIntentBinding resource not found. Ignoring since object must be deleted", "Name", req.Name, "Namespace", req.Namespace)
 			return nil, nil
 		}
 		log.Error(err, "Failed to get SecurityIntentBinding", "Name", req.Name, "Namespace", req.Namespace)

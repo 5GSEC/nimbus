@@ -4,15 +4,12 @@ metadata:
   name: net-redis-ingress-deny
   namespace: default
 spec:
+  intents:
+    - name: deny-any-to-redis-port
   selector:
-      any:
-        - resources:
-            kind: Pod
-            namespace: default
-            matchLabels:
-              app: "redis"
-  intentRequests:
-    - type: network
-      intentName: redis-ingress-deny-traffic
-      description: "Don’t allow any outside traffic to the Redis port"
-      mode: strict
+    any:
+      - resources:
+          kind: Pod
+          matchLabels:
+            app: "redis"
+          namespace: default

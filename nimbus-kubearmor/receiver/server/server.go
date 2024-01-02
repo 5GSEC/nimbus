@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 )
 
 var (
@@ -64,7 +65,15 @@ func main() {
 		}
 	})
 
-	// Start the server on port 13000
+	// Create a custom HTTP server with timeouts
+	server := &http.Server{
+		Addr:         ":13000",
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  15 * time.Second,
+	}
+
+	// Start the server
 	log.Println("Server starting on port 13000...")
-	log.Fatal(http.ListenAndServe(":13000", nil))
+	log.Fatal(server.ListenAndServe())
 }

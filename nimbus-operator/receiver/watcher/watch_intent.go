@@ -50,7 +50,6 @@ func (wi *WatcherIntent) Reconcile(ctx context.Context, req ctrl.Request) (*v1.S
 		return intent, nil
 	} else {
 		if errors.IsNotFound(err) {
-			log.Info("SecurityIntent resource not found. Ignoring since object must be deleted", "Name", req.Name, "Namespace", req.Namespace)
 			return nil, nil
 		}
 		log.Error(err, "Failed to get SecurityIntent", "Name", req.Name, "Namespace", req.Namespace)

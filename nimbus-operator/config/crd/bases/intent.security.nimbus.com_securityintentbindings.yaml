@@ -37,28 +37,19 @@ spec:
           spec:
             description: SecurityIntentBindingSpec defines the desired state of SecurityIntentBinding
             properties:
-              intentRequests:
+              intents:
+                description: Foo is an example field of SecurityIntentBinding. Edit
+                  securityintentbinding_types.go to remove/update
                 items:
-                  description: IntentRequest defines the request for a specific SecurityIntent
                   properties:
-                    description:
-                      type: string
-                    intentName:
-                      type: string
-                    mode:
-                      type: string
-                    type:
+                    name:
                       type: string
                   required:
-                  - description
-                  - intentName
-                  - mode
-                  - type
+                  - name
                   type: object
                 type: array
               selector:
-                description: Foo is an example field of SecurityIntentBinding. Edit
-                  securityintentbinding_types.go to remove/update
+                description: Selector defines the selection criteria for resources
                 properties:
                   all:
                     items:
@@ -104,7 +95,7 @@ spec:
                     type: array
                 type: object
             required:
-            - intentRequests
+            - intents
             - selector
             type: object
           status:

@@ -4,6 +4,8 @@ metadata:
   name: sys-proc-path-sleep-block
   namespace: multiubuntu
 spec:
+  intents:
+    - name: group-1-proc-path-sleep-block
   selector:
       any:
         - resources:
@@ -11,8 +13,3 @@ spec:
             namespace: multiubuntu
             matchLabels:
               group: group-1
-  intentRequests:
-    - type: system
-      intentName: group-1-proc-path-sleep-block
-      description: "Block a specific executable /bin/sleep"
-      mode: strict
