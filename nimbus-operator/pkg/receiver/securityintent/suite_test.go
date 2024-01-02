@@ -19,7 +19,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	v1 "github.com/5GSEC/nimbus/nimbus-operator/api/v1"
+	v1 "github.com/5GSEC/nimbus/nimbus-operator/pkg/api/v1"
 	//+kubebuilder:scaffold:imports
 )
 

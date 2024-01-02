@@ -12,9 +12,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	v1 "github.com/5GSEC/nimbus/nimbus-operator/api/v1"
-	"github.com/5GSEC/nimbus/nimbus-operator/exporter/httpexporter"
-	watcher "github.com/5GSEC/nimbus/nimbus-operator/receiver/watcher"
+	v1 "github.com/5GSEC/nimbus/nimbus-operator/pkg/api/v1"
+	"github.com/5GSEC/nimbus/nimbus-operator/pkg/exporter/httpexporter"
+	watcher "github.com/5GSEC/nimbus/nimbus-operator/pkg/receiver/watcher"
 )
 
 // NimbusPolicyReconciler reconciles a NimbusPolicy object.

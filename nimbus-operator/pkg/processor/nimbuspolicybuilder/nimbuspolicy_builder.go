@@ -11,8 +11,8 @@ import (
 	"github.com/google/cel-go/checker/decls"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	v1 "github.com/5GSEC/nimbus/nimbus-operator/api/v1"
-	intentbinder "github.com/5GSEC/nimbus/nimbus-operator/processor/intentbinder"
+	v1 "github.com/5GSEC/nimbus/nimbus-operator/pkg/api/v1"
+	intentbinder "github.com/5GSEC/nimbus/nimbus-operator/pkg/processor/intentbinder"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"

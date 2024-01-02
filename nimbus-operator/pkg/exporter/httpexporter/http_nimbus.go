@@ -15,7 +15,7 @@ import (
 	"fmt"
 	"net/http"
 
-	v1 "github.com/5GSEC/nimbus/nimbus-operator/api/v1"
+	v1 "github.com/5GSEC/nimbus/nimbus-operator/pkg/api/v1"
 )
 
 // HttpNimbusExporter struct defines the HTTP client and the URL for exporting Nimbus policies.

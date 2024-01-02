@@ -6,7 +6,7 @@ package intentbinder
 import (
 	"context"
 
-	v1 "github.com/5GSEC/nimbus/nimbus-operator/api/v1"
+	v1 "github.com/5GSEC/nimbus/nimbus-operator/pkg/api/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"

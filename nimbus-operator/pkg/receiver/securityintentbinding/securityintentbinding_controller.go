@@ -12,10 +12,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	v1 "github.com/5GSEC/nimbus/nimbus-operator/api/v1"
-	"github.com/5GSEC/nimbus/nimbus-operator/processor/intentbinder"
-	"github.com/5GSEC/nimbus/nimbus-operator/processor/nimbuspolicybuilder"
-	watcher "github.com/5GSEC/nimbus/nimbus-operator/receiver/watcher"
+	v1 "github.com/5GSEC/nimbus/nimbus-operator/pkg/api/v1"
+	"github.com/5GSEC/nimbus/nimbus-operator/pkg/processor/intentbinder"
+	"github.com/5GSEC/nimbus/nimbus-operator/pkg/processor/nimbuspolicybuilder"
+	watcher "github.com/5GSEC/nimbus/nimbus-operator/pkg/receiver/watcher"
 )
 
 // SecurityIntentBindingReconciler reconciles a SecurityIntentBinding object

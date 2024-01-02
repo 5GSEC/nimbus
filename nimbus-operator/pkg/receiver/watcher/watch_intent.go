@@ -12,7 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	v1 "github.com/5GSEC/nimbus/nimbus-operator/api/v1"
+	v1 "github.com/5GSEC/nimbus/nimbus-operator/pkg/api/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 )
 

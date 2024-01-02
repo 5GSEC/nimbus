@@ -20,11 +20,11 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	// Importing custom API types and controllers
-	v1 "github.com/5GSEC/nimbus/nimbus-operator/api/v1"
-	nimbuspolicy "github.com/5GSEC/nimbus/nimbus-operator/exporter/nimbuspolicy"
-	securityintent "github.com/5GSEC/nimbus/nimbus-operator/receiver/securityintent"
-	securityintentbinding "github.com/5GSEC/nimbus/nimbus-operator/receiver/securityintentbinding"
-	watcher "github.com/5GSEC/nimbus/nimbus-operator/receiver/watcher"
+	v1 "github.com/5GSEC/nimbus/nimbus-operator/pkg/api/v1"
+	nimbuspolicy "github.com/5GSEC/nimbus/nimbus-operator/pkg/exporter/nimbuspolicy"
+	securityintent "github.com/5GSEC/nimbus/nimbus-operator/pkg/receiver/securityintent"
+	securityintentbinding "github.com/5GSEC/nimbus/nimbus-operator/pkg/receiver/securityintentbinding"
+	watcher "github.com/5GSEC/nimbus/nimbus-operator/pkg/receiver/watcher"
 
 	// Importing third-party Kubernetes resource types
 	ciliumv2 "github.com/cilium/cilium/pkg/k8s/apis/cilium.io/v2"
