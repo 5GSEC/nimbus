@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2023 Authors of Nimbus
 
-package policy
+package processor
 
+/*
 import (
 	"context"
 	"fmt"
@@ -77,3 +78,4 @@ func (pc *PolicyController) Reconcile(ctx context.Context, bindingInfo *general.
 
 	return nil
 }
+*/
