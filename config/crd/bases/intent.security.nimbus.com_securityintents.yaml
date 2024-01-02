@@ -12,7 +12,7 @@ spec:
     listKind: SecurityIntentList
     plural: securityintents
     shortNames:
-    - sit
+    - si
     singular: securityintent
   scope: Namespaced
   versions:
@@ -37,7 +37,6 @@ spec:
             description: SecurityIntentSpec defines the desired state of SecurityIntent
             properties:
               intent:
-                description: Intent defines the security policy details
                 properties:
                   action:
                     type: string

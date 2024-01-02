@@ -38,9 +38,8 @@ spec:
             description: SecurityIntentBindingSpec defines the desired state of SecurityIntentBinding
             properties:
               intents:
-                description: Foo is an example field of SecurityIntentBinding. Edit
-                  securityintentbinding_types.go to remove/update
                 items:
+                  description: Intent struct defines the request for a specific SecurityIntent
                   properties:
                     name:
                       type: string

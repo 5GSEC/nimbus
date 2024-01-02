@@ -40,8 +40,6 @@ spec:
                 description: PolicyType specifies the type of policy, e.g., "Network",
                   "System", "Cluster"
                 items:
-                  description: NimbusRules represents a single policy rule with an
-                    ID, type, description, and detailed rule configurations.
                   properties:
                     description:
                       type: string
@@ -49,6 +47,8 @@ spec:
                       type: string
                     rule:
                       items:
+                        description: Resource defines the resources that the security
+                          policy applies to
                         properties:
                           action:
                             type: string
@@ -167,8 +167,6 @@ spec:
                   matchLabels:
                     additionalProperties:
                       type: string
-                    description: MatchLabels is a map that holds key-value pairs to
-                      match against labels of resources.
                     type: object
                 required:
                 - matchLabels
