@@ -3,6 +3,7 @@
 
 package utils
 
+/*
 import (
 	"context"
 	"fmt"
@@ -423,3 +424,4 @@ func DeletePolicy(ctx context.Context, c client.Client, policyType, name, namesp
 	}
 	return nil
 }
+*/

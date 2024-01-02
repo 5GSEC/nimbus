@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2023 Authors of Nimbus
 
-package policy
+package processor
 
+/*
 import (
 	"context"
 
@@ -60,3 +61,4 @@ func (spc *SystemPolicyController) DeletePolicy(ctx context.Context, bindingInfo
 	log.Info("Deleted System Policy", "PolicyName", bindingInfo.Binding.Name)
 	return nil
 }
+*/
