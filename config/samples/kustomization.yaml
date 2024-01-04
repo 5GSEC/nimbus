@@ -1,5 +1,0 @@
-## Append samples of your project ##
-resources:
-- intent_v1_securityintent.yaml
-- intent_v1_securityintentbinding.yaml
-#+kubebuilder:scaffold:manifestskustomizesamples
