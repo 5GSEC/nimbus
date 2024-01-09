@@ -2,8 +2,6 @@ module github.com/5GSEC/nimbus/pkg/nimbus-kubearmor
 
 go 1.21
 
-toolchain go1.21.3
-
 require (
 	github.com/5GSEC/nimbus v0.0.0-20240104111857-cf09d5346fc6
 	github.com/kubearmor/KubeArmor/pkg/KubeArmorController v0.0.0-20231218054902-8b18cac961c0
