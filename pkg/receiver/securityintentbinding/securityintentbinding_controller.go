@@ -18,6 +18,7 @@ import (
 	"github.com/5GSEC/nimbus/pkg/processor/intentbinder"
 	"github.com/5GSEC/nimbus/pkg/processor/nimbuspolicybuilder"
 	"github.com/5GSEC/nimbus/pkg/receiver/watcher"
+	kubearmorv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorController/api/security.kubearmor.com/v1"
 )
 
 // SecurityIntentBindingReconciler reconciles a SecurityIntentBinding object
@@ -93,6 +94,15 @@ func (r *SecurityIntentBindingReconciler) Reconcile(ctx context.Context, req ctr
 				return ctrl.Result{}, err
 			}
 			log.Info("Deleted NimbusPolicy due to SecurityIntentBinding deletion", "NimbusPolicy", req.NamespacedName)
+		}
+		// Delete Kubearmor Policy with the same name and namespace
+		kubearmorPolicy := &kubearmorv1.KubeArmorPolicy{}
+		if err := r.Get(ctx, client.ObjectKey{Name: req.Name, Namespace: req.Namespace}, kubearmorPolicy); err == nil {
+			if err := r.Delete(ctx, kubearmorPolicy); err != nil {
+				log.Error(err, "Failed to delete KubearmorPolicy")
+				return ctrl.Result{}, err
+			}
+			log.Info("Deleted KubearmorPolicy due to SecurityIntentBinding deletion", "KubearmorPolicy", req.NamespacedName)
 		}
 		return ctrl.Result{}, nil
 	}

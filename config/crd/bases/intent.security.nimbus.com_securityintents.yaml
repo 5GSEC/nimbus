@@ -116,12 +116,43 @@ spec:
                                 type: string
                             type: object
                           type: array
+                        matchSyscallPaths:
+                          items:
+                            properties:
+                              fromSource:
+                                items:
+                                  properties:
+                                    dir:
+                                      type: string
+                                    path:
+                                      type: string
+                                  type: object
+                                type: array
+                              path:
+                                type: string
+                              recursive:
+                                type: boolean
+                              syscall:
+                                items:
+                                  type: string
+                                type: array
+                            type: object
+                          type: array
                         matchSyscalls:
                           description: 'Syscalls: MatchSyscalls'
                           items:
                             description: MatchSyscall defines a syscall for syscall
                               policies
                             properties:
+                              fromSource:
+                                items:
+                                  properties:
+                                    dir:
+                                      type: string
+                                    path:
+                                      type: string
+                                  type: object
+                                type: array
                               syscalls:
                                 items:
                                   type: string
