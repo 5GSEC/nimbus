@@ -13,7 +13,7 @@ import (
 	"time"
 
 	v1 "github.com/5GSEC/nimbus/api/v1"
-	transformer "github.com/5GSEC/nimbus/pkg/nimbus-kubearmor/core/transformer"
+	"github.com/5GSEC/nimbus/pkg/nimbus-kubearmor/core/enforcer"
 	watcher "github.com/5GSEC/nimbus/pkg/nimbus-kubearmor/receiver/nimbuspolicywatcher"
 	"github.com/5GSEC/nimbus/pkg/nimbus-kubearmor/receiver/verifier"
 
@@ -22,6 +22,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	kubearmorv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorController/api/security.kubearmor.com/v1"
 )
@@ -30,21 +31,17 @@ import (
 var scheme = runtime.NewScheme()
 
 func init() {
-	// Register the NimbusPolicy type in the schema
 	utilruntime.Must(v1.AddToScheme(scheme))
-	// Register the KubeArmorPolicy type in the schema
 	utilruntime.Must(kubearmorv1.AddToScheme(scheme))
 }
 
 func main() {
+	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
 	log.Println("Starting Kubernetes client configuration")
-	// Set up the Kubernetes client configuration
+
 	var cfg *rest.Config
 	var err error
-
-	// Check if running inside the cluster
 	if cfg, err = rest.InClusterConfig(); err != nil {
-		// If running outside the cluster, use kubeconfig
 		kubeconfig := filepath.Join(os.Getenv("HOME"), ".kube", "config")
 		cfg, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
 		if err != nil {
@@ -52,17 +49,14 @@ func main() {
 		}
 	}
 
-	// Create the client with the specified scheme
 	c, err := client.New(cfg, client.Options{Scheme: scheme})
 	if err != nil {
 		log.Fatalf("Failed to create client: %v", err)
 	}
 
 	log.Println("Starting NimbusPolicyWatcher")
-	// Initialize the NimbusPolicyWatcher
 	npw := watcher.NewNimbusPolicyWatcher(c)
 
-	// Start watching NimbusPolicies
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	policyChan, err := npw.WatchNimbusPolicies(ctx)
@@ -70,14 +64,10 @@ func main() {
 		log.Fatalf("NimbusPolicy: Watch Failed %v", err)
 	}
 
-	// Keep track of detected policies to prevent duplicate printing
 	detectedPolicies := make(map[string]bool)
-
-	// Initialize the PolicyTransformer
-	pt := transformer.NewPolicyTransformer(c)
+	enforcer := enforcer.NewPolicyEnforcer(c)
 
 	log.Println("Starting policy processing loop")
-	// Process received NimbusPolicies
 	for {
 		select {
 		case policy := <-policyChan:
@@ -85,28 +75,15 @@ func main() {
 			if _, detected := detectedPolicies[policyKey]; !detected {
 				if verifier.HandlePolicy(policy) {
 					log.Printf("NimbusPolicy: Detected policy: Name: %s, Namespace: %s, ID: %s \n%+v\n", policy.Namespace, policy.Name, getRulesIDs(policy), policy)
-				}
-				// Mark the policy as detected
-				detectedPolicies[policyKey] = true
+					detectedPolicies[policyKey] = true
 
-				// Transform NimbusPolicy to KubeArmorPolicy
-				log.Println("Transforming NimbusPolicy to KubeArmorPolicy")
-				kubeArmorPolicy, err := pt.Transform(ctx, policy)
-				if err != nil {
-					log.Printf("Error transforming NimbusPolicy: %v", err)
-					continue
-				}
-				// Log the transformed KubeArmorPolicy
-				log.Printf("Transformed KubeArmorPolicy: %+v\n", kubeArmorPolicy)
-
-				// Apply or update the KubeArmorPolicy
-				log.Println("Applying KubeArmorPolicy")
-				err = pt.ApplyPolicy(ctx, kubeArmorPolicy)
-				if err != nil {
-					log.Printf("Error applying/updating KubeArmorPolicy: %v", err)
-					continue
-				} else {
-					log.Println("Successfully applied/updated KubeArmorPolicy")
+					log.Println("Exporting and Applying NimbusPolicy to KubeArmorPolicy")
+					err := enforcer.Enforcer(ctx, policy)
+					if err != nil {
+						log.Printf("Error exporting NimbusPolicy: %v", err)
+					} else {
+						log.Println("Successfully exported NimbusPolicy to KubeArmorPolicy")
+					}
 				}
 			}
 		case <-time.After(120 * time.Second):
@@ -115,7 +92,6 @@ func main() {
 	}
 }
 
-// Return a list of Rules IDs from the NimbusPolicy as a string
 func getRulesIDs(policy v1.NimbusPolicy) string {
 	var ruleIDs []string
 	for _, rule := range policy.Spec.NimbusRules {

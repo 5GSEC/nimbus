@@ -28,6 +28,7 @@ func NewNimbusPolicyWatcher(client client.Client) *NimbusPolicyWatcher {
 // It returns a channel through which the NimbusPolicy objects can be received.
 func (npw *NimbusPolicyWatcher) WatchNimbusPolicies(ctx context.Context) (<-chan v1.NimbusPolicy, error) {
 	policyChan := make(chan v1.NimbusPolicy)
+	// NimbusPolicyWatcher 구조체에 추가
 
 	go func() {
 		defer close(policyChan)
