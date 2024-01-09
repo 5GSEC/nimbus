@@ -12,4 +12,7 @@ kubectl delete securityintentbindings --all --all-namespaces
 # Delete all NimbusPolicy resources
 kubectl delete nimbuspolicies --all --all-namespaces
 
+# Delete all KubeArmorPolicy resouces
+kubectl delete ksp --all --all-namespaces
+
 echo "All resources have been successfully deleted."

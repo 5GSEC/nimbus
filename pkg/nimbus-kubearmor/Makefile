@@ -3,8 +3,10 @@
 
 .PHONY: build run deploy-rbac
 
+BINARY_NAME=nimbus-kubearmor
+
 build:
-	go build -o nimbus-kubearmor
+	GOARCH=amd64 GOOS=linux go build -o ${BINARY_NAME} main.go
 
 run:
 	./nimbus-kubearmor
