@@ -69,6 +69,15 @@ spec:
                               properties:
                                 capability:
                                   type: string
+                                fromSource:
+                                  items:
+                                    description: FromSource defines a source path
+                                      for directory-based policies
+                                    properties:
+                                      path:
+                                        type: string
+                                    type: object
+                                  type: array
                               type: object
                             type: array
                           matchDirectories:
@@ -91,7 +100,7 @@ spec:
                             type: array
                           matchPaths:
                             description: 'Process: MatchPaths, MatchDirectories, MatchPatterns
-                              File: MatchPaths, MatchDirectories'
+                              File: MatchPaths, MatchDirectories,  MatchPatterns'
                             items:
                               description: MatchPath defines a path for process or
                                 file policies
@@ -119,12 +128,43 @@ spec:
                                   type: string
                               type: object
                             type: array
+                          matchSyscallPaths:
+                            items:
+                              properties:
+                                fromSource:
+                                  items:
+                                    properties:
+                                      dir:
+                                        type: string
+                                      path:
+                                        type: string
+                                    type: object
+                                  type: array
+                                path:
+                                  type: string
+                                recursive:
+                                  type: boolean
+                                syscall:
+                                  items:
+                                    type: string
+                                  type: array
+                              type: object
+                            type: array
                           matchSyscalls:
                             description: 'Syscalls: MatchSyscalls'
                             items:
                               description: MatchSyscall defines a syscall for syscall
                                 policies
                               properties:
+                                fromSource:
+                                  items:
+                                    properties:
+                                      dir:
+                                        type: string
+                                      path:
+                                        type: string
+                                    type: object
+                                  type: array
                                 syscalls:
                                   items:
                                     type: string

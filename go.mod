@@ -1,6 +1,6 @@
 module github.com/5GSEC/nimbus
 
-go 1.20
+go 1.21
 
 require (
 	github.com/cilium/cilium v1.14.3

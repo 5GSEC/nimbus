@@ -44,7 +44,8 @@ type SecurityIntentParams struct {
 	MatchCapabilities []SecurityIntentMatchCapability `json:"matchCapabilities,omitempty"`
 
 	// Syscalls: MatchSyscalls
-	MatchSyscalls []SecurityIntentMatchSyscall `json:"matchSyscalls,omitempty"`
+	MatchSyscalls     []SecurityIntentMatchSyscall     `json:"matchSyscalls,omitempty"`
+	MatchSyscallPaths []SecurityIntentMatchSyscallPath `json:"matchSyscallPaths,omitempty"`
 
 	FromCIDRSet []SecurityIntentCIDRSet `json:"fromCIDRSet,omitempty"`
 	ToPorts     []SecurityIntentToPort  `json:"toPorts,omitempty"`
@@ -89,7 +90,15 @@ type SecurityIntentMatchPattern struct {
 
 // MatchSyscall defines a syscall for syscall policies
 type SecurityIntentMatchSyscall struct {
-	Syscalls []string `json:"syscalls,omitempty"`
+	Syscalls   []string            `json:"syscalls,omitempty"`
+	FromSource []SyscallFromSource `json:"fromSource,omitempty"`
+}
+
+type SecurityIntentMatchSyscallPath struct {
+	Path       string              `json:"path,omitempty"`
+	Recursive  bool                `json:"recursive,omitempty"`
+	Syscalls   []string            `json:"syscall,omitempty"`
+	FromSource []SyscallFromSource `json:"fromSource,omitempty"`
 }
 
 // MatchCapability defines a capability for capabilities policies

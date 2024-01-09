@@ -13,7 +13,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1 "github.com/5GSEC/nimbus/api/v1"
-	"github.com/5GSEC/nimbus/pkg/exporter/httpexporter"
 	"github.com/5GSEC/nimbus/pkg/receiver/watcher"
 )
 
@@ -34,7 +33,7 @@ func NewNimbusPolicyReconciler(client client.Client, scheme *runtime.Scheme) *Ni
 
 	watcherNimbusPolicy, err := watcher.NewWatcherNimbusPolicy(client)
 	if err != nil {
-		fmt.Println("NimbusPolicyReconciler: Failed to initialize WatcherNimbusPolicy:", err)
+		fmt.Println("NimbusPolicyReconciler: Failed to initialize WatcherNimbusPolicy", err)
 		return nil
 	}
 
@@ -62,31 +61,19 @@ func (r *NimbusPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	log := log.FromContext(ctx)
 
 	if r.WatcherNimbusPolicy == nil {
-		fmt.Println("NimbusPolicyReconciler: WatcherNimbusPolicy is nil")
-		return ctrl.Result{}, fmt.Errorf("WatcherNimbusPolicy is not properly initialized")
+		return ctrl.Result{}, fmt.Errorf("NimbusPolicyReconciler: WatcherNimbusPolicy is nil")
 	}
 
 	nimPol, err := r.WatcherNimbusPolicy.Reconcile(ctx, req)
 	if err != nil {
-		log.Error(err, "Error in WatcherNimbusPolicy.Reconcile", "Request", req.NamespacedName)
+		log.Error(err, "NimbusPolicyReconciler: WatcherNimbusPolicy is error")
 		return ctrl.Result{}, err
 	}
 
 	if nimPol != nil {
-		log.Info("NimbusPolicy resource found", "Name", req.Name, "Namespace", req.Namespace)
+		log.Info("Found: NimbusPolicy", "Name", req.Name, "Namespace", req.Namespace)
 	} else {
-		log.Info("NimbusPolicy resource not found", "Name", req.Name, "Namespace", req.Namespace)
-	}
-
-	// Exporting the NimbusPolicy if it is found.
-	if nimPol != nil {
-		exporter := httpexporter.NewHttpNimbusExporter("http://localhost:13000/api/v1/nimbus/export") // Update the URL as needed.
-		err := exporter.ExportNimbusPolicy(ctx, nimPol)
-		if err != nil {
-			log.Error(err, "Failed to export NimbusPolicy")
-			return ctrl.Result{}, err
-		}
-		log.Info("NimbusPolicy exported successfully")
+		log.Info("Not Found: NimbusPolicy")
 	}
 
 	return ctrl.Result{}, nil

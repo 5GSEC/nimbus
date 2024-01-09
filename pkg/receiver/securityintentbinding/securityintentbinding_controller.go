@@ -7,7 +7,9 @@ import (
 	"context"
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -16,6 +18,7 @@ import (
 	"github.com/5GSEC/nimbus/pkg/processor/intentbinder"
 	"github.com/5GSEC/nimbus/pkg/processor/nimbuspolicybuilder"
 	"github.com/5GSEC/nimbus/pkg/receiver/watcher"
+	kubearmorv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorController/api/security.kubearmor.com/v1"
 )
 
 // SecurityIntentBindingReconciler reconciles a SecurityIntentBinding object
@@ -76,6 +79,32 @@ func (r *SecurityIntentBindingReconciler) Reconcile(ctx context.Context, req ctr
 		log.Info("SecurityIntentBinding resource found", "Name", req.Name, "Namespace", req.Namespace)
 	} else {
 		log.Info("SecurityIntentBinding resource not found", "Name", req.Name, "Namespace", req.Namespace)
+
+		// Delete associated NimbusPolicy if exists
+		nimbusPolicy := &v1.NimbusPolicy{}
+		err := r.Get(ctx, types.NamespacedName{Name: req.Name, Namespace: req.Namespace}, nimbusPolicy)
+		if err != nil && !errors.IsNotFound(err) {
+			log.Error(err, "Failed to get NimbusPolicy for deletion")
+			return ctrl.Result{}, err
+		}
+		if err == nil {
+			// NimbusPolicy exists, delete it
+			if err := r.Delete(ctx, nimbusPolicy); err != nil {
+				log.Error(err, "Failed to delete NimbusPolicy")
+				return ctrl.Result{}, err
+			}
+			log.Info("Deleted NimbusPolicy due to SecurityIntentBinding deletion", "NimbusPolicy", req.NamespacedName)
+		}
+		// Delete Kubearmor Policy with the same name and namespace
+		kubearmorPolicy := &kubearmorv1.KubeArmorPolicy{}
+		if err := r.Get(ctx, client.ObjectKey{Name: req.Name, Namespace: req.Namespace}, kubearmorPolicy); err == nil {
+			if err := r.Delete(ctx, kubearmorPolicy); err != nil {
+				log.Error(err, "Failed to delete KubearmorPolicy")
+				return ctrl.Result{}, err
+			}
+			log.Info("Deleted KubearmorPolicy due to SecurityIntentBinding deletion", "KubearmorPolicy", req.NamespacedName)
+		}
+		return ctrl.Result{}, nil
 	}
 
 	// Call the MatchAndBindIntents function to generate the binding information.
