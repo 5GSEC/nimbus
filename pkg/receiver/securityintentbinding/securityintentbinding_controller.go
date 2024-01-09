@@ -7,7 +7,9 @@ import (
 	"context"
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -76,6 +78,23 @@ func (r *SecurityIntentBindingReconciler) Reconcile(ctx context.Context, req ctr
 		log.Info("SecurityIntentBinding resource found", "Name", req.Name, "Namespace", req.Namespace)
 	} else {
 		log.Info("SecurityIntentBinding resource not found", "Name", req.Name, "Namespace", req.Namespace)
+
+		// Delete associated NimbusPolicy if exists
+		nimbusPolicy := &v1.NimbusPolicy{}
+		err := r.Get(ctx, types.NamespacedName{Name: req.Name, Namespace: req.Namespace}, nimbusPolicy)
+		if err != nil && !errors.IsNotFound(err) {
+			log.Error(err, "Failed to get NimbusPolicy for deletion")
+			return ctrl.Result{}, err
+		}
+		if err == nil {
+			// NimbusPolicy exists, delete it
+			if err := r.Delete(ctx, nimbusPolicy); err != nil {
+				log.Error(err, "Failed to delete NimbusPolicy")
+				return ctrl.Result{}, err
+			}
+			log.Info("Deleted NimbusPolicy due to SecurityIntentBinding deletion", "NimbusPolicy", req.NamespacedName)
+		}
+		return ctrl.Result{}, nil
 	}
 
 	// Call the MatchAndBindIntents function to generate the binding information.
