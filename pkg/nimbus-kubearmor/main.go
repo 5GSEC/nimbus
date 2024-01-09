@@ -13,7 +13,7 @@ import (
 	"time"
 
 	v1 "github.com/5GSEC/nimbus/api/v1"
-	"github.com/5GSEC/nimbus/pkg/nimbus-kubearmor/core/enforcer"
+	"github.com/5GSEC/nimbus/pkg/nimbus-kubearmor/processor/enforcer"
 	watcher "github.com/5GSEC/nimbus/pkg/nimbus-kubearmor/receiver/nimbuspolicywatcher"
 	"github.com/5GSEC/nimbus/pkg/nimbus-kubearmor/receiver/verifier"
 	ctrl "sigs.k8s.io/controller-runtime"
