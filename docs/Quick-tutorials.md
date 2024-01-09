@@ -9,7 +9,7 @@ $ kubectl apply -f ./test/env/multiubuntu.yaml
 
 ### Run Operators (Nimbus)
 ```
-$ make run
+~/nimbus_accuknox$ make run
 test -s /home/cclab/nimbus_accuknox/bin/controller-gen && /home/cclab/nimbus_accuknox/bin/controller-gen --version | grep -q v0.13.0 || \
 GOBIN=/home/cclab/nimbus_accuknox/bin go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.13.0
 /home/cclab/nimbus_accuknox/bin/controller-gen rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
@@ -25,25 +25,26 @@ go run cmd/main.go
 ...
 ```
 
-### Run Adapter
+### Run Adapter (in this example, KubeArmor)
 ```
-$ cd /pk/nimbus-kubearmor
-$ make build
-$ make run
-./nimbus-kubearmor
+~/nimbus_accuknox$ cd pkg/nimbus-kubearmor
+~/nimbus_accuknox/pkg/nimbus-kubearmor$ make build
+~/nimbus_accuknox/pkg/nimbus-kubearmor$ make run
+...
 2024/01/09 13:36:18 Starting Kubernetes client configuration
 2024/01/09 13:36:18 Starting NimbusPolicyWatcher
 2024/01/09 13:36:18 Starting policy processing loop
 ```
 
-### Create and apply Securityintent and SecurityintentBinding file
+### Create and apply Securityintent and SecurityintentBinding
 ```
-$ kubectl apply -f intents/system/intent-path-block.yaml
+$ cd nimbus_accuknox/test/v2
+~/nimbus_accuknox/test/v2$ kubectl apply -f intents/system/intent-path-block.yaml
 securityintent.intent.security.nimbus.com/group-1-proc-path-sleep-block created
 ```
 
 ```
-$ kubectl apply -f bindings/system/binding-path-block.yaml
+~/nimbus_accuknox/test/v2$ kubectl apply -f bindings/system/binding-path-block.yaml
 securityintentbinding.intent.security.nimbus.com/sys-proc-path-sleep-block created
 ```
 
@@ -52,7 +53,6 @@ securityintentbinding.intent.security.nimbus.com/sys-proc-path-sleep-block creat
 You can also check the operator's logs to see the detection and the process of creating the Nimbus Policy. 
 
 ```
-$ make run
 ...
 2024-01-09T13:37:06Z    INFO    SecurityIntent resource found   {"controller": "securityintent", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "SecurityIntent", "SecurityIntent": {"name":"group-1-proc-path-sleep-block","namespace":"multiubuntu"}, "namespace": "multiubuntu", "name": "group-1-proc-path-sleep-block", "reconcileID": "5f7f67ea-33af-46b9-942a-af99a792c621", "Name": "group-1-proc-path-sleep-block", "Namespace": "multiubuntu"}
 2024-01-09T13:37:19Z    INFO    SecurityIntentBinding resource found    {"controller": "securityintentbinding", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "SecurityIntentBinding", "SecurityIntentBinding": {"name":"sys-proc-path-sleep-block","namespace":"multiubuntu"}, "namespace": "multiubuntu", "name": "sys-proc-path-sleep-block", "reconcileID": "6425366f-c6ca-4a73-87e1-1191d7984166", "Name": "sys-proc-path-sleep-block", "Namespace": "multiubuntu"}
@@ -110,8 +110,6 @@ spec:
 ### Verify the adapter 
 The log for the adapter that detected nimbuspolicy is shown below. 
 ```
-$ make run
-./nimbus-kubearmor
 2024/01/09 13:36:18 Starting Kubernetes client configuration
 2024/01/09 13:36:18 Starting NimbusPolicyWatcher
 2024/01/09 13:36:18 Starting policy processing loop
