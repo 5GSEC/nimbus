@@ -5,7 +5,7 @@ metadata:
   namespace: multiubuntu
 spec:
   intent:
-    id: sys-path-exec
+    id: sysPathExec
     description: "block the execution of '/bin/sleep'"
     action: Block
     mode: Strict

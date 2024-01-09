@@ -33,7 +33,7 @@ type NimbusRules struct {
 	Id          string `json:"id"`
 	Type        string `json:"type,omitempty"`
 	Description string `json:"description,omitempty"`
-	Rule        []Rule `json:"rule"`
+	Rule        Rule   `json:"rule"`
 }
 
 type Rule struct {

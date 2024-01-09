@@ -9,14 +9,14 @@ import (
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1 "github.com/5GSEC/nimbus/api/v1"
 	"github.com/5GSEC/nimbus/pkg/processor/intentbinder"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // BuildNimbusPolicy generates a NimbusPolicy based on SecurityIntent and SecurityIntentBinding.
@@ -34,11 +34,6 @@ func BuildNimbusPolicy(ctx context.Context, client client.Client, req ctrl.Reque
 
 	// Iterate over intent names to build rules.
 	for i, intentName := range bindingInfo.IntentNames {
-		// Checks for array length consistency.
-		if i >= len(bindingInfo.IntentNamespaces) || i >= len(bindingInfo.BindingNames) ||
-			i >= len(bindingInfo.BindingNamespaces) {
-			return nil, fmt.Errorf("index out of range in bindingInfo arrays")
-		}
 
 		intentNamespace := bindingInfo.IntentNamespaces[i]
 		intent, err := fetchIntentByName(ctx, client, intentName, intentNamespace)
@@ -52,9 +47,6 @@ func BuildNimbusPolicy(ctx context.Context, client client.Client, req ctrl.Reque
 			return nil, fmt.Errorf("no intents or bindings to process")
 		}
 
-		var rules []v1.Rule
-
-		// Constructs a rule from the intent parameters.
 		rule := v1.Rule{
 			RuleAction:        intent.Spec.Intent.Action,
 			MatchProtocols:    []v1.MatchProtocol{},
@@ -70,13 +62,12 @@ func BuildNimbusPolicy(ctx context.Context, client client.Client, req ctrl.Reque
 		for _, param := range intent.Spec.Intent.Params {
 			processSecurityIntentParams(&rule, param)
 		}
-		rules = append(rules, rule)
 
 		nimbusRule := v1.NimbusRules{
 			Id:          intent.Spec.Intent.Id,
 			Type:        "", // Set Type if necessary
 			Description: intent.Spec.Intent.Description,
-			Rule:        rules,
+			Rule:        rule,
 		}
 		nimbusRulesList = append(nimbusRulesList, nimbusRule)
 	}

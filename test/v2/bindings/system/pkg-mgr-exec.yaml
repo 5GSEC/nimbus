@@ -1,0 +1,14 @@
+apiVersion: intent.security.nimbus.com/v1
+kind: SecurityIntentBinding
+metadata:
+  name: pkg-mgr-exec
+spec:
+  intents:
+    - name: pkg-mgr-exec
+  selector:
+    any:
+      - resources:
+          kind: Pod
+          namespace: default
+          matchLabels:
+            app: nginx

@@ -5,12 +5,15 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"sync"
 	"time"
+
+	"go.uber.org/zap"
+
+	v1 "github.com/5GSEC/nimbus/api/v1"
+	"github.com/5GSEC/nimbus/pkg/adapter/exporter"
 )
 
 var (
@@ -20,6 +23,9 @@ var (
 )
 
 func main() {
+	logger, _ := zap.NewProduction()
+	log := logger.Sugar()
+
 	// Handler for exporting Nimbus Policies
 	http.HandleFunc("/api/v1/nimbus/export", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
@@ -36,8 +42,8 @@ func main() {
 		defer r.Body.Close()
 
 		// Unmarshal the JSON data from the request
-		var data interface{}
-		err = json.Unmarshal(body, &data)
+		var nimbusPolicy v1.NimbusPolicy
+		err = json.Unmarshal(body, &nimbusPolicy)
 		if err != nil {
 			http.Error(w, "Error unmarshalling request body", http.StatusBadRequest)
 			return
@@ -45,11 +51,10 @@ func main() {
 
 		// Store the received Nimbus Policy
 		lock.Lock()
-		nimbusPolicies = append(nimbusPolicies, data)
+		nimbusPolicies = append(nimbusPolicies, nimbusPolicy)
 		lock.Unlock()
-
-		// Log the received policy
-		fmt.Printf("Received Nimbus Policy: %+v\n", data)
+		log.Infof("Exporting '%s' NimbusPolicy to security engines", nimbusPolicy.Name)
+		exporter.ExportNpToAdapters(log, nimbusPolicy)
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -77,6 +82,6 @@ func main() {
 	}
 
 	// Start the server
-	log.Println("Server starting on port 13000...")
+	log.Info("Starting server on port 13000...")
 	log.Fatal(server.ListenAndServe())
 }

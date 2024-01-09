@@ -5,7 +5,7 @@ metadata:
   namespace:  default
 spec:
   intent:
-    id: net-port-exec
+    id: netPortExec
     description: "Don’t allow any outside traffic to the Redis port"
     action: Block
     mode: Strict

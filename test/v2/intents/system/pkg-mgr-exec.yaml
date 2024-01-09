@@ -1,0 +1,10 @@
+apiVersion: intent.security.nimbus.com/v1
+kind: SecurityIntent
+metadata:
+  name: pkg-mgr-exec
+spec:
+  intent:
+    id: swDeploymentTools
+    description: "Do not allow execution of package managers inside the containers"
+    action: Block
+    mode: Strict

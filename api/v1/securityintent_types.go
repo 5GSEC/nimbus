@@ -20,13 +20,14 @@ type SecurityIntentSpec struct {
 
 // Intent defines the security policy details
 type Intent struct {
+	// +kubebuilder:validation:Pattern:="^[a-zA-Z0-9]*$"
 	Id          string                 `json:"id"`
 	Description string                 `json:"description,omitempty"`
 	Action      string                 `json:"action"`
 	Mode        string                 `json:"mode"`
 	Severity    int                    `json:"severity,omitempty"`
 	Tags        []string               `json:"tags,omitempty"`
-	Params      []SecurityIntentParams `json:"params"`
+	Params      []SecurityIntentParams `json:"params,omitempty"`
 }
 
 // Resource defines the resources that the security policy applies to
@@ -110,7 +111,7 @@ type SecurityIntentStatus struct {
 
 // SecurityIntent is the Schema for the securityintents API
 // +kubebuilder:object:root=true
-// +kubebuilder:resource: shortName="sit"
+// +kubebuilder:resource: shortName="si"
 // +kubebuilder:subresource:status
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
