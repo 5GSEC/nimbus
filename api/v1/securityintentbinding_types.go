@@ -15,11 +15,11 @@ type SecurityIntentBindingSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of SecurityIntentBinding. Edit securityintentbinding_types.go to remove/update
 	Intents  []MatchIntent `json:"intents"`
 	Selector Selector      `json:"selector"`
 }
 
+// Intent struct defines the request for a specific SecurityIntent
 type MatchIntent struct {
 	Name string `json:"name"`
 }
@@ -49,9 +49,10 @@ type SecurityIntentBindingStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 // +kubebuilder:resource: shortName="sib"
-//+kubebuilder:subresource:status
+// +kubebuilder:subresource:status
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // SecurityIntentBinding is the Schema for the securityintentbindings API
 type SecurityIntentBinding struct {
@@ -60,8 +61,6 @@ type SecurityIntentBinding struct {
 	Spec              SecurityIntentBindingSpec   `json:"spec,omitempty"`
 	Status            SecurityIntentBindingStatus `json:"status,omitempty"`
 }
-
-//+kubebuilder:object:root=true
 
 // SecurityIntentBindingList contains a list of SecurityIntentBinding
 type SecurityIntentBindingList struct {
