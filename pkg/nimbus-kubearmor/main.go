@@ -16,6 +16,7 @@ import (
 	"github.com/5GSEC/nimbus/pkg/nimbus-kubearmor/core/enforcer"
 	watcher "github.com/5GSEC/nimbus/pkg/nimbus-kubearmor/receiver/nimbuspolicywatcher"
 	"github.com/5GSEC/nimbus/pkg/nimbus-kubearmor/receiver/verifier"
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"

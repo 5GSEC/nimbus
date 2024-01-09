@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2023 Authors of Nimbus
 
-package transformer
+package converter
 
 import (
 	v1 "github.com/5GSEC/nimbus/api/v1"
