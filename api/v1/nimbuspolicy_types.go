@@ -43,7 +43,7 @@ type Rule struct {
 	MatchProtocols []MatchProtocol `json:"matchProtocols,omitempty"`
 
 	// Process: MatchPaths, MatchDirectories, MatchPatterns
-	// File: MatchPaths, MatchDirectories
+	// File: MatchPaths, MatchDirectories,  MatchPatterns
 	MatchPaths       []MatchPath      `json:"matchPaths,omitempty"`
 	MatchDirectories []MatchDirectory `json:"matchDirectories,omitempty"`
 	MatchPatterns    []MatchPattern   `json:"matchPatterns,omitempty"`
@@ -52,7 +52,8 @@ type Rule struct {
 	MatchCapabilities []MatchCapability `json:"matchCapabilities,omitempty"`
 
 	// Syscalls: MatchSyscalls
-	MatchSyscalls []MatchSyscall `json:"matchSyscalls,omitempty"`
+	MatchSyscalls     []MatchSyscall     `json:"matchSyscalls,omitempty"`
+	MatchSyscallPaths []MatchSyscallPath `json:"matchSyscallPaths,omitempty"`
 
 	FromCIDRSet []CIDRSet `json:"fromCIDRSet,omitempty"`
 	ToPorts     []ToPort  `json:"toPorts,omitempty"`
@@ -97,12 +98,26 @@ type MatchPattern struct {
 
 // MatchSyscall defines a syscall for syscall policies
 type MatchSyscall struct {
-	Syscalls []string `json:"syscalls,omitempty"`
+	Syscalls   []string            `json:"syscalls,omitempty"`
+	FromSource []SyscallFromSource `json:"fromSource,omitempty"`
+}
+
+type MatchSyscallPath struct {
+	Path       string              `json:"path,omitempty"`
+	Recursive  bool                `json:"recursive,omitempty"`
+	Syscalls   []string            `json:"syscall,omitempty"`
+	FromSource []SyscallFromSource `json:"fromSource,omitempty"`
+}
+
+type SyscallFromSource struct {
+	Path string `json:"path,omitempty"`
+	Dir  string `json:"dir,omitempty"`
 }
 
 // MatchCapability defines a capability for capabilities policies
 type MatchCapability struct {
-	Capability string `json:"capability,omitempty"`
+	Capability string             `json:"capability,omitempty"`
+	FromSource []NimbusFromSource `json:"fromSource,omitempty"`
 }
 
 // FromSource defines a source path for directory-based policies

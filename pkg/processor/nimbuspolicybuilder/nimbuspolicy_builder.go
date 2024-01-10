@@ -167,12 +167,22 @@ func processSecurityIntentParams(rule *v1.Rule, param v1.SecurityIntentParams) {
 
 	// Processes MatchCapabilities.
 	for _, mc := range param.MatchCapabilities {
-		rule.MatchCapabilities = append(rule.MatchCapabilities, v1.MatchCapability(mc))
+		matchCapability := v1.MatchCapability{
+			Capability: mc.Capability,
+			FromSource: []v1.NimbusFromSource{},
+		}
+		rule.MatchCapabilities = append(rule.MatchCapabilities, matchCapability)
 	}
 
-	// Processes MatchSyscalls.
+	// Processes MatchSyscalls and MatchSyscallPaths.
 	for _, ms := range param.MatchSyscalls {
-		rule.MatchSyscalls = append(rule.MatchSyscalls, v1.MatchSyscall(ms))
+		var matchSyscall v1.MatchSyscall
+		matchSyscall.Syscalls = ms.Syscalls
+		rule.MatchSyscalls = append(rule.MatchSyscalls, matchSyscall)
+	}
+
+	for _, msp := range param.MatchSyscallPaths {
+		rule.MatchSyscallPaths = append(rule.MatchSyscallPaths, v1.MatchSyscallPath(msp))
 	}
 
 	// Processes FromCIDRSet.
@@ -200,7 +210,7 @@ func extractSelector(selector v1.Selector) (map[string]string, error) {
 	if len(selector.CEL) > 0 {
 		celMatchLabels, err := ProcessCEL(selector.CEL)
 		if err != nil {
-			return nil, fmt.Errorf("error processing CEL: %v", err)
+			return nil, fmt.Errorf("Error processing CEL: %v", err)
 		}
 		for k, v := range celMatchLabels {
 			matchLabels[k] = v
@@ -211,7 +221,7 @@ func extractSelector(selector v1.Selector) (map[string]string, error) {
 	if len(selector.Any) > 0 || len(selector.All) > 0 {
 		matchLabelsFromAnyAll, err := ProcessMatchLabels(selector.Any, selector.All)
 		if err != nil {
-			return nil, fmt.Errorf("error processing Any/All match labels: %v", err)
+			return nil, fmt.Errorf("Error processing Any/All match labels: %v", err)
 		}
 		for key, value := range matchLabelsFromAnyAll {
 			matchLabels[key] = value
@@ -229,7 +239,7 @@ func ProcessCEL(expressions []string) (map[string]string, error) {
 		),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("error creating CEL environment: %v", err)
+		return nil, fmt.Errorf("Error creating CEL environment: %v", err)
 	}
 
 	matchLabels := make(map[string]string)
@@ -237,19 +247,19 @@ func ProcessCEL(expressions []string) (map[string]string, error) {
 	for _, expr := range expressions {
 		ast, issues := env.Compile(expr)
 		if issues != nil && issues.Err() != nil {
-			return nil, fmt.Errorf("error compiling CEL expression: %v", issues.Err())
+			return nil, fmt.Errorf("Error compiling CEL expression: %v", issues.Err())
 		}
 
 		prg, err := env.Program(ast)
 		if err != nil {
-			return nil, fmt.Errorf("error creating CEL program: %v", err)
+			return nil, fmt.Errorf("Error creating CEL program: %v", err)
 		}
 
 		out, _, err := prg.Eval(map[string]interface{}{
 			"label": map[string]interface{}{},
 		})
 		if err != nil {
-			return nil, fmt.Errorf("error evaluating CEL expression: %v", err)
+			return nil, fmt.Errorf("Error evaluating CEL expression: %v", err)
 		}
 
 		// Handle the output of the CEL expression.
@@ -261,7 +271,6 @@ func ProcessCEL(expressions []string) (map[string]string, error) {
 			}
 		}
 	}
-
 	return matchLabels, nil
 }
 
