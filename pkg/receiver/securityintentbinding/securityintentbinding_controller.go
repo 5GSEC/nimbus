@@ -14,11 +14,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	kubearmorv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorController/api/security.kubearmor.com/v1"
+
 	v1 "github.com/5GSEC/nimbus/api/v1"
 	"github.com/5GSEC/nimbus/pkg/processor/intentbinder"
 	"github.com/5GSEC/nimbus/pkg/processor/nimbuspolicybuilder"
 	"github.com/5GSEC/nimbus/pkg/receiver/watcher"
-	kubearmorv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorController/api/security.kubearmor.com/v1"
 )
 
 // SecurityIntentBindingReconciler reconciles a SecurityIntentBinding object
@@ -108,14 +109,14 @@ func (r *SecurityIntentBindingReconciler) Reconcile(ctx context.Context, req ctr
 	}
 
 	// Call the MatchAndBindIntents function to generate the binding information.
-	bindingInfo, err := intentbinder.MatchAndBindIntents(ctx, r.Client, req, binding)
+	bindingInfo, err := intentbinder.MatchAndBindIntents(ctx, r.Client, binding)
 	if err != nil {
 		log.Error(err, "Failed to match and bind intents")
 		return ctrl.Result{}, err
 	}
 
 	// Create a NimbusPolicy.
-	nimbusPolicy, err := nimbuspolicybuilder.BuildNimbusPolicy(ctx, r.Client, req, bindingInfo)
+	nimbusPolicy, err := nimbuspolicybuilder.BuildNimbusPolicy(ctx, r.Client, bindingInfo)
 	if err != nil {
 		log.Error(err, "Failed to build NimbusPolicy")
 		return ctrl.Result{}, err
@@ -126,7 +127,7 @@ func (r *SecurityIntentBindingReconciler) Reconcile(ctx context.Context, req ctr
 		log.Error(err, "Failed to create NimbusPolicy")
 		return ctrl.Result{}, err
 	}
-
+	//Todo: Update status
 	return ctrl.Result{}, nil
 }
 

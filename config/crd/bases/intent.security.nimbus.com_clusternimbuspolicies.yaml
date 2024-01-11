@@ -4,22 +4,23 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.13.0
-  name: nimbuspolicies.intent.security.nimbus.com
+  name: clusternimbuspolicies.intent.security.nimbus.com
 spec:
   group: intent.security.nimbus.com
   names:
-    kind: NimbusPolicy
-    listKind: NimbusPolicyList
-    plural: nimbuspolicies
+    kind: ClusterNimbusPolicy
+    listKind: ClusterNimbusPolicyList
+    plural: clusternimbuspolicies
     shortNames:
-    - np
-    singular: nimbuspolicy
-  scope: Namespaced
+    - cwnp
+    singular: clusternimbuspolicy
+  scope: Cluster
   versions:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: NimbusPolicy is the Schema for the nimbuspolicies API
+        description: ClusterNimbusPolicy is the Schema for the clusternimbuspolicies
+          API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -34,11 +35,9 @@ spec:
           metadata:
             type: object
           spec:
-            description: NimbusPolicySpec defines the desired state of NimbusPolicy
+            description: ClusterNimbusPolicySpec defines the desired state of ClusterNimbusPolicy
             properties:
               rules:
-                description: PolicyType specifies the type of policy, e.g., "Network",
-                  "System", "Cluster"
                 items:
                   description: NimbusRules represents a single policy rule with an
                     ID, type, description, and detailed rule configurations.
@@ -70,24 +69,36 @@ spec:
                   type: object
                 type: array
               selector:
-                description: Selector specifies the target resources to which the
-                  policy applies
                 properties:
-                  matchLabels:
-                    additionalProperties:
+                  cel:
+                    items:
                       type: string
-                    description: MatchLabels is a map that holds key-value pairs to
-                      match against labels of resources.
-                    type: object
-                required:
-                - matchLabels
+                    type: array
+                  resources:
+                    items:
+                      properties:
+                        kind:
+                          type: string
+                        matchLabels:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        name:
+                          type: string
+                        namespace:
+                          type: string
+                      required:
+                      - kind
+                      - name
+                      type: object
+                    type: array
                 type: object
             required:
             - rules
             - selector
             type: object
           status:
-            description: NimbusPolicyStatus defines the observed state of NimbusPolicy
+            description: ClusterNimbusPolicyStatus defines the observed state of ClusterNimbusPolicy
             properties:
               status:
                 type: string

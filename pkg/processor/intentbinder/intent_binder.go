@@ -6,61 +6,71 @@ package intentbinder
 import (
 	"context"
 
-	v1 "github.com/5GSEC/nimbus/api/v1"
 	"k8s.io/apimachinery/pkg/types"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	v1 "github.com/5GSEC/nimbus/api/v1"
 )
 
 // BindingInfo holds the names of matched SecurityIntent and SecurityIntentBinding.
 type BindingInfo struct {
 	IntentNames       []string
-	IntentNamespaces  []string
 	BindingNames      []string
 	BindingNamespaces []string
 }
 
 // NewBindingInfo creates a new instance of BindingInfo.
-func NewBindingInfo(intentNames []string, intentNamespaces []string, bindingNames []string, bindingNamespaces []string) *BindingInfo {
+func NewBindingInfo(intentNames []string, bindingNames []string, bindingNamespaces []string) *BindingInfo {
 	return &BindingInfo{
 		IntentNames:       intentNames,
-		IntentNamespaces:  intentNamespaces,
 		BindingNames:      bindingNames,
 		BindingNamespaces: bindingNamespaces,
 	}
 }
 
-func MatchAndBindIntents(ctx context.Context, client client.Client, req ctrl.Request, bindings *v1.SecurityIntentBinding) (*BindingInfo, error) {
-	log := log.FromContext(ctx)
-	log.Info("Starting intent and binding matching")
+func MatchAndBindIntents(ctx context.Context, client client.Client, bindings *v1.SecurityIntentBinding) (*BindingInfo, error) {
+	logger := log.FromContext(ctx)
+	logger.Info("SecurityIntent and SecurityIntentBinding matching started")
 
-	// Fetching SecurityIntent objects.
-	var intents []*v1.SecurityIntent
-	for _, intentRef := range bindings.Spec.Intents {
-		intent := &v1.SecurityIntent{}
-		if err := client.Get(ctx, types.NamespacedName{Name: intentRef.Name, Namespace: bindings.Namespace}, intent); err != nil {
-			log.Error(err, "Failed to get SecurityIntent", "Name", intentRef.Name)
-			continue
-		}
-		intents = append(intents, intent)
-	}
-
-	var matchedIntentNames []string
-	var matchedIntentNamespaces []string
-	var matchedBindingNames []string
+	var matchedIntents []string
+	var matchedBindings []string
 	var matchedBindingNamespaces []string
 
-	// Checking match for SecurityIntent and SecurityIntentBinding.
-	for _, intent := range intents {
-		matchedIntentNames = append(matchedIntentNames, intent.Name)
-		matchedIntentNamespaces = append(matchedIntentNamespaces, intent.Namespace)
+	for _, intentRef := range bindings.Spec.Intents {
+		var intent v1.SecurityIntent
+		if err := client.Get(ctx, types.NamespacedName{Name: intentRef.Name, Namespace: bindings.Namespace}, &intent); err != nil {
+			logger.Error(err, "failed to get SecurityIntent", "Name", intentRef.Name)
+			continue
+		}
+		matchedIntents = append(matchedIntents, intent.Name)
 	}
 
 	// Adding names and namespaces of SecurityIntentBinding.
-	matchedBindingNames = append(matchedBindingNames, bindings.Name)
+	matchedBindings = append(matchedBindings, bindings.Name)
 	matchedBindingNamespaces = append(matchedBindingNamespaces, bindings.Namespace)
 
-	log.Info("Matching completed", "Matched Intent Names", matchedIntentNames, "Matched Binding Names", matchedBindingNames)
-	return NewBindingInfo(matchedIntentNames, matchedIntentNamespaces, matchedBindingNames, matchedBindingNamespaces), nil
+	logger.Info("Matching completed", "Matched SecurityIntents", matchedIntents, "Matched SecurityIntentsBindings", matchedBindings)
+	return NewBindingInfo(matchedIntents, matchedBindings, matchedBindingNamespaces), nil
+}
+
+func MatchAndBindIntentsGlobal(ctx context.Context, client client.Client, clusterBinding *v1.ClusterSecurityIntentBinding) (*BindingInfo, error) {
+	logger := log.FromContext(ctx)
+	logger.Info("SecurityIntent and ClusterSecurityIntentBinding matching started")
+
+	var matchedIntents []string
+	for _, intentRef := range clusterBinding.Spec.Intents {
+		var intent v1.SecurityIntent
+		if err := client.Get(ctx, types.NamespacedName{Name: intentRef.Name}, &intent); err != nil {
+			logger.Error(err, "failed to get SecurityIntent", "Name", intentRef.Name)
+			continue
+		}
+		matchedIntents = append(matchedIntents, intent.Name)
+	}
+
+	var matchedClusterBindings []string
+	matchedClusterBindings = append(matchedClusterBindings, clusterBinding.Name)
+
+	logger.Info("Matching completed", "Matched SecurityIntents", matchedIntents, "Matched ClusterSecurityIntentBindings", matchedClusterBindings)
+	return NewBindingInfo(matchedIntents, matchedClusterBindings, nil), nil
 }

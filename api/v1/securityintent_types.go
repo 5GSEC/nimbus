@@ -7,119 +7,50 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // SecurityIntentSpec defines the desired state of SecurityIntent
 type SecurityIntentSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
 	Intent Intent `json:"intent"` // Define the details of the security policy.
 }
 
 // Intent defines the security policy details
 type Intent struct {
-	Id          string                 `json:"id"`
-	Description string                 `json:"description,omitempty"`
-	Action      string                 `json:"action"`
-	Mode        string                 `json:"mode"`
-	Severity    int                    `json:"severity,omitempty"`
-	Tags        []string               `json:"tags,omitempty"`
-	Params      []SecurityIntentParams `json:"params"`
-}
+	// ID is predefined in adapter ID pool.
+	// Used by security engines to generate corresponding security policies.
+	//+kubebuilder:validation:Pattern:="^[a-zA-Z0-9]*$"
+	ID string `json:"id"`
 
-// Resource defines the resources that the security policy applies to
-type SecurityIntentParams struct {
-	// Network: MatchProtocols
-	MatchProtocols []SecurityIntentMatchProtocol `json:"SecurityIntentMatchProtocols,omitempty"`
+	// Description is human-readable explanation of the intent's purpose.
+	Description string `json:"description,omitempty"`
 
-	// Process: MatchPaths, MatchDirectories, MatchPatterns
-	// File: MatchPaths, MatchDirectories
-	MatchPaths       []SecurityIntentMatchPath      `json:"matchPaths,omitempty"`
-	MatchDirectories []SecurityIntentMatchDirectory `json:"matchDirectories,omitempty"`
-	MatchPatterns    []SecurityIntentMatchPattern   `json:"matchPatterns,omitempty"`
+	// Action defines how the security policy will be enforced.
+	Action string `json:"action"`
 
-	// Capabilities: MatchCapabilities
-	MatchCapabilities []SecurityIntentMatchCapability `json:"matchCapabilities,omitempty"`
+	// Mode defines the enforcement behavior of the intent.
+	// Defaults to best-effort.
+	//+kubebuilder:default:="best-effort"
+	Mode string `json:"mode,omitempty"`
 
-	// Syscalls: MatchSyscalls
-	MatchSyscalls     []SecurityIntentMatchSyscall     `json:"matchSyscalls,omitempty"`
-	MatchSyscallPaths []SecurityIntentMatchSyscallPath `json:"matchSyscallPaths,omitempty"`
+	// Severity defines the potential impact of a security violation related to the intent.
+	// Defaults to Low.
+	//+kubebuilder:default:=Low
+	Severity string `json:"severity,omitempty"`
 
-	FromCIDRSet []SecurityIntentCIDRSet `json:"fromCIDRSet,omitempty"`
-	ToPorts     []SecurityIntentToPort  `json:"toPorts,omitempty"`
-}
+	// Tags are additional metadata for categorization and grouping of intents.
+	// Facilitates searching, filtering, and management of security policies.
+	Tags []string `json:"tags,omitempty"`
 
-// CIDRSet defines CIDR ranges for network policies
-type SecurityIntentCIDRSet struct {
-	CIDR string `json:"cidr,omitempty"`
-}
-
-// ToPort defines ports and protocols for network policies
-type SecurityIntentToPort struct {
-	Ports []SecurityIntentPort `json:"ports,omitempty"`
-}
-
-// Port defines a network port and its protocol
-type SecurityIntentPort struct {
-	Port     string `json:"port,omitempty"`
-	Protocol string `json:"protocol,omitempty"`
-}
-
-// SecurityIntentMatchProtocol defines a protocol for network policies
-type SecurityIntentMatchProtocol struct {
-	Protocol string `json:"protocol,omitempty"`
-}
-
-// MatchPath defines a path for process or file policies
-type SecurityIntentMatchPath struct {
-	Path string `json:"path,omitempty"`
-}
-
-// MatchDirectory defines a directory for process or file policies
-type SecurityIntentMatchDirectory struct {
-	Directory  string                     `json:"dir,omitempty"`
-	FromSource []SecurityIntentFromSource `json:"fromSource,omitempty"`
-}
-
-// MatchPattern defines a pattern for process policies
-type SecurityIntentMatchPattern struct {
-	Pattern string `json:"pattern,omitempty"`
-}
-
-// MatchSyscall defines a syscall for syscall policies
-type SecurityIntentMatchSyscall struct {
-	Syscalls   []string            `json:"syscalls,omitempty"`
-	FromSource []SyscallFromSource `json:"fromSource,omitempty"`
-}
-
-type SecurityIntentMatchSyscallPath struct {
-	Path       string              `json:"path,omitempty"`
-	Recursive  bool                `json:"recursive,omitempty"`
-	Syscalls   []string            `json:"syscall,omitempty"`
-	FromSource []SyscallFromSource `json:"fromSource,omitempty"`
-}
-
-// MatchCapability defines a capability for capabilities policies
-type SecurityIntentMatchCapability struct {
-	Capability string `json:"capability,omitempty"`
-}
-
-type SecurityIntentFromSource struct {
-	Path string `json:"path,omitempty"`
+	// Params are key-value pairs that allows fine-tuning of intents to specific requirements.
+	Params map[string][]string `json:"params,omitempty"`
 }
 
 // SecurityIntentStatus defines the observed state of SecurityIntent
 type SecurityIntentStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-	// This field can be updated to reflect the actual status of the application of the security intents
+	Status string `json:"status"`
 }
 
 // SecurityIntent is the Schema for the securityintents API
 // +kubebuilder:object:root=true
-// +kubebuilder:resource: shortName="sit"
+// +kubebuilder:resource:shortName="si",scope="Cluster"
 // +kubebuilder:subresource:status
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 

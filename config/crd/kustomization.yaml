@@ -5,6 +5,8 @@ resources:
 - bases/intent.security.nimbus.com_securityintents.yaml
 - bases/intent.security.nimbus.com_securityintentbindings.yaml
 - bases/intent.security.nimbus.com_nimbuspolicies.yaml
+- bases/intent.security.nimbus.com_clusternimbuspolicies.yaml
+- bases/intent.security.nimbus.com_clustersecurityintentbindings.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patches:
@@ -13,6 +15,8 @@ patches:
 #- path: patches/webhook_in_securityintents.yaml
 #- path: patches/webhook_in_securityintentbindings.yaml
 #- path: patches/webhook_in_nimbuspolicies.yaml
+#- path: patches/webhook_in_clusternimbuspolicies.yaml
+#- path: patches/webhook_in_clustersecurityintentbindings.yaml
 #+kubebuilder:scaffold:crdkustomizewebhookpatch
 
 # [CERTMANAGER] To enable cert-manager, uncomment all the sections with [CERTMANAGER] prefix.
@@ -20,6 +24,8 @@ patches:
 #- path: patches/cainjection_in_securityintents.yaml
 #- path: patches/cainjection_in_securityintentbindings.yaml
 #- path: patches/cainjection_in_nimbuspolicies.yaml
+#- path: patches/cainjection_in_clusternimbuspolicies.yaml
+#- path: patches/cainjection_in_clustersecurityintentbindings.yaml
 #+kubebuilder:scaffold:crdkustomizecainjectionpatch
 
 # [WEBHOOK] To enable webhook, uncomment the following section

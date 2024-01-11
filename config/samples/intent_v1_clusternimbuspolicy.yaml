@@ -1,0 +1,12 @@
+apiVersion: intent.security.nimbus.com/v1
+kind: ClusterNimbusPolicy
+metadata:
+  labels:
+    app.kubernetes.io/name: clusternimbuspolicy
+    app.kubernetes.io/instance: clusternimbuspolicy-sample
+    app.kubernetes.io/part-of: nimbus
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: nimbus
+  name: clusternimbuspolicy-sample
+spec:
+  # TODO(user): Add fields here

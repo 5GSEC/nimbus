@@ -26,4 +26,20 @@ resources:
   kind: NimbusPolicy
   path: github.com/5GSEC/nimbus/api/v1
   version: v1
+- api:
+    crdVersion: v1
+  controller: true
+  domain: security.nimbus.com
+  group: intent
+  kind: ClusterNimbusPolicy
+  path: github.com/5GSEC/nimbus/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+  controller: true
+  domain: security.nimbus.com
+  group: intent
+  kind: ClusterSecurityIntentBinding
+  path: github.com/5GSEC/nimbus/api/v1
+  version: v1
 version: "3"

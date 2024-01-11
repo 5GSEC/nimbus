@@ -7,19 +7,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // SecurityIntentBindingSpec defines the desired state of SecurityIntentBinding
 type SecurityIntentBindingSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
 	Intents  []MatchIntent `json:"intents"`
 	Selector Selector      `json:"selector"`
 }
 
-// Intent struct defines the request for a specific SecurityIntent
+// MatchIntent struct defines the request for a specific SecurityIntent
 type MatchIntent struct {
 	Name string `json:"name"`
 }
@@ -45,8 +39,7 @@ type Resources struct {
 
 // SecurityIntentBindingStatus defines the observed state of SecurityIntentBinding
 type SecurityIntentBindingStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	Status string `json:"status"`
 }
 
 // +kubebuilder:object:root=true
@@ -61,6 +54,8 @@ type SecurityIntentBinding struct {
 	Spec              SecurityIntentBindingSpec   `json:"spec,omitempty"`
 	Status            SecurityIntentBindingStatus `json:"status,omitempty"`
 }
+
+//+kubebuilder:object:root=true
 
 // SecurityIntentBindingList contains a list of SecurityIntentBinding
 type SecurityIntentBindingList struct {

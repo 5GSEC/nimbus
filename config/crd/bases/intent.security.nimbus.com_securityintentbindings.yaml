@@ -39,7 +39,8 @@ spec:
             properties:
               intents:
                 items:
-                  description: Intent struct defines the request for a specific SecurityIntent
+                  description: MatchIntent struct defines the request for a specific
+                    SecurityIntent
                   properties:
                     name:
                       type: string
@@ -100,6 +101,11 @@ spec:
           status:
             description: SecurityIntentBindingStatus defines the observed state of
               SecurityIntentBinding
+            properties:
+              status:
+                type: string
+            required:
+            - status
             type: object
         type: object
     served: true

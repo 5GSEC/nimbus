@@ -7,14 +7,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // NimbusPolicySpec defines the desired state of NimbusPolicy
 type NimbusPolicySpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
 	// Selector specifies the target resources to which the policy applies
 	Selector NimbusSelector `json:"selector"`
 
@@ -30,107 +24,21 @@ type NimbusSelector struct {
 
 // NimbusRules represents a single policy rule with an ID, type, description, and detailed rule configurations.
 type NimbusRules struct {
-	Id          string `json:"id"`
+	ID          string `json:"id"`
 	Type        string `json:"type,omitempty"`
 	Description string `json:"description,omitempty"`
-	Rule        []Rule `json:"rule"`
+	Rule        Rule   `json:"rule"`
 }
 
 type Rule struct {
-	RuleAction string `json:"action"`
-
-	// Network: MatchProtocols
-	MatchProtocols []MatchProtocol `json:"matchProtocols,omitempty"`
-
-	// Process: MatchPaths, MatchDirectories, MatchPatterns
-	// File: MatchPaths, MatchDirectories,  MatchPatterns
-	MatchPaths       []MatchPath      `json:"matchPaths,omitempty"`
-	MatchDirectories []MatchDirectory `json:"matchDirectories,omitempty"`
-	MatchPatterns    []MatchPattern   `json:"matchPatterns,omitempty"`
-
-	// Capabilities: MatchCapabilities
-	MatchCapabilities []MatchCapability `json:"matchCapabilities,omitempty"`
-
-	// Syscalls: MatchSyscalls
-	MatchSyscalls     []MatchSyscall     `json:"matchSyscalls,omitempty"`
-	MatchSyscallPaths []MatchSyscallPath `json:"matchSyscallPaths,omitempty"`
-
-	FromCIDRSet []CIDRSet `json:"fromCIDRSet,omitempty"`
-	ToPorts     []ToPort  `json:"toPorts,omitempty"`
-}
-
-// CIDRSet defines CIDR ranges for network policies
-type CIDRSet struct {
-	CIDR string `json:"cidr,omitempty"`
-}
-
-// ToPort defines ports and protocols for network policies
-type ToPort struct {
-	Ports []Port `json:"ports,omitempty"`
-}
-
-// Port defines a network port and its protocol
-type Port struct {
-	Port     string `json:"port,omitempty"`
-	Protocol string `json:"protocol,omitempty"`
-}
-
-// MatchProtocol defines a protocol for network policies
-type MatchProtocol struct {
-	Protocol string `json:"protocol,omitempty"`
-}
-
-// MatchPath defines a path for process or file policies
-type MatchPath struct {
-	Path string `json:"path,omitempty"`
-}
-
-// MatchDirectory defines a directory for process or file policies
-type MatchDirectory struct {
-	Directory  string             `json:"dir,omitempty"`
-	FromSource []NimbusFromSource `json:"fromSource,omitempty"`
-}
-
-// MatchPattern defines a pattern for process policies
-type MatchPattern struct {
-	Pattern string `json:"pattern,omitempty"`
-}
-
-// MatchSyscall defines a syscall for syscall policies
-type MatchSyscall struct {
-	Syscalls   []string            `json:"syscalls,omitempty"`
-	FromSource []SyscallFromSource `json:"fromSource,omitempty"`
-}
-
-type MatchSyscallPath struct {
-	Path       string              `json:"path,omitempty"`
-	Recursive  bool                `json:"recursive,omitempty"`
-	Syscalls   []string            `json:"syscall,omitempty"`
-	FromSource []SyscallFromSource `json:"fromSource,omitempty"`
-}
-
-type SyscallFromSource struct {
-	Path string `json:"path,omitempty"`
-	Dir  string `json:"dir,omitempty"`
-}
-
-// MatchCapability defines a capability for capabilities policies
-type MatchCapability struct {
-	Capability string             `json:"capability,omitempty"`
-	FromSource []NimbusFromSource `json:"fromSource,omitempty"`
-}
-
-// FromSource defines a source path for directory-based policies
-type NimbusFromSource struct {
-	Path string `json:"path,omitempty"`
+	RuleAction string              `json:"action"`
+	Mode       string              `json:"mode,omitempty"`
+	Params     map[string][]string `json:"params,omitempty"`
 }
 
 // NimbusPolicyStatus defines the observed state of NimbusPolicy
 type NimbusPolicyStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	PolicyStatus string `json:"status"`
+	Status string `json:"status"`
 }
 
 //+kubebuilder:object:root=true

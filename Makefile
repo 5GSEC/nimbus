@@ -29,6 +29,10 @@ SHELL = /usr/bin/env bash -o pipefail
 .PHONY: all
 all: build
 
+.PHONY: cleanup
+cleanup:
+	@kubectl delete si --all && kubectl delete sib --all -A && kubectl delete csib --all -A && kubectl delete np --all -A && kubectl delete cwnp --all -A
+
 ##@ General
 
 # The help target prints out all targets with their descriptions organized
@@ -54,7 +58,7 @@ manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and Cust
 
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
-	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./pkg/..."
+	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./api/..."
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.

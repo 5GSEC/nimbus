@@ -9,39 +9,25 @@ import (
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
-	ctrl "sigs.k8s.io/controller-runtime"
-
-	v1 "github.com/5GSEC/nimbus/api/v1"
-	"github.com/5GSEC/nimbus/pkg/processor/intentbinder"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	v1 "github.com/5GSEC/nimbus/api/v1"
+	"github.com/5GSEC/nimbus/pkg/processor/intentbinder"
 )
 
 // BuildNimbusPolicy generates a NimbusPolicy based on SecurityIntent and SecurityIntentBinding.
-func BuildNimbusPolicy(ctx context.Context, client client.Client, req ctrl.Request, bindingInfo *intentbinder.BindingInfo) (*v1.NimbusPolicy, error) {
+func BuildNimbusPolicy(ctx context.Context, client client.Client, bindingInfo *intentbinder.BindingInfo) (*v1.NimbusPolicy, error) {
 	log := log.FromContext(ctx)
 	log.Info("Starting NimbusPolicy building")
-
-	// Validates bindingInfo.
-	if bindingInfo == nil || len(bindingInfo.IntentNames) == 0 || len(bindingInfo.IntentNamespaces) == 0 ||
-		len(bindingInfo.BindingNames) == 0 || len(bindingInfo.BindingNamespaces) == 0 {
-		return nil, fmt.Errorf("invalid bindingInfo: one or more arrays are empty")
-	}
 
 	var nimbusRulesList []v1.NimbusRules
 
 	// Iterate over intent names to build rules.
-	for i, intentName := range bindingInfo.IntentNames {
-		// Checks for array length consistency.
-		if i >= len(bindingInfo.IntentNamespaces) || i >= len(bindingInfo.BindingNames) ||
-			i >= len(bindingInfo.BindingNamespaces) {
-			return nil, fmt.Errorf("index out of range in bindingInfo arrays")
-		}
-
-		intentNamespace := bindingInfo.IntentNamespaces[i]
-		intent, err := fetchIntentByName(ctx, client, intentName, intentNamespace)
+	for _, intentName := range bindingInfo.IntentNames {
+		intent, err := fetchIntentByName(ctx, client, intentName)
 		if err != nil {
 			return nil, err
 		}
@@ -52,31 +38,22 @@ func BuildNimbusPolicy(ctx context.Context, client client.Client, req ctrl.Reque
 			return nil, fmt.Errorf("no intents or bindings to process")
 		}
 
-		var rules []v1.Rule
-
 		// Constructs a rule from the intent parameters.
 		rule := v1.Rule{
-			RuleAction:        intent.Spec.Intent.Action,
-			MatchProtocols:    []v1.MatchProtocol{},
-			MatchPaths:        []v1.MatchPath{},
-			MatchDirectories:  []v1.MatchDirectory{},
-			MatchPatterns:     []v1.MatchPattern{},
-			MatchCapabilities: []v1.MatchCapability{},
-			MatchSyscalls:     []v1.MatchSyscall{},
-			FromCIDRSet:       []v1.CIDRSet{},
-			ToPorts:           []v1.ToPort{},
+			RuleAction: intent.Spec.Intent.Action,
+			Mode:       intent.Spec.Intent.Mode,
+			Params:     map[string][]string{},
 		}
 
-		for _, param := range intent.Spec.Intent.Params {
-			processSecurityIntentParams(&rule, param)
+		for key, val := range intent.Spec.Intent.Params {
+			rule.Params[key] = val
 		}
-		rules = append(rules, rule)
 
 		nimbusRule := v1.NimbusRules{
-			Id:          intent.Spec.Intent.Id,
+			ID:          intent.Spec.Intent.ID,
 			Type:        "", // Set Type if necessary
 			Description: intent.Spec.Intent.Description,
-			Rule:        rules,
+			Rule:        rule,
 		}
 		nimbusRulesList = append(nimbusRulesList, nimbusRule)
 	}
@@ -108,7 +85,7 @@ func BuildNimbusPolicy(ctx context.Context, client client.Client, req ctrl.Reque
 			NimbusRules: nimbusRulesList,
 		},
 		Status: v1.NimbusPolicyStatus{
-			PolicyStatus: "Pending",
+			Status: "Pending",
 		},
 	}
 
@@ -117,11 +94,11 @@ func BuildNimbusPolicy(ctx context.Context, client client.Client, req ctrl.Reque
 }
 
 // fetchIntentByName fetches a SecurityIntent by its name and namespace.
-func fetchIntentByName(ctx context.Context, client client.Client, name string, namespace string) (*v1.SecurityIntent, error) {
+func fetchIntentByName(ctx context.Context, client client.Client, name string) (*v1.SecurityIntent, error) {
 	log := log.FromContext(ctx)
 
 	var intent v1.SecurityIntent
-	if err := client.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &intent); err != nil {
+	if err := client.Get(ctx, types.NamespacedName{Name: name}, &intent); err != nil {
 		log.Error(err, "Failed to get SecurityIntent")
 		return nil, err
 	}
@@ -137,69 +114,6 @@ func fetchBindingByName(ctx context.Context, client client.Client, name string, 
 		return nil, err
 	}
 	return &binding, nil
-}
-
-// processSecurityIntentParams processes the parameters of a SecurityIntent.
-func processSecurityIntentParams(rule *v1.Rule, param v1.SecurityIntentParams) {
-	// Processes MatchProtocols.
-	for _, mp := range param.MatchProtocols {
-		rule.MatchProtocols = append(rule.MatchProtocols, v1.MatchProtocol(mp))
-
-	}
-
-	// Processes MatchPaths.
-	for _, mp := range param.MatchPaths {
-		rule.MatchPaths = append(rule.MatchPaths, v1.MatchPath(mp))
-	}
-
-	// Processes MatchDirectories.
-	for _, md := range param.MatchDirectories {
-		rule.MatchDirectories = append(rule.MatchDirectories, v1.MatchDirectory{
-			Directory:  md.Directory,
-			FromSource: []v1.NimbusFromSource{},
-		})
-	}
-
-	// Processes MatchPatterns.
-	for _, mp := range param.MatchPatterns {
-		rule.MatchPatterns = append(rule.MatchPatterns, v1.MatchPattern(mp))
-	}
-
-	// Processes MatchCapabilities.
-	for _, mc := range param.MatchCapabilities {
-		matchCapability := v1.MatchCapability{
-			Capability: mc.Capability,
-			FromSource: []v1.NimbusFromSource{},
-		}
-		rule.MatchCapabilities = append(rule.MatchCapabilities, matchCapability)
-	}
-
-	// Processes MatchSyscalls and MatchSyscallPaths.
-	for _, ms := range param.MatchSyscalls {
-		var matchSyscall v1.MatchSyscall
-		matchSyscall.Syscalls = ms.Syscalls
-		rule.MatchSyscalls = append(rule.MatchSyscalls, matchSyscall)
-	}
-
-	for _, msp := range param.MatchSyscallPaths {
-		rule.MatchSyscallPaths = append(rule.MatchSyscallPaths, v1.MatchSyscallPath(msp))
-	}
-
-	// Processes FromCIDRSet.
-	for _, fcs := range param.FromCIDRSet {
-		rule.FromCIDRSet = append(rule.FromCIDRSet, v1.CIDRSet(fcs))
-	}
-
-	// Processes ToPorts.
-	for _, tp := range param.ToPorts {
-		var ports []v1.Port
-		for _, p := range tp.Ports {
-			ports = append(ports, v1.Port(p))
-		}
-		rule.ToPorts = append(rule.ToPorts, v1.ToPort{
-			Ports: ports,
-		})
-	}
 }
 
 // extractSelector extracts match labels from a Selector.
@@ -293,4 +207,86 @@ func ProcessMatchLabels(any, all []v1.ResourceFilter) (map[string]string, error)
 	}
 
 	return matchLabels, nil
+}
+
+func BuildClusterNimbusPolicy(ctx context.Context, client client.Client, clusterBindingInfo *intentbinder.BindingInfo) (*v1.ClusterNimbusPolicy, error) {
+	logger := log.FromContext(ctx)
+	logger.Info("Building ClusterNimbusPolicy")
+
+	var nimbusRules []v1.NimbusRules
+	for _, intentName := range clusterBindingInfo.IntentNames {
+		intent, err := fetchIntentByName(ctx, client, intentName)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(clusterBindingInfo.IntentNames) == 0 || len(clusterBindingInfo.BindingNames) == 0 {
+			logger.Info("No SecurityIntents or SecurityIntentsBindings to process")
+			return nil, fmt.Errorf("no SecurityIntents or SecurityIntentsBindings to process")
+		}
+
+		rule := v1.Rule{
+			RuleAction: intent.Spec.Intent.Action,
+			Mode:       intent.Spec.Intent.Mode,
+			Params:     map[string][]string{},
+		}
+
+		for key, val := range intent.Spec.Intent.Params {
+			rule.Params[key] = val
+		}
+
+		nimbusRule := v1.NimbusRules{
+			ID:          intent.Spec.Intent.ID,
+			Type:        "", // Set Type if necessary
+			Description: intent.Spec.Intent.Description,
+			Rule:        rule,
+		}
+		nimbusRules = append(nimbusRules, nimbusRule)
+	}
+
+	binding, err := fetchClusterBindingByName(ctx, client, clusterBindingInfo.BindingNames[0])
+	if err != nil {
+		return nil, err
+	}
+
+	clusterBindingSelector := extractClusterBindingSelector(binding.Spec.Selector)
+
+	clusterNimbusPolicy := &v1.ClusterNimbusPolicy{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: binding.Name,
+		},
+		Spec: v1.ClusterNimbusPolicySpec{
+			Selector:    clusterBindingSelector,
+			NimbusRules: nimbusRules,
+		},
+		Status: v1.ClusterNimbusPolicyStatus{
+			Status: "Pending",
+		},
+	}
+
+	logger.Info("ClusterNimbusPolicy built successfully", "ClusterNimbusPolicy", clusterNimbusPolicy)
+	return clusterNimbusPolicy, nil
+}
+
+func extractClusterBindingSelector(cwSelector v1.CwSelector) v1.CwSelector {
+	var clusterBindingSelector v1.CwSelector
+	for _, resource := range cwSelector.Resources {
+		var cwresource v1.CwResource
+		cwresource.Kind = resource.Kind
+		cwresource.Name = resource.Name
+		cwresource.Namespace = resource.Namespace
+		cwresource.MatchLabels = resource.MatchLabels
+		clusterBindingSelector.Resources = append(clusterBindingSelector.Resources, cwresource)
+	}
+	return clusterBindingSelector
+}
+
+func fetchClusterBindingByName(ctx context.Context, client client.Client, clusterBindingName string) (v1.ClusterSecurityIntentBinding, error) {
+	logger := log.FromContext(ctx)
+	var clusterBinding v1.ClusterSecurityIntentBinding
+	if err := client.Get(ctx, types.NamespacedName{Name: clusterBindingName}, &clusterBinding); err != nil {
+		logger.Error(err, "failed to get ClusterSecurityIntentBinding", "ClusterSecurityIntentBinding", clusterBindingName)
+		return v1.ClusterSecurityIntentBinding{}, err
+	}
+	return clusterBinding, nil
 }
