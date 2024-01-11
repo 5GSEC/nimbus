@@ -12,35 +12,34 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	v1 "github.com/5GSEC/nimbus/api/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+
+	v1 "github.com/5GSEC/nimbus/api/v1"
 )
 
-// WatcherIntent is a struct that holds a Kubernetes client.
-type WatcherIntent struct {
+// SecurityIntent is a struct that holds a Kubernetes client.
+type SecurityIntent struct {
 	Client client.Client // Client to interact with Kubernetes resources.
 }
 
-// NewWatcherIntent creates a new instance of WatcherIntent.
-func NewWatcherIntent(client client.Client) (*WatcherIntent, error) {
+// NewSecurityIntent creates a new instance of SecurityIntent.
+func NewSecurityIntent(client client.Client) (*SecurityIntent, error) {
 	if client == nil {
-		// Return an error if the client is not provided.
-		return nil, fmt.Errorf("WatcherIntent: Client is nil")
+		return nil, fmt.Errorf("SecurityIntent: Client is nil")
 	}
 
-	// Return a new WatcherIntent instance with the provided client.
-	return &WatcherIntent{
+	return &SecurityIntent{
 		Client: client,
 	}, nil
 }
 
 // Reconcile is the method that handles the reconciliation of the Kubernetes resources.
-func (wi *WatcherIntent) Reconcile(ctx context.Context, req ctrl.Request) (*v1.SecurityIntent, error) {
-	log := log.FromContext(ctx)
+func (wi *SecurityIntent) Reconcile(ctx context.Context, req ctrl.Request) (*v1.SecurityIntent, error) {
+	logger := log.FromContext(ctx)
 
 	if wi == nil || wi.Client == nil {
-		log.Info("WatcherIntent is nil or Client is nil in Reconcile")
-		return nil, fmt.Errorf("WatcherIntent or Client is not initialized")
+		logger.Info("SecurityIntent is nil or Client is nil in Reconcile")
+		return nil, fmt.Errorf("SecurityIntent or Client is not initialized")
 	}
 
 	intent := &v1.SecurityIntent{}
@@ -52,7 +51,7 @@ func (wi *WatcherIntent) Reconcile(ctx context.Context, req ctrl.Request) (*v1.S
 		if errors.IsNotFound(err) {
 			return nil, nil
 		}
-		log.Error(err, "Failed to get SecurityIntent", "Name", req.Name, "Namespace", req.Namespace)
+		logger.Error(err, "failed to get SecurityIntent", "Name", req.Name, "Namespace", req.Namespace)
 		return nil, err
 	}
 }

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2023 Authors of Nimbus
+
 package watcher
 
 import (
@@ -13,26 +16,25 @@ import (
 	v1 "github.com/5GSEC/nimbus/api/v1"
 )
 
-type WatcherClusterBinding struct {
+type ClusterSecurityIntentBinding struct {
 	Client client.Client
 }
 
-func NewWatcherClusterBinding(client client.Client) (*WatcherClusterBinding, error) {
+func NewClusterSecurityIntentBinding(client client.Client) (*ClusterSecurityIntentBinding, error) {
 	if client == nil {
-		return nil, fmt.Errorf("WatcherClusterBinding: Client is nil")
+		return nil, fmt.Errorf("ClusterSecurityIntentBinding: Client is nil")
 	}
 
-	// Return a new WatcherBinding instance with the provided client.
-	return &WatcherClusterBinding{
+	return &ClusterSecurityIntentBinding{
 		Client: client,
 	}, nil
 }
 
-func (wcb *WatcherClusterBinding) Reconcile(ctx context.Context, req ctrl.Request) (*v1.ClusterSecurityIntentBinding, error) {
+func (wcb *ClusterSecurityIntentBinding) Reconcile(ctx context.Context, req ctrl.Request) (*v1.ClusterSecurityIntentBinding, error) {
 	logger := log.FromContext(ctx)
 	if wcb == nil || wcb.Client == nil {
-		logger.Info("WatcherClusterBinding is nil or Client is nil in Reconcile")
-		return nil, fmt.Errorf("WatcherClusterBinding or Client is not initialized")
+		logger.Info("ClusterSecurityIntentBinding is nil or Client is nil in Reconcile")
+		return nil, fmt.Errorf("ClusterSecurityIntentBinding or Client is not initialized")
 	}
 
 	clusterSib := &v1.ClusterSecurityIntentBinding{}

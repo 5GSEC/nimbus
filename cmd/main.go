@@ -19,14 +19,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
-	// Importing custom API types and controllers
-
 	v1 "github.com/5GSEC/nimbus/api/v1"
 	"github.com/5GSEC/nimbus/internal/controller"
-	"github.com/5GSEC/nimbus/pkg/exporter/nimbuspolicy"
-	"github.com/5GSEC/nimbus/pkg/receiver/securityintent"
-	"github.com/5GSEC/nimbus/pkg/receiver/securityintentbinding"
-	"github.com/5GSEC/nimbus/pkg/receiver/watcher"
+	"github.com/5GSEC/nimbus/pkg/watcher"
 	// Importing third-party Kubernetes resource types
 	//+kubebuilder:scaffold:imports
 )
@@ -88,25 +83,25 @@ func main() {
 		os.Exit(1)
 	}
 
-	watcherController, err := watcher.NewWatcherController(mgr.GetClient())
+	controllerWatcher, err := watcher.NewController(mgr.GetClient())
 	if err != nil {
-		setupLog.Error(err, "Unable to create WatcherController")
+		setupLog.Error(err, "Unable to create ControllerWatcher")
 		os.Exit(1)
 	}
 
-	if err = (&securityintent.SecurityIntentReconciler{
+	if err = (&controller.SecurityIntentReconciler{
 		Client:            mgr.GetClient(),
 		Scheme:            mgr.GetScheme(),
-		WatcherController: watcherController,
+		ControllerWatcher: controllerWatcher,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "Unable to create controller", "controller", "SecurityIntent")
 		os.Exit(1)
 	}
 
-	if err = (&securityintentbinding.SecurityIntentBindingReconciler{
+	if err = (&controller.SecurityIntentBindingReconciler{
 		Client:            mgr.GetClient(),
 		Scheme:            mgr.GetScheme(),
-		WatcherController: watcherController,
+		ControllerWatcher: controllerWatcher,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "Unable to create controller", "controller", "SecurityIntentBinding")
 		os.Exit(1)
@@ -115,23 +110,23 @@ func main() {
 	if err = (&controller.ClusterSecurityIntentBindingReconciler{
 		Client:            mgr.GetClient(),
 		Scheme:            mgr.GetScheme(),
-		WatcherController: watcherController,
+		ControllerWatcher: controllerWatcher,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterSecurityIntentBinding")
 		os.Exit(1)
 	}
 
-	nimbusPolicyReconciler := nimbuspolicy.NewNimbusPolicyReconciler(mgr.GetClient(), mgr.GetScheme())
+	nimbusPolicyReconciler := controller.NewNimbusPolicyReconciler(mgr.GetClient(), mgr.GetScheme())
 	if err != nil {
 		setupLog.Error(err, "Unable to create NimbusPolicyReconciler")
 		os.Exit(1)
 	}
-	watcherNimbusPolicy, err := watcher.NewWatcherNimbusPolicy(mgr.GetClient())
+	nimbusPolicywatcher, err := watcher.NewNimbusPolicy(mgr.GetClient())
 	if err != nil {
-		setupLog.Error(err, "Unable to create WatcherNimbusPolicy")
+		setupLog.Error(err, "Unable to create NimbusPolicyWatcher")
 		os.Exit(1)
 	}
-	nimbusPolicyReconciler.WatcherNimbusPolicy = watcherNimbusPolicy
+	nimbusPolicyReconciler.NimbusPolicyWatcher = nimbusPolicywatcher
 	if err = nimbusPolicyReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "Unable to set up NimbusPolicyReconciler with manager", "controller", "NimbusPolicy")
 		os.Exit(1)

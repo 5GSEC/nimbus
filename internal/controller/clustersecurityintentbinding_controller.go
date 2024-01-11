@@ -16,15 +16,15 @@ import (
 
 	v1 "github.com/5GSEC/nimbus/api/v1"
 	"github.com/5GSEC/nimbus/pkg/processor/intentbinder"
-	"github.com/5GSEC/nimbus/pkg/processor/nimbuspolicybuilder"
-	"github.com/5GSEC/nimbus/pkg/receiver/watcher"
+	"github.com/5GSEC/nimbus/pkg/processor/policybuilder"
+	"github.com/5GSEC/nimbus/pkg/watcher"
 )
 
 // ClusterSecurityIntentBindingReconciler reconciles a ClusterSecurityIntentBinding object
 type ClusterSecurityIntentBindingReconciler struct {
 	client.Client
 	Scheme            *runtime.Scheme
-	WatcherController *watcher.WatcherController
+	ControllerWatcher *watcher.Controller
 }
 
 //+kubebuilder:rbac:groups=intent.security.nimbus.com,resources=clustersecurityintentbindings,verbs=get;list;watch;create;update;patch;delete
@@ -35,13 +35,11 @@ type ClusterSecurityIntentBindingReconciler struct {
 // move the current state of the cluster closer to the desired state.
 func (r *ClusterSecurityIntentBindingReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
-	if r.WatcherController == nil {
-		logger.Info("ClusterSecurityIntentBindingReconciler.WatcherController is nil", "WatcherController", r.WatcherController)
-		return ctrl.Result{}, fmt.Errorf("WatcherController is not properly initialized")
+	if r.ControllerWatcher == nil {
+		return ctrl.Result{}, fmt.Errorf("ControllerWatcher is not properly initialized")
 	}
 
-	// Todo: Change "Watcher" prefix to suffix.
-	clusterBinding, err := r.WatcherController.WatcherClusterBinding.Reconcile(ctx, req)
+	clusterBinding, err := r.ControllerWatcher.ClusterSecurityIntentBindingWatcher.Reconcile(ctx, req)
 	if err != nil {
 		logger.Error(err, "failed to reconcile ClusterSecurityIntentBinding", "ClusterSecurityIntentBinding", req.Name)
 		return ctrl.Result{}, err
@@ -63,8 +61,8 @@ func (r *ClusterSecurityIntentBindingReconciler) Reconcile(ctx context.Context, 
 				logger.Error(err, "failed to delete ClusterNimbusPolicy for deletion", "ClusterNimbusPolicy", clusterNp.Name)
 				return ctrl.Result{}, err
 			}
+			logger.Info("Deleted ClusterNimbusPolicy due to ClusterSecurityIntentBinding deletion", "ClusterNimbusPolicy", clusterNp.Name)
 		}
-		logger.Info("Deleted ClusterNimbusPolicy due to ClusterSecurityIntentBinding deletion", "ClusterNimbusPolicy", clusterNp.Name)
 		//Todo: Signal adapters to delete corresponding policies.
 		return ctrl.Result{}, nil
 	}
@@ -75,7 +73,7 @@ func (r *ClusterSecurityIntentBindingReconciler) Reconcile(ctx context.Context, 
 		return ctrl.Result{}, err
 	}
 
-	cwnp, err := nimbuspolicybuilder.BuildClusterNimbusPolicy(ctx, r.Client, clusterBindingInfo)
+	cwnp, err := policybuilder.BuildClusterNimbusPolicy(ctx, r.Client, clusterBindingInfo)
 	if err != nil {
 		logger.Error(err, "failed to build ClusterNimbusPolicy")
 		return ctrl.Result{}, err

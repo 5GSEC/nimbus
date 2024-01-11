@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2023 Authors of Nimbus
 
-package nimbuspolicy
+package controller
 
 import (
 	"context"
@@ -13,34 +13,34 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1 "github.com/5GSEC/nimbus/api/v1"
-	"github.com/5GSEC/nimbus/pkg/receiver/watcher"
+	"github.com/5GSEC/nimbus/pkg/watcher"
 )
 
 // NimbusPolicyReconciler reconciles a NimbusPolicy object.
 type NimbusPolicyReconciler struct {
 	client.Client
 	Scheme              *runtime.Scheme
-	WatcherNimbusPolicy *watcher.WatcherNimbusPolicy
+	NimbusPolicyWatcher *watcher.NimbusPolicy
 }
 
 // NewNimbusPolicyReconciler creates a new instance of NimbusPolicyReconciler.
 // It initializes the WatcherNimbusPolicy which watches and reacts to changes in NimbusPolicy objects.
 func NewNimbusPolicyReconciler(client client.Client, scheme *runtime.Scheme) *NimbusPolicyReconciler {
 	if client == nil {
-		fmt.Println("NimbusPolicyReconciler: Client is nil")
+		fmt.Println("NimbusPolicyReconciler.Client is nil")
 		return nil
 	}
 
-	watcherNimbusPolicy, err := watcher.NewWatcherNimbusPolicy(client)
+	nimbusPolicyWatcher, err := watcher.NewNimbusPolicy(client)
 	if err != nil {
-		fmt.Println("NimbusPolicyReconciler: Failed to initialize WatcherNimbusPolicy", err)
+		fmt.Println("failed to initialize NimbusPolicyWatcher, error:", err)
 		return nil
 	}
 
 	return &NimbusPolicyReconciler{
 		Client:              client,
 		Scheme:              scheme,
-		WatcherNimbusPolicy: watcherNimbusPolicy,
+		NimbusPolicyWatcher: nimbusPolicyWatcher,
 	}
 }
 
@@ -50,30 +50,23 @@ func NewNimbusPolicyReconciler(client client.Client, scheme *runtime.Scheme) *Ni
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the NimbusPolicy object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.16.3/pkg/reconcile
 func (r *NimbusPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
+	logger := log.FromContext(ctx)
 
-	if r.WatcherNimbusPolicy == nil {
-		return ctrl.Result{}, fmt.Errorf("NimbusPolicyReconciler: WatcherNimbusPolicy is nil")
+	if r.NimbusPolicyWatcher == nil {
+		return ctrl.Result{}, fmt.Errorf("NimbusPolicyWatcher is not properly initialized")
 	}
 
-	nimPol, err := r.WatcherNimbusPolicy.Reconcile(ctx, req)
+	nimPol, err := r.NimbusPolicyWatcher.Reconcile(ctx, req)
 	if err != nil {
-		log.Error(err, "NimbusPolicyReconciler: WatcherNimbusPolicy is error")
+		logger.Error(err, "failed to reconcile NimbusPolicy", "NimbusPolicy", req.Name)
 		return ctrl.Result{}, err
 	}
 
 	if nimPol != nil {
-		log.Info("Found: NimbusPolicy", "Name", req.Name, "Namespace", req.Namespace)
+		logger.Info("NimbusPolicy found", "Name", req.Name, "Namespace", req.Namespace)
 	} else {
-		log.Info("Not Found: NimbusPolicy")
+		logger.Info("NimbusPolicy not found", "Name", req.Name, "Namespace", req.Namespace)
 	}
 
 	return ctrl.Result{}, nil

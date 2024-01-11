@@ -29,10 +29,6 @@ SHELL = /usr/bin/env bash -o pipefail
 .PHONY: all
 all: build
 
-.PHONY: cleanup
-cleanup:
-	@kubectl delete si --all && kubectl delete sib --all -A && kubectl delete csib --all -A && kubectl delete np --all -A && kubectl delete cwnp --all -A
-
 ##@ General
 
 # The help target prints out all targets with their descriptions organized

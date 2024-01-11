@@ -13,7 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1 "github.com/5GSEC/nimbus/api/v1"
-	"github.com/5GSEC/nimbus/pkg/receiver/watcher"
+	"github.com/5GSEC/nimbus/pkg/watcher"
 )
 
 // ClusterNimbusPolicyReconciler reconciles a ClusterNimbusPolicy object
@@ -25,13 +25,13 @@ type ClusterNimbusPolicyReconciler struct {
 
 func NewClusterNimbusPolicyReconciler(client client.Client, scheme *runtime.Scheme) *ClusterNimbusPolicyReconciler {
 	if client == nil {
-		fmt.Println("ClusterNimbusPolicyReconciler: Client is nil")
+		fmt.Println("ClusterNimbusPolicyReconciler.Client is nil")
 		return nil
 	}
 
 	clusterNPWatcher, err := watcher.NewClusterNimbusPolicy(client)
 	if err != nil {
-		fmt.Println("ClusterNimbusPolicyReconciler: failed to initialize ClusterNimbusPolicy watcher", err)
+		fmt.Println("failed to initialize ClusterNimbusPolicyWatcher, error:", err)
 		return nil
 	}
 	return &ClusterNimbusPolicyReconciler{
@@ -50,8 +50,7 @@ func NewClusterNimbusPolicyReconciler(client client.Client, scheme *runtime.Sche
 func (r *ClusterNimbusPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 	if r.ClusterNimbusPolicyWatcher == nil {
-		logger.Info("ClusterNimbusPolicyReconciler.ClusterNimbusPolicyWatcher is nil", "WatcherController", r.ClusterNimbusPolicyWatcher)
-		return ctrl.Result{}, fmt.Errorf("WatcherController is not properly initialized")
+		return ctrl.Result{}, fmt.Errorf("ClusterNimbusPolicyWatcher is not properly initialized")
 	}
 
 	cwnp, err := r.ClusterNimbusPolicyWatcher.Reconcile(ctx, req)
