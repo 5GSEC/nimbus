@@ -21,7 +21,6 @@ import (
 
 	v1 "github.com/5GSEC/nimbus/api/v1"
 	"github.com/5GSEC/nimbus/internal/controller"
-	"github.com/5GSEC/nimbus/pkg/watcher"
 	// Importing third-party Kubernetes resource types
 	//+kubebuilder:scaffold:imports
 )
@@ -83,64 +82,27 @@ func main() {
 		os.Exit(1)
 	}
 
-	controllerWatcher, err := watcher.NewController(mgr.GetClient())
-	if err != nil {
-		setupLog.Error(err, "Unable to create ControllerWatcher")
-		os.Exit(1)
-	}
-
 	if err = (&controller.SecurityIntentReconciler{
-		Client:            mgr.GetClient(),
-		Scheme:            mgr.GetScheme(),
-		ControllerWatcher: controllerWatcher,
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "Unable to create controller", "controller", "SecurityIntent")
 		os.Exit(1)
 	}
 
 	if err = (&controller.SecurityIntentBindingReconciler{
-		Client:            mgr.GetClient(),
-		Scheme:            mgr.GetScheme(),
-		ControllerWatcher: controllerWatcher,
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "Unable to create controller", "controller", "SecurityIntentBinding")
 		os.Exit(1)
 	}
 
 	if err = (&controller.ClusterSecurityIntentBindingReconciler{
-		Client:            mgr.GetClient(),
-		Scheme:            mgr.GetScheme(),
-		ControllerWatcher: controllerWatcher,
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterSecurityIntentBinding")
-		os.Exit(1)
-	}
-
-	nimbusPolicyReconciler := controller.NewNimbusPolicyReconciler(mgr.GetClient(), mgr.GetScheme())
-	if err != nil {
-		setupLog.Error(err, "Unable to create NimbusPolicyReconciler")
-		os.Exit(1)
-	}
-	nimbusPolicywatcher, err := watcher.NewNimbusPolicy(mgr.GetClient())
-	if err != nil {
-		setupLog.Error(err, "Unable to create NimbusPolicyWatcher")
-		os.Exit(1)
-	}
-	nimbusPolicyReconciler.NimbusPolicyWatcher = nimbusPolicywatcher
-	if err = nimbusPolicyReconciler.SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "Unable to set up NimbusPolicyReconciler with manager", "controller", "NimbusPolicy")
-		os.Exit(1)
-	}
-
-	clusterNpReconciler := controller.NewClusterNimbusPolicyReconciler(mgr.GetClient(), mgr.GetScheme())
-	clusterNpWatcher, err := watcher.NewClusterNimbusPolicy(mgr.GetClient())
-	if err != nil {
-		setupLog.Error(err, "Unable to create ClusterNimbusPolicyWatcher")
-		os.Exit(1)
-	}
-	clusterNpReconciler.ClusterNimbusPolicyWatcher = clusterNpWatcher
-	if err = clusterNpReconciler.SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "Unable to setup ClusterNimbusPolicyReconciler with manager", "controller", "ClusterNimbusPolicy")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

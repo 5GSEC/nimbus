@@ -19,12 +19,6 @@ rules:
 - apiGroups:
   - intent.security.nimbus.com
   resources:
-  - clusternimbuspolicies/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - intent.security.nimbus.com
-  resources:
   - clusternimbuspolicies/status
   verbs:
   - get
@@ -42,12 +36,6 @@ rules:
   - patch
   - update
   - watch
-- apiGroups:
-  - intent.security.nimbus.com
-  resources:
-  - clustersecurityintentbindings/finalizers
-  verbs:
-  - update
 - apiGroups:
   - intent.security.nimbus.com
   resources:
@@ -71,12 +59,6 @@ rules:
 - apiGroups:
   - intent.security.nimbus.com
   resources:
-  - nimbuspolicies/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - intent.security.nimbus.com
-  resources:
   - nimbuspolicies/status
   verbs:
   - get
@@ -97,12 +79,6 @@ rules:
 - apiGroups:
   - intent.security.nimbus.com
   resources:
-  - securityintentbindings/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - intent.security.nimbus.com
-  resources:
   - securityintentbindings/status
   verbs:
   - get
@@ -120,12 +96,6 @@ rules:
   - patch
   - update
   - watch
-- apiGroups:
-  - intent.security.nimbus.com
-  resources:
-  - securityintents/finalizers
-  verbs:
-  - update
 - apiGroups:
   - intent.security.nimbus.com
   resources:

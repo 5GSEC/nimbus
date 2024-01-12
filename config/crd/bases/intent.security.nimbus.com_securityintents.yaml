@@ -16,7 +16,11 @@ spec:
     singular: securityintent
   scope: Cluster
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    name: v1
     schema:
       openAPIV3Schema:
         description: SecurityIntent is the Schema for the securityintents API

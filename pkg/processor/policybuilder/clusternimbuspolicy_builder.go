@@ -8,7 +8,9 @@ import (
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -16,7 +18,7 @@ import (
 	"github.com/5GSEC/nimbus/pkg/processor/intentbinder"
 )
 
-func BuildClusterNimbusPolicy(ctx context.Context, client client.Client, clusterBindingInfo *intentbinder.BindingInfo) (*v1.ClusterNimbusPolicy, error) {
+func BuildClusterNimbusPolicy(ctx context.Context, client client.Client, scheme *runtime.Scheme, clusterBindingInfo *intentbinder.BindingInfo) (*v1.ClusterNimbusPolicy, error) {
 	logger := log.FromContext(ctx)
 	logger.Info("Building ClusterNimbusPolicy")
 
@@ -69,6 +71,11 @@ func BuildClusterNimbusPolicy(ctx context.Context, client client.Client, cluster
 		Status: v1.ClusterNimbusPolicyStatus{
 			Status: "Pending",
 		},
+	}
+
+	if err = ctrl.SetControllerReference(&binding, clusterNimbusPolicy, scheme); err != nil {
+		logger.Error(err, "failed to set OwnerReference")
+		return nil, err
 	}
 
 	logger.Info("ClusterNimbusPolicy built successfully", "ClusterNimbusPolicy", clusterNimbusPolicy)

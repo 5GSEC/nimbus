@@ -16,7 +16,11 @@ spec:
     singular: clustersecurityintentbinding
   scope: Cluster
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    name: v1
     schema:
       openAPIV3Schema:
         description: ClusterSecurityIntentBinding is the Schema for the clustersecurityintentbindings

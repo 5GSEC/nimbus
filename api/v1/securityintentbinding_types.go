@@ -45,6 +45,7 @@ type SecurityIntentBindingStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:resource: shortName="sib"
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status"
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // SecurityIntentBinding is the Schema for the securityintentbindings API

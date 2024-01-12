@@ -52,6 +52,7 @@ type SecurityIntentStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:shortName="si",scope="Cluster"
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status"
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // SecurityIntent is the Schema for the securityintents API

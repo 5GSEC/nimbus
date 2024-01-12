@@ -8,7 +8,9 @@ import (
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -17,7 +19,7 @@ import (
 )
 
 // BuildNimbusPolicy generates a NimbusPolicy based on SecurityIntent and SecurityIntentBinding.
-func BuildNimbusPolicy(ctx context.Context, client client.Client, bindingInfo *intentbinder.BindingInfo) (*v1.NimbusPolicy, error) {
+func BuildNimbusPolicy(ctx context.Context, client client.Client, scheme *runtime.Scheme, bindingInfo *intentbinder.BindingInfo) (*v1.NimbusPolicy, error) {
 	logger := log.FromContext(ctx)
 	logger.Info("Building NimbusPolicy")
 
@@ -85,6 +87,11 @@ func BuildNimbusPolicy(ctx context.Context, client client.Client, bindingInfo *i
 		Status: v1.NimbusPolicyStatus{
 			Status: "Pending",
 		},
+	}
+
+	if err = ctrl.SetControllerReference(binding, nimbusPolicy, scheme); err != nil {
+		logger.Error(err, "failed to set OwnerReference")
+		return nil, err
 	}
 
 	logger.Info("NimbusPolicy built successfully", "Policy", nimbusPolicy)

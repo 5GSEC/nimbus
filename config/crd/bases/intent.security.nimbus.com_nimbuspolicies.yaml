@@ -16,7 +16,11 @@ spec:
     singular: nimbuspolicy
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    name: v1
     schema:
       openAPIV3Schema:
         description: NimbusPolicy is the Schema for the nimbuspolicies API
@@ -61,6 +65,7 @@ spec:
                           type: object
                       required:
                       - action
+                      - mode
                       type: object
                     type:
                       type: string

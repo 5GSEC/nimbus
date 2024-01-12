@@ -32,7 +32,7 @@ type NimbusRules struct {
 
 type Rule struct {
 	RuleAction string              `json:"action"`
-	Mode       string              `json:"mode,omitempty"`
+	Mode       string              `json:"mode"`
 	Params     map[string][]string `json:"params,omitempty"`
 }
 
@@ -43,8 +43,8 @@ type NimbusPolicyStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status"
 //+kubebuilder:resource: shortName="np"
-//+k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // NimbusPolicy is the Schema for the nimbuspolicies API
 type NimbusPolicy struct {

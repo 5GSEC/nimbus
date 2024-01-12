@@ -21,7 +21,7 @@ type ClusterNimbusPolicyStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:resource:scope=Cluster,shortName="cwnp"
-//+k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+//+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status"
 
 // ClusterNimbusPolicy is the Schema for the clusternimbuspolicies API
 type ClusterNimbusPolicy struct {

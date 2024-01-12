@@ -16,7 +16,11 @@ spec:
     singular: clusternimbuspolicy
   scope: Cluster
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    name: v1
     schema:
       openAPIV3Schema:
         description: ClusterNimbusPolicy is the Schema for the clusternimbuspolicies
@@ -60,6 +64,7 @@ spec:
                           type: object
                       required:
                       - action
+                      - mode
                       type: object
                     type:
                       type: string
