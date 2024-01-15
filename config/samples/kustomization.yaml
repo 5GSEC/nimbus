@@ -3,4 +3,6 @@ resources:
 - intent_v1_securityintent.yaml
 - intent_v1_securityintentbinding.yaml
 - intent_v1_nimbuspolicy.yaml
+- intent_v1_clusternimbuspolicy.yaml
+- intent_v1_clustersecurityintentbinding.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

@@ -16,7 +16,11 @@ spec:
     singular: nimbuspolicy
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    name: v1
     schema:
       openAPIV3Schema:
         description: NimbusPolicy is the Schema for the nimbuspolicies API
@@ -48,151 +52,21 @@ spec:
                     id:
                       type: string
                     rule:
-                      items:
-                        properties:
-                          action:
-                            type: string
-                          fromCIDRSet:
+                      properties:
+                        action:
+                          type: string
+                        mode:
+                          type: string
+                        params:
+                          additionalProperties:
                             items:
-                              description: CIDRSet defines CIDR ranges for network
-                                policies
-                              properties:
-                                cidr:
-                                  type: string
-                              type: object
+                              type: string
                             type: array
-                          matchCapabilities:
-                            description: 'Capabilities: MatchCapabilities'
-                            items:
-                              description: MatchCapability defines a capability for
-                                capabilities policies
-                              properties:
-                                capability:
-                                  type: string
-                                fromSource:
-                                  items:
-                                    description: FromSource defines a source path
-                                      for directory-based policies
-                                    properties:
-                                      path:
-                                        type: string
-                                    type: object
-                                  type: array
-                              type: object
-                            type: array
-                          matchDirectories:
-                            items:
-                              description: MatchDirectory defines a directory for
-                                process or file policies
-                              properties:
-                                dir:
-                                  type: string
-                                fromSource:
-                                  items:
-                                    description: FromSource defines a source path
-                                      for directory-based policies
-                                    properties:
-                                      path:
-                                        type: string
-                                    type: object
-                                  type: array
-                              type: object
-                            type: array
-                          matchPaths:
-                            description: 'Process: MatchPaths, MatchDirectories, MatchPatterns
-                              File: MatchPaths, MatchDirectories,  MatchPatterns'
-                            items:
-                              description: MatchPath defines a path for process or
-                                file policies
-                              properties:
-                                path:
-                                  type: string
-                              type: object
-                            type: array
-                          matchPatterns:
-                            items:
-                              description: MatchPattern defines a pattern for process
-                                policies
-                              properties:
-                                pattern:
-                                  type: string
-                              type: object
-                            type: array
-                          matchProtocols:
-                            description: 'Network: MatchProtocols'
-                            items:
-                              description: MatchProtocol defines a protocol for network
-                                policies
-                              properties:
-                                protocol:
-                                  type: string
-                              type: object
-                            type: array
-                          matchSyscallPaths:
-                            items:
-                              properties:
-                                fromSource:
-                                  items:
-                                    properties:
-                                      dir:
-                                        type: string
-                                      path:
-                                        type: string
-                                    type: object
-                                  type: array
-                                path:
-                                  type: string
-                                recursive:
-                                  type: boolean
-                                syscall:
-                                  items:
-                                    type: string
-                                  type: array
-                              type: object
-                            type: array
-                          matchSyscalls:
-                            description: 'Syscalls: MatchSyscalls'
-                            items:
-                              description: MatchSyscall defines a syscall for syscall
-                                policies
-                              properties:
-                                fromSource:
-                                  items:
-                                    properties:
-                                      dir:
-                                        type: string
-                                      path:
-                                        type: string
-                                    type: object
-                                  type: array
-                                syscalls:
-                                  items:
-                                    type: string
-                                  type: array
-                              type: object
-                            type: array
-                          toPorts:
-                            items:
-                              description: ToPort defines ports and protocols for
-                                network policies
-                              properties:
-                                ports:
-                                  items:
-                                    description: Port defines a network port and its
-                                      protocol
-                                    properties:
-                                      port:
-                                        type: string
-                                      protocol:
-                                        type: string
-                                    type: object
-                                  type: array
-                              type: object
-                            type: array
-                        required:
-                        - action
-                        type: object
-                      type: array
+                          type: object
+                      required:
+                      - action
+                      - mode
+                      type: object
                     type:
                       type: string
                   required:

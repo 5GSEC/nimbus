@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: intent.security.nimbus.com/v1
+kind: SecurityIntent
+metadata:
+  name: pkg-mgr-exec-single-nsscoped
+spec:
+  intent:
+    id: swDeploymentTools
+    description: "Do not allow the execution of package managers inside the containers"
+    action: Audit
+    mode: strict
+---
+apiVersion: intent.security.nimbus.com/v1
+kind: SecurityIntentBinding
+metadata:
+  name: pkg-mgr-exec-single-nsscoped-binding
+spec:
+  intents:
+    - name: pkg-mgr-exec-single-nsscoped
+  selector:
+    any:
+      - resources:
+          kind: Pod
+          namespace: default
+          matchLabels:
+            app: nginx

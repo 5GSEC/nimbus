@@ -1,158 +1,290 @@
 # Quick Tutorials
 
-## Deploy test pod
-```
-$ kubectl apply -f ./test/env/multiubuntu.yaml
+## Create a sample deployment
+
+```shell
+$ kubectl apply -f ./test/env/nginx-deploy.yaml
+deployment.apps/nginx created
 ```
 
-## Sample
+## Run Nimbus Operator
 
-### Run Operators (Nimbus)
-```
-~/nimbus_accuknox$ make run
-test -s /home/cclab/nimbus_accuknox/bin/controller-gen && /home/cclab/nimbus_accuknox/bin/controller-gen --version | grep -q v0.13.0 || \
-GOBIN=/home/cclab/nimbus_accuknox/bin go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.13.0
-/home/cclab/nimbus_accuknox/bin/controller-gen rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
-/home/cclab/nimbus_accuknox/bin/controller-gen object:headerFile="hack/boilerplate.go.txt" paths="./pkg/..."
+```shell
+$ make run
+test -s /Users/anurag/workspace/nimbus/bin/controller-gen && /Users/anurag/workspace/nimbus/bin/controller-gen --version | grep -q v0.13.0 || \
+        GOBIN=/Users/anurag/workspace/nimbus/bin go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.13.0
+/Users/anurag/workspace/nimbus/bin/controller-gen rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+/Users/anurag/workspace/nimbus/bin/controller-gen object:headerFile="hack/boilerplate.go.txt" paths="./api/..."
 go fmt ./...
 go vet ./...
 go run cmd/main.go
-2024-01-09T13:36:57Z    INFO    setup   Starting manager
-2024-01-09T13:36:57Z    INFO    controller-runtime.metrics      Starting metrics server
-2024-01-09T13:36:57Z    INFO    starting server {"kind": "health probe", "addr": "[::]:8081"}
-2024-01-09T13:36:57Z    INFO    Starting EventSource    {"controller": "securityintent", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "SecurityIntent", "source": "kind source: *v1.SecurityIntent"}
-2024-01-09T13:36:57Z    INFO    Starting EventSource    {"controller": "nimbuspolicy", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "NimbusPolicy", "source": "kind source: *v1.NimbusPolicy"}
-...
+2024-01-13T22:12:20+05:30       INFO    setup   Starting manager
+2024-01-13T22:12:20+05:30       INFO    starting server {"kind": "health probe", "addr": "[::]:8081"}
+2024-01-13T22:12:20+05:30       INFO    controller-runtime.metrics      Starting metrics server
+2024-01-13T22:12:20+05:30       INFO    controller-runtime.metrics      Serving metrics server  {"bindAddress": ":8080", "secure": false}
+2024-01-13T22:12:20+05:30       INFO    Starting EventSource    {"controller": "clustersecurityintentbinding", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "ClusterSecurityIntentBinding", "source": "kind source: *v1.ClusterSecurityIntentBinding"}
+2024-01-13T22:12:20+05:30       INFO    Starting EventSource    {"controller": "securityintentbinding", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "SecurityIntentBinding", "source": "kind source: *v1.SecurityIntentBinding"}
+2024-01-13T22:12:20+05:30       INFO    Starting EventSource    {"controller": "securityintentbinding", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "SecurityIntentBinding", "source": "kind source: *v1.NimbusPolicy"}
+2024-01-13T22:12:20+05:30       INFO    Starting Controller     {"controller": "securityintentbinding", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "SecurityIntentBinding"}
+2024-01-13T22:12:20+05:30       INFO    Starting EventSource    {"controller": "clustersecurityintentbinding", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "ClusterSecurityIntentBinding", "source": "kind source: *v1.ClusterNimbusPolicy"}
+2024-01-13T22:12:20+05:30       INFO    Starting Controller     {"controller": "clustersecurityintentbinding", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "ClusterSecurityIntentBinding"}
+2024-01-13T22:12:20+05:30       INFO    Starting EventSource    {"controller": "securityintent", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "SecurityIntent", "source": "kind source: *v1.SecurityIntent"}
+2024-01-13T22:12:20+05:30       INFO    Starting Controller     {"controller": "securityintent", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "SecurityIntent"}
+2024-01-13T22:12:20+05:30       INFO    Starting workers        {"controller": "securityintent", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "SecurityIntent", "worker count": 1}
+2024-01-13T22:12:20+05:30       INFO    Starting workers        {"controller": "clustersecurityintentbinding", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "ClusterSecurityIntentBinding", "worker count": 1}
+2024-01-13T22:12:20+05:30       INFO    Starting workers        {"controller": "securityintentbinding", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "SecurityIntentBinding", "worker count": 1}
 ```
 
-### Run Adapter (in this example, KubeArmor)
-```
-~/nimbus_accuknox$ cd pkg/nimbus-kubearmor
-~/nimbus_accuknox/pkg/nimbus-kubearmor$ make build
-~/nimbus_accuknox/pkg/nimbus-kubearmor$ make run
-...
-2024/01/09 13:36:18 Starting Kubernetes client configuration
-2024/01/09 13:36:18 Starting NimbusPolicyWatcher
-2024/01/09 13:36:18 Starting policy processing loop
+## Run Adapter (in this example, KubeArmor)
+
+```shell
+$ cd pkg/adapter/nimbus-kubearmor
+$ make run
+{"level":"info","ts":"2024-01-13T22:13:25+05:30","msg":"KubeArmor Adapter started"}
+{"level":"info","ts":"2024-01-13T22:13:25+05:30","msg":"NimbusPolicy watcher started"}
 ```
 
-### Create and apply Securityintent and SecurityintentBinding
-```
-$ cd nimbus_accuknox/test/v2
-~/nimbus_accuknox/test/v2$ kubectl apply -f intents/system/intent-path-block.yaml
-securityintent.intent.security.nimbus.com/group-1-proc-path-sleep-block created
+## Create SecurityIntent and SecurityIntentBinding
+
+```shell
+$ kubectl apply -f ./test/v2/namespaced/multiple-si-sib-namespaced.yaml
+securityintent.intent.security.nimbus.com/pkg-mgr-exec-multiple-nsscoped created
+securityintent.intent.security.nimbus.com/unauthorized-sa-token-access-multiple-nsscoped created
+securityintent.intent.security.nimbus.com/dns-manipulation-multiple-nsscoped created
+securityintentbinding.intent.security.nimbus.com/multiple-sis-nsscoped-binding created
 ```
 
-```
-~/nimbus_accuknox/test/v2$ kubectl apply -f bindings/system/binding-path-block.yaml
-securityintentbinding.intent.security.nimbus.com/sys-proc-path-sleep-block created
-```
+## Verify SecurityIntent and SecurityIntentBinding
 
-
-### Verify SecurityIntent and SecurityIntentBinding
-You can also check the operator's logs to see the detection and the process of creating the Nimbus Policy. 
-
-```
-...
-2024-01-09T13:37:06Z    INFO    SecurityIntent resource found   {"controller": "securityintent", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "SecurityIntent", "SecurityIntent": {"name":"group-1-proc-path-sleep-block","namespace":"multiubuntu"}, "namespace": "multiubuntu", "name": "group-1-proc-path-sleep-block", "reconcileID": "5f7f67ea-33af-46b9-942a-af99a792c621", "Name": "group-1-proc-path-sleep-block", "Namespace": "multiubuntu"}
-2024-01-09T13:37:19Z    INFO    SecurityIntentBinding resource found    {"controller": "securityintentbinding", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "SecurityIntentBinding", "SecurityIntentBinding": {"name":"sys-proc-path-sleep-block","namespace":"multiubuntu"}, "namespace": "multiubuntu", "name": "sys-proc-path-sleep-block", "reconcileID": "6425366f-c6ca-4a73-87e1-1191d7984166", "Name": "sys-proc-path-sleep-block", "Namespace": "multiubuntu"}
-2024-01-09T13:37:19Z    INFO    Starting intent and binding matching    {"controller": "securityintentbinding", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "SecurityIntentBinding", "SecurityIntentBinding": {"name":"sys-proc-path-sleep-block","namespace":"multiubuntu"}, "namespace": "multiubuntu", "name": "sys-proc-path-sleep-block", "reconcileID": "6425366f-c6ca-4a73-87e1-1191d7984166"}
-2024-01-09T13:37:19Z    INFO    Matching completed      {"controller": "securityintentbinding", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "SecurityIntentBinding", "SecurityIntentBinding": {"name":"sys-proc-path-sleep-block","namespace":"multiubuntu"}, "namespace": "multiubuntu", "name": "sys-proc-path-sleep-block", "reconcileID": "6425366f-c6ca-4a73-87e1-1191d7984166", "Matched Intent Names": ["group-1-proc-path-sleep-block"], "Matched Binding Names": ["sys-proc-path-sleep-block"]}
-2024-01-09T13:37:19Z    INFO    Starting NimbusPolicy building  {"controller": "securityintentbinding", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "SecurityIntentBinding", "SecurityIntentBinding": {"name":"sys-proc-path-sleep-block","namespace":"multiubuntu"}, "namespace": "multiubuntu", "name": "sys-proc-path-sleep-block", "reconcileID": "6425366f-c6ca-4a73-87e1-1191d7984166"}
-2024-01-09T13:37:19Z    INFO    NimbusPolicy built successfully {"controller": "securityintentbinding", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "SecurityIntentBinding", "SecurityIntentBinding": {"name":"sys-proc-path-sleep-block","namespace":"multiubuntu"}, "namespace": "multiubuntu", "name": "sys-proc-path-sleep-block", "reconcileID": "6425366f-c6ca-4a73-87e1-1191d7984166", "Policy": {"namespace": "multiubuntu", "name": "sys-proc-path-sleep-block"}}
-2024-01-09T13:37:19Z    INFO    Found: NimbusPolicy     {"controller": "nimbuspolicy", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "NimbusPolicy", "NimbusPolicy": {"name":"sys-proc-path-sleep-block","namespace":"multiubuntu"}, "namespace": "multiubuntu", "name": "sys-proc-path-sleep-block", "reconcileID": "46b8482e-bd09-44d4-9cdc-6b9b8c17febf", "Name": "sys-proc-path-sleep-block", "Namespace": "multiubuntu"}
-...
-```
-
-To verify that it was actually created, you can check the following. 
 * Verify SecurityIntent
+
+```shell
+$ kubectl get securityintent
+NAME                                             STATUS
+pkg-mgr-exec-multiple-nsscoped                   Created
+unauthorized-sa-token-access-multiple-nsscoped   Created
+dns-manipulation-multiple-nsscoped               Created
 ```
-$ kubectl get SecurityIntent -n multiubuntu
-NAME                            AGE
-group-1-proc-path-sleep-block   28s
-```
+
 * Verify SecurityIntentBinding
+
+```shell
+$ kubectl get securityintentbinding
+NAME                            STATUS
+multiple-sis-nsscoped-binding   Created
 ```
-$ kubectl get SecurityIntentBinding -n multiubuntu
-NAME                        AGE
-sys-proc-path-sleep-block   29s
-```
+
 * Verify Nimbus policy
+
+```shell
+$ kubectl get nimbuspolicy
+NAME                            STATUS
+multiple-sis-nsscoped-binding   Created
 ```
-$ kubectl get nimbuspolicy -n multiubuntu
-NAME                        AGE
-sys-proc-path-sleep-block   39s
+
+or inspect nimbuspolicy for detailed info:
+
+```shell
+$ kubectl get nimbuspolicy multiple-sis-nsscoped-binding -o yaml
 ```
-```
-$ kubectl get np -n multiubuntu sys-proc-path-sleep-block -o yaml
+
+```yaml
 apiVersion: intent.security.nimbus.com/v1
 kind: NimbusPolicy
 metadata:
-  creationTimestamp: "2024-01-09T13:37:19Z"
+  creationTimestamp: "2024-01-13T16:43:56Z"
   generation: 1
-  name: sys-proc-path-sleep-block
-  namespace: multiubuntu
-  resourceVersion: "5753517"
-  uid: 5d2ae075-98b8-4958-850e-8114cb6dec19
+  name: multiple-sis-nsscoped-binding
+  namespace: default
+  ownerReferences:
+    - apiVersion: intent.security.nimbus.com/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: SecurityIntentBinding
+      name: multiple-sis-nsscoped-binding
+      uid: b047d013-b402-4126-9798-529d96d2cc85
+  resourceVersion: "406627"
+  uid: 6ef05c5b-660f-4ba0-baa3-bbf87e501cca
 spec:
   rules:
-  - description: block the execution of '/bin/sleep'
-    id: sys-proc-paths
-    rule:
-    - action: Block
-      matchPaths:
-      - path: /bin/sleep
+    - description: Do not allow the execution of package managers inside the containers
+      id: swDeploymentTools
+      rule:
+        action: Block
+        mode: Strict
+    - id: unAuthorizedSaTokenAccess
+      rule:
+        action: Block
+        mode: strict
+    - id: dnsManipulation
+      rule:
+        action: Block
+        mode: best-effort
   selector:
     matchLabels:
-      group: group-1
+      app: nginx
+status:
+  status: Created
 ```
 
-### Verify the adapter 
-The log for the adapter that detected nimbuspolicy is shown below. 
-```
-2024/01/09 13:36:18 Starting Kubernetes client configuration
-2024/01/09 13:36:18 Starting NimbusPolicyWatcher
-2024/01/09 13:36:18 Starting policy processing loop
-2024/01/09 13:37:28 NimbusPolicy: Detected policy: Name: multiubuntu, Namespace: sys-proc-path-sleep-block, ID: [sys-proc-paths]
-{TypeMeta:{Kind:NimbusPolicy APIVersion:intent.security.nimbus.com/v1} ObjectMeta:{Name:sys-proc-path-sleep-block GenerateName: Namespace:multiubuntu SelfLink: UID:5d2ae075-98b8-4958-850e-8114cb6dec19 ResourceVersion:5753517 Generation:1 CreationTimestamp:2024-01-09 13:37:19 +0000 UTC DeletionTimestamp:<nil> DeletionGracePeriodSeconds:<nil> Labels:map[] Annotations:map[] OwnerReferences:[] Finalizers:[] ManagedFields:[{Manager:main Operation:Update APIVersion:intent.security.nimbus.com/v1 Time:2024-01-09 13:37:19 +0000 UTC FieldsType:FieldsV1 FieldsV1:{"f:spec":{".":{},"f:rules":{},"f:selector":{".":{},"f:matchLabels":{".":{},"f:group":{}}}}} Subresource:}]} Spec:{Selector:{MatchLabels:map[group:group-1]} NimbusRules:[{Id:sys-proc-paths Type: Description:block the execution of '/bin/sleep' Rule:[{RuleAction:Block MatchProtocols:[] MatchPaths:[{Path:/bin/sleep}] MatchDirectories:[] MatchPatterns:[] MatchCapabilities:[] MatchSyscalls:[] MatchSyscallPaths:[] FromCIDRSet:[] ToPorts:[]}]}]} Status:{PolicyStatus:}}
-2024/01/09 13:37:28 Exporting and Applying NimbusPolicy to KubeArmorPolicy
-2024-01-09T13:37:28Z    INFO    Start Converting a NimbusPolicy {"PolicyName": "sys-proc-path-sleep-block"}
-2024-01-09T13:37:28Z    INFO    Apply a new KubeArmorPolicy     {"PolicyName": "sys-proc-path-sleep-block", "Policy": {"metadata":{"name":"sys-proc-path-sleep-block","namespace":"multiubuntu","creationTimestamp":null},"spec":{"selector":{"matchLabels":{"group":"group-1"}},"process":{"matchPaths":[{"path":"/bin/sleep"}]},"file":{},"network":{"matchProtocols":[{"protocol":"raw"}]},"capabilities":{"matchCapabilities":[{"capability":"lease"}]},"syscalls":{},"action":"Block"},"status":{}}}
-2024/01/09 13:37:28 Successfully exported NimbusPolicy to KubeArmorPolicy
-```
-<br>
-You can also see the policies that were actually created. 
+## Verify the Security Engine policy (in this example, KubeArmorPolicy)
 
-``` 
-$ kubectl get ksp -n multiubuntu
-NAME                        AGE
-sys-proc-path-sleep-block   3m24s
+KubeArmor adapter logs can that that detected NimbusPolicy is shown below:
+
+```shell
+{"level":"info","ts":"2024-01-13T22:13:25+05:30","msg":"KubeArmor Adapter started"}
+{"level":"info","ts":"2024-01-13T22:13:25+05:30","msg":"NimbusPolicy watcher started"}
+{"level":"info","ts":"2024-01-13T22:13:56+05:30","msg":"NimbusPolicy found","NimbusPolicy.Name":"multiple-sis-nsscoped-binding","NimbusPolicy.Namespace":"default"}
+{"level":"info","ts":"2024-01-13T22:13:57+05:30","msg":"KubeArmor does not support this ID","ID":"dnsManipulation","NimbusPolicy":"multiple-sis-nsscoped-binding","NimbusPolicy.Namespace":"default"}
+{"level":"info","ts":"2024-01-13T22:13:57+05:30","msg":"KubeArmorPolicy Created","KubeArmorPolicy.Name":"multiple-sis-nsscoped-binding-swdeploymenttools","KubeArmorPolicy.Namespace":"default"}
+{"level":"info","ts":"2024-01-13T22:13:57+05:30","msg":"KubeArmorPolicy Created","KubeArmorPolicy.Name":"multiple-sis-nsscoped-binding-unauthorizedsatokenaccess","KubeArmorPolicy.Namespace":"default"}
 ```
+
+You can also review the policies that were successfully generated:
+
+```shell
+$ kubectl get kubearmorpolicy
+NAME                                                      AGE
+multiple-sis-nsscoped-binding-swdeploymenttools           2m8s
+multiple-sis-nsscoped-binding-unauthorizedsatokenaccess   2m8s
 ```
-$  kubectl get ksp -n multiubuntu sys-proc-path-sleep-block -o yaml
+
+Or, inspect each individual policy for detailed info:
+
+```shell
+$ kubectl get kubearmorpolicy multiple-sis-nsscoped-binding-swdeploymenttools -o yaml
+```
+
+```yaml
 apiVersion: security.kubearmor.com/v1
 kind: KubeArmorPolicy
 metadata:
-  creationTimestamp: "2024-01-09T13:37:28Z"
+  annotations:
+    app.kubernetes.io/managed-by: nimbus-kubearmor
+  creationTimestamp: "2024-01-13T16:43:57Z"
   generation: 1
-  name: sys-proc-path-sleep-block
-  namespace: multiubuntu
-  resourceVersion: "5753537"
-  uid: 16cb107b-e442-442f-90fe-dbb139658d5e
+  name: multiple-sis-nsscoped-binding-swdeploymenttools
+  namespace: default
+  resourceVersion: "406628"
+  uid: b665ed3c-89de-40c4-bf24-1ac7e8ca63eb
 spec:
   action: Block
-  capabilities:
-    matchCapabilities:
-    - capability: lease
-  file: {}
-  network:
-    matchProtocols:
-    - protocol: raw
+  capabilities: { }
+  file: { }
+  message: Do not allow the execution of package managers inside the containers
+  network: { }
   process:
     matchPaths:
-    - path: /bin/sleep
+      - path: /usr/bin/apt
+      - path: /usr/bin/apt-get
+      - path: /bin/apt-get
+      - path: /bin/apt
+      - path: /usr/bin/dpkg
+      - path: /bin/dpkg
+      - path: /usr/bin/gdebi
+      - path: /bin/gdebi
+      - path: /usr/bin/make
+      - path: /bin/make
+      - path: /usr/bin/yum
+      - path: /bin/yum
+      - path: /usr/bin/rpm
+      - path: /bin/rpm
+      - path: /usr/bin/dnf
+      - path: /bin/dnf
+      - path: /usr/bin/pacman
+      - path: /usr/sbin/pacman
+      - path: /bin/pacman
+      - path: /sbin/pacman
+      - path: /usr/bin/makepkg
+      - path: /usr/sbin/makepkg
+      - path: /bin/makepkg
+      - path: /sbin/makepkg
+      - path: /usr/bin/yaourt
+      - path: /usr/sbin/yaourt
+      - path: /bin/yaourt
+      - path: /sbin/yaourt
+      - path: /usr/bin/zypper
+      - path: /bin/zypper
+    severity: 5
   selector:
     matchLabels:
-      group: group-1
-  syscalls: {}
+      app: nginx
+  syscalls: { }
+  tags:
+    - NIST
+    - CM-7(5)
+    - SI-4
+    - Package Manager
+```
+
+```shell
+$ kubectl get kubearmorpolicy multiple-sis-nsscoped-binding-unauthorizedsatokenaccess -o yaml
+```
+
+```yaml
+apiVersion: security.kubearmor.com/v1
+kind: KubeArmorPolicy
+metadata:
+  annotations:
+    app.kubernetes.io/managed-by: nimbus-kubearmor
+  creationTimestamp: "2024-01-13T16:43:57Z"
+  generation: 1
+  name: multiple-sis-nsscoped-binding-unauthorizedsatokenaccess
+  namespace: default
+  resourceVersion: "406629"
+  uid: 6644f0a9-46a2-4bde-9b5a-b01947da3311
+spec:
+  action: Block
+  capabilities: { }
+  file:
+    matchDirectories:
+      - dir: /run/secrets/kubernetes.io/serviceaccount/
+        recursive: true
+  network: { }
+  process: { }
+  selector:
+    matchLabels:
+      app: nginx
+  syscalls: { }
+```
+
+## Cleanup
+
+* The SecurityIntent and SecurityIntentBinding created earlier are no longer needed and can be deleted:
+
+```shell
+$ kubectl delete -f ./test/v2/namespaced/multiple-si-sib-namespaced.yaml
+securityintent.intent.security.nimbus.com "pkg-mgr-exec-multiple-nsscoped" deleted
+securityintent.intent.security.nimbus.com "unauthorized-sa-token-access-multiple-nsscoped" deleted
+securityintent.intent.security.nimbus.com "dns-manipulation-multiple-nsscoped" deleted
+securityintentbinding.intent.security.nimbus.com "multiple-sis-nsscoped-binding" deleted
+```
+
+* Check Security Engine adapter logs:
+
+```shell
+{"level":"info","ts":"2024-01-13T22:13:25+05:30","msg":"KubeArmor Adapter started"}
+{"level":"info","ts":"2024-01-13T22:13:25+05:30","msg":"NimbusPolicy watcher started"}
+{"level":"info","ts":"2024-01-13T22:13:56+05:30","msg":"NimbusPolicy found","NimbusPolicy.Name":"multiple-sis-nsscoped-binding","NimbusPolicy.Namespace":"default"}
+{"level":"info","ts":"2024-01-13T22:13:57+05:30","msg":"KubeArmor does not support this ID","ID":"dnsManipulation","NimbusPolicy":"multiple-sis-nsscoped-binding","NimbusPolicy.Namespace":"default"}
+{"level":"info","ts":"2024-01-13T22:13:57+05:30","msg":"KubeArmorPolicy Created","KubeArmorPolicy.Name":"multiple-sis-nsscoped-binding-swdeploymenttools","KubeArmorPolicy.Namespace":"default"}
+{"level":"info","ts":"2024-01-13T22:13:57+05:30","msg":"KubeArmorPolicy Created","KubeArmorPolicy.Name":"multiple-sis-nsscoped-binding-unauthorizedsatokenaccess","KubeArmorPolicy.Namespace":"default"}
+{"level":"info","ts":"2024-01-13T22:17:48+05:30","msg":"NimbusPolicy deleted","NimbusPolicy.Name":"multiple-sis-nsscoped-binding","NimbusPolicy.Namespace":"default"}
+{"level":"info","ts":"2024-01-13T22:17:49+05:30","msg":"KubeArmor does not support this ID","ID":"dnsManipulation","NimbusPolicy":"multiple-sis-nsscoped-binding","NimbusPolicy.Namespace":"default"}
+{"level":"info","ts":"2024-01-13T22:17:49+05:30","msg":"KubeArmorPolicy deleted due to NimbusPolicy deletion","KubeArmorPolicy.Name":"multiple-sis-nsscoped-binding-swdeploymenttools","KubeArmorPolicy.Namespace":"default","NimbusPolicy.Name":"multiple-sis-nsscoped-binding","NimbusPolicy.Namespace":"default"}
+{"level":"info","ts":"2024-01-13T22:17:49+05:30","msg":"KubeArmorPolicy deleted due to NimbusPolicy deletion","KubeArmorPolicy.Name":"multiple-sis-nsscoped-binding-unauthorizedsatokenaccess","KubeArmorPolicy.Namespace":"default","NimbusPolicy.Name":"multiple-sis-nsscoped-binding","NimbusPolicy.Namespace":"default"}
+```
+
+* Delete deployment
+
+```shell
+$ kubectl delete -f ./test/env/nginx-deploy.yaml
+deployment.apps "nginx" deleted
+```
+
+* Confirm all resources have been deleted (Optional)
+
+```shell
+$ kubectl get securityintent,securityintentbinding,nimbuspolicy,kubearmorpolicy -A
+No resources found
 ```

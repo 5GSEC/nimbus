@@ -1,0 +1,98 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.13.0
+  name: clustersecurityintentbindings.intent.security.nimbus.com
+spec:
+  group: intent.security.nimbus.com
+  names:
+    kind: ClusterSecurityIntentBinding
+    listKind: ClusterSecurityIntentBindingList
+    plural: clustersecurityintentbindings
+    shortNames:
+    - csib
+    singular: clustersecurityintentbinding
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: ClusterSecurityIntentBinding is the Schema for the clustersecurityintentbindings
+          API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ClusterSecurityIntentBindingSpec defines the desired state
+              of ClusterSecurityIntentBinding
+            properties:
+              intents:
+                items:
+                  description: MatchIntent struct defines the request for a specific
+                    SecurityIntent
+                  properties:
+                    name:
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+              selector:
+                properties:
+                  cel:
+                    items:
+                      type: string
+                    type: array
+                  resources:
+                    items:
+                      properties:
+                        kind:
+                          type: string
+                        matchLabels:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        name:
+                          type: string
+                        namespace:
+                          type: string
+                      required:
+                      - kind
+                      - name
+                      type: object
+                    type: array
+                type: object
+            required:
+            - intents
+            - selector
+            type: object
+          status:
+            description: ClusterSecurityIntentBindingStatus defines the observed state
+              of ClusterSecurityIntentBinding
+            properties:
+              status:
+                type: string
+            required:
+            - status
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

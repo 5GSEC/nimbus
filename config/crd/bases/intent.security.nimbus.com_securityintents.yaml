@@ -12,11 +12,15 @@ spec:
     listKind: SecurityIntentList
     plural: securityintents
     shortNames:
-    - sit
+    - si
     singular: securityintent
-  scope: Namespaced
+  scope: Cluster
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    name: v1
     schema:
       openAPIV3Schema:
         description: SecurityIntent is the Schema for the securityintents API
@@ -40,162 +44,56 @@ spec:
                 description: Intent defines the security policy details
                 properties:
                   action:
+                    description: Action defines how the security policy will be enforced.
                     type: string
                   description:
+                    description: Description is human-readable explanation of the
+                      intent's purpose.
                     type: string
                   id:
+                    description: ID is predefined in adapter ID pool. Used by security
+                      engines to generate corresponding security policies.
+                    pattern: ^[a-zA-Z0-9]*$
                     type: string
                   mode:
+                    default: best-effort
+                    description: Mode defines the enforcement behavior of the intent.
+                      Defaults to best-effort.
                     type: string
                   params:
-                    items:
-                      description: Resource defines the resources that the security
-                        policy applies to
-                      properties:
-                        SecurityIntentMatchProtocols:
-                          description: 'Network: MatchProtocols'
-                          items:
-                            description: SecurityIntentMatchProtocol defines a protocol
-                              for network policies
-                            properties:
-                              protocol:
-                                type: string
-                            type: object
-                          type: array
-                        fromCIDRSet:
-                          items:
-                            description: CIDRSet defines CIDR ranges for network policies
-                            properties:
-                              cidr:
-                                type: string
-                            type: object
-                          type: array
-                        matchCapabilities:
-                          description: 'Capabilities: MatchCapabilities'
-                          items:
-                            description: MatchCapability defines a capability for
-                              capabilities policies
-                            properties:
-                              capability:
-                                type: string
-                            type: object
-                          type: array
-                        matchDirectories:
-                          items:
-                            description: MatchDirectory defines a directory for process
-                              or file policies
-                            properties:
-                              dir:
-                                type: string
-                              fromSource:
-                                items:
-                                  properties:
-                                    path:
-                                      type: string
-                                  type: object
-                                type: array
-                            type: object
-                          type: array
-                        matchPaths:
-                          description: 'Process: MatchPaths, MatchDirectories, MatchPatterns
-                            File: MatchPaths, MatchDirectories'
-                          items:
-                            description: MatchPath defines a path for process or file
-                              policies
-                            properties:
-                              path:
-                                type: string
-                            type: object
-                          type: array
-                        matchPatterns:
-                          items:
-                            description: MatchPattern defines a pattern for process
-                              policies
-                            properties:
-                              pattern:
-                                type: string
-                            type: object
-                          type: array
-                        matchSyscallPaths:
-                          items:
-                            properties:
-                              fromSource:
-                                items:
-                                  properties:
-                                    dir:
-                                      type: string
-                                    path:
-                                      type: string
-                                  type: object
-                                type: array
-                              path:
-                                type: string
-                              recursive:
-                                type: boolean
-                              syscall:
-                                items:
-                                  type: string
-                                type: array
-                            type: object
-                          type: array
-                        matchSyscalls:
-                          description: 'Syscalls: MatchSyscalls'
-                          items:
-                            description: MatchSyscall defines a syscall for syscall
-                              policies
-                            properties:
-                              fromSource:
-                                items:
-                                  properties:
-                                    dir:
-                                      type: string
-                                    path:
-                                      type: string
-                                  type: object
-                                type: array
-                              syscalls:
-                                items:
-                                  type: string
-                                type: array
-                            type: object
-                          type: array
-                        toPorts:
-                          items:
-                            description: ToPort defines ports and protocols for network
-                              policies
-                            properties:
-                              ports:
-                                items:
-                                  description: Port defines a network port and its
-                                    protocol
-                                  properties:
-                                    port:
-                                      type: string
-                                    protocol:
-                                      type: string
-                                  type: object
-                                type: array
-                            type: object
-                          type: array
-                      type: object
-                    type: array
+                    additionalProperties:
+                      items:
+                        type: string
+                      type: array
+                    description: Params are key-value pairs that allows fine-tuning
+                      of intents to specific requirements.
+                    type: object
                   severity:
-                    type: integer
+                    default: Low
+                    description: Severity defines the potential impact of a security
+                      violation related to the intent. Defaults to Low.
+                    type: string
                   tags:
+                    description: Tags are additional metadata for categorization and
+                      grouping of intents. Facilitates searching, filtering, and management
+                      of security policies.
                     items:
                       type: string
                     type: array
                 required:
                 - action
                 - id
-                - mode
-                - params
                 type: object
             required:
             - intent
             type: object
           status:
             description: SecurityIntentStatus defines the observed state of SecurityIntent
+            properties:
+              status:
+                type: string
+            required:
+            - status
             type: object
         type: object
     served: true
