@@ -1,9 +1,10 @@
-module github.com/5GSEC/nimbus/pkg/nimbus-kubearmor
+module github.com/5GSEC/nimbus/pkg/adapter/nimbus-kubearmor
 
 go 1.21
 
 require (
 	github.com/5GSEC/nimbus v0.0.0-20240104111857-cf09d5346fc6
+	github.com/go-logr/logr v1.3.0
 	github.com/kubearmor/KubeArmor/pkg/KubeArmorController v0.0.0-20231218054902-8b18cac961c0
 	k8s.io/apimachinery v0.29.0
 	k8s.io/client-go v0.29.0
@@ -17,7 +18,6 @@ require (
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
-	github.com/go-logr/logr v1.3.0 // indirect
 	github.com/go-logr/zapr v1.3.0 // indirect
 	github.com/go-openapi/jsonpointer v0.20.0 // indirect
 	github.com/go-openapi/jsonreference v0.20.2 // indirect

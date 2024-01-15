@@ -7,7 +7,6 @@
 *.dylib
 bin
 Dockerfile.cross
-nimbus-kubearmor
 
 # Test binary, build with `go test -c`
 *.test
