@@ -3,7 +3,7 @@ module github.com/5GSEC/nimbus/pkg/adapter/nimbus-kubearmor
 go 1.21
 
 require (
-	github.com/5GSEC/nimbus v0.0.0-20240104111857-cf09d5346fc6
+	github.com/5GSEC/nimbus v0.0.0-20240115232953-8e1950f95b7e
 	github.com/go-logr/logr v1.3.0
 	github.com/kubearmor/KubeArmor/pkg/KubeArmorController v0.0.0-20231218054902-8b18cac961c0
 	k8s.io/apimachinery v0.29.0

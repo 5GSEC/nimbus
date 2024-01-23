@@ -15,17 +15,12 @@ build:
 run: build
 	@./${BINARY}
 
-deploy-rbac:
-	kubectl apply -f config/service_account.yaml
-	kubectl apply -f config/role.yaml
-	kubectl apply -f config/role_binding.yaml
-
 .PHONY: docker-build
-docker-build: ## Build docker image with the manager.
+docker-build:
 	$(CONTAINER_TOOL) build -t ${IMG}:${TAG} -t ${IMG}:latest --build-arg VERSION=${TAG} .
 
 .PHONY: docker-push
-docker-push: ## Push docker image with the manager.
+docker-push:
 	$(CONTAINER_TOOL) push ${IMG}:${TAG}
 	$(CONTAINER_TOOL) push ${IMG}:latest
 
