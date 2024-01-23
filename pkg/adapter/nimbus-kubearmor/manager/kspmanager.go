@@ -12,10 +12,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1 "github.com/5GSEC/nimbus/api/v1"
+	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kubearmor/idpool"
 	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kubearmor/k8s"
 	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kubearmor/processor"
 )
@@ -66,11 +69,14 @@ func deleteKsp(ctx context.Context, npName, npNamespace string) {
 		ksp := ksps[idx]
 		var existingKsp kubearmorv1.KubeArmorPolicy
 		err := k8sClient.Get(ctx, types.NamespacedName{Name: ksp.Name, Namespace: ksp.Namespace}, &existingKsp)
-		if err != nil && !errors.IsNotFound(err) {
-			logger.Error(err, "failed to get existing KubeArmorPolicy", "KubeArmorPolicy.Name", ksp.Name, "KubeArmorPolicy.Namespace", ksp.Namespace)
-			return
-		}
-		if err == nil {
+		if err != nil {
+			if errors.IsNotFound(err) {
+				logger.Info("KubeArmorPolicy already deleted, no action needed", "KubeArmorPolicy.Name", ksp.Name, "KubeArmorPolicy.Namespace", ksp.Namespace)
+			} else {
+				logger.Error(err, "failed to get existing KubeArmorPolicy", "KubeArmorPolicy.Name", ksp.Name, "KubeArmorPolicy.Namespace", ksp.Namespace)
+				continue
+			}
+		} else {
 			if err = k8sClient.Delete(ctx, &existingKsp); err != nil {
 				logger.Error(err, "failed to delete KubeArmorPolicy", "KubeArmorPolicy.Name", ksp.Name, "KubeArmorPolicy.Namespace", ksp.Namespace)
 				return
@@ -86,14 +92,36 @@ func deleteKsp(ctx context.Context, npName, npNamespace string) {
 func createKsp(ctx context.Context, npName, npNamespace string) {
 	logger := log.FromContext(ctx)
 	if err := k8sClient.Get(ctx, types.NamespacedName{Name: npName, Namespace: npNamespace}, &np); err != nil {
-		logger.Error(err, "failed to get NimbusPolicy", "NimbusPolicy.Name", npName[0], "NimbusPolicy.Namespace", npName[1])
+		logger.Error(err, "Failed to get NimbusPolicy", "NimbusPolicy.Name", npName, "NimbusPolicy.Namespace", npNamespace)
+		return
+	}
+
+	// Check if all strict mode intents are implemented by the adapter.
+	allStrictIntentsImplemented := true
+	for _, rule := range np.Spec.NimbusRules {
+		if rule.Rule.Mode == "strict" && !idpool.IsIdSupported(rule.ID) {
+			allStrictIntentsImplemented = false
+			logger.Info("The adapter does not support the strict mode intent", "ID", rule.ID)
+			break
+		}
+	}
+
+	// If there is any unimplemented strict mode intent, skip processing the NimbusPolicy.
+	if !allStrictIntentsImplemented {
+		logger.Info("Skipping NimbusPolicy processing.", "NimbusPolicy.Name", npName, "NimbusPolicy.Namespace", npNamespace)
 		return
 	}
 
 	ksps := processor.BuildKspsFrom(logger, &np)
-	// Iterate using a separate index variable to avoid aliasing
 	for idx := range ksps {
 		ksp := ksps[idx]
+
+		// Set NimbusPolicy as the owner of the KSP
+		if err := ctrl.SetControllerReference(&np, &ksp, scheme); err != nil {
+			logger.Error(err, "failed to set OwnerReference on KubeArmorPolicy", "Name", ksp.Name)
+			return
+		}
+
 		var existingKsp kubearmorv1.KubeArmorPolicy
 		err := k8sClient.Get(ctx, types.NamespacedName{Name: ksp.Name, Namespace: ksp.Namespace}, &existingKsp)
 		if err != nil && !errors.IsNotFound(err) {
@@ -114,10 +142,5 @@ func createKsp(ctx context.Context, npName, npNamespace string) {
 			}
 			logger.Info("KubeArmorPolicy Configured", "KubeArmorPolicy.Name", existingKsp.Name, "KubeArmorPolicy.Namespace", existingKsp.Namespace)
 		}
-
-		//Fixme: Set OwnerReference
-		//if err = ctrl.SetControllerReference(&np, &ksp, scheme); err != nil {
-		//	logger.Error(err, "failed to set OwnerReference on KubeArmorPolicy", "Name", ksp.Name)
-		//}
 	}
 }
