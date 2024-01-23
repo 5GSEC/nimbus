@@ -16,18 +16,15 @@ RUN go mod download
 
 # Copy the go source
 COPY main.go main.go
-COPY idpool/ idpool/
-COPY k8s/ k8s/
 COPY manager/ manager/
 COPY processor/ processor/
-COPY watcher/ watcher/
 
 # Build
 # the GOARCH has not a default value to allow the binary be built according to the host where the command
 # was called. For example, if we call make docker-build in a local env which has the Apple Silicon M1 SO
 # the docker BUILDPLATFORM arg will be linux/arm64 when for Apple x86 it will be linux/amd64. Therefore,
 # by leaving it empty we can ensure that the container and binary shipped on it will have the same platform.
-RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o nimbus-kubearmor main.go
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -ldflags="-w" -a -o nimbus-kubearmor main.go
 
 FROM gcr.io/distroless/static:nonroot
 WORKDIR /

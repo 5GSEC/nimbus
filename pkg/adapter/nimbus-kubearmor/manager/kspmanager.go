@@ -18,8 +18,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1 "github.com/5GSEC/nimbus/api/v1"
-	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kubearmor/idpool"
-	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kubearmor/k8s"
+	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
+	"github.com/5GSEC/nimbus/pkg/adapter/k8s"
 	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kubearmor/processor"
 )
 

@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 
 	v1 "github.com/5GSEC/nimbus/api/v1"
-	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kubearmor/idpool"
+	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 )
 
 func BuildKspsFrom(logger logr.Logger, np *v1.NimbusPolicy) []kubearmorv1.KubeArmorPolicy {

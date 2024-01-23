@@ -13,7 +13,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kubearmor/k8s"
+	"github.com/5GSEC/nimbus/pkg/adapter/k8s"
 )
 
 var factory dynamicinformer.DynamicSharedInformerFactory

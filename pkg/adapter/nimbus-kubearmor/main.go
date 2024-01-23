@@ -13,7 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kubearmor/manager"
-	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kubearmor/watcher"
+	"github.com/5GSEC/nimbus/pkg/adapter/watcher"
 )
 
 func main() {
