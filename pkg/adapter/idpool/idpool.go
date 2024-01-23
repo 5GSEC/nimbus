@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2023 Authors of Nimbus
 
-// Package idpool manages a pool of IDs for use by KubeArmor.
+// Package idpool manages a pool of IDs for use by adapters.
 package idpool
+
+import (
+	"strings"
+)
 
 const (
 	SwDeploymentTools         = "swDeploymentTools"
@@ -16,12 +20,28 @@ const (
 
 // KaIds are IDs supported by KubeArmor.
 var KaIds = []string{
-	SwDeploymentTools, UnAuthorizedSaTokenAccess,
+	SwDeploymentTools, UnAuthorizedSaTokenAccess, DNSManipulation,
 }
 
-// IsIdSupported determines whether a given ID is supported by KubeArmor.
-func IsIdSupported(id string) bool {
-	for _, currId := range KaIds {
+// NetPolIDs are IDs supported by Network Policy adapter.
+var NetPolIDs = []string{
+	DNSManipulation,
+}
+
+// IsIdSupportedBy determines whether a given ID is supported by a security engine.
+func IsIdSupportedBy(id, securityEngine string) bool {
+	switch strings.ToLower(securityEngine) {
+	case "kubearmor":
+		return in(id, KaIds)
+	case "netpol":
+		return in(id, NetPolIDs)
+	default:
+		return false
+	}
+}
+
+func in(id string, securityEngineIds []string) bool {
+	for _, currId := range securityEngineIds {
 		if currId == id {
 			return true
 		}

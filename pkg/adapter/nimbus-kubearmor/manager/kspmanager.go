@@ -99,7 +99,7 @@ func createKsp(ctx context.Context, npName, npNamespace string) {
 	// Check if all strict mode intents are implemented by the adapter.
 	allStrictIntentsImplemented := true
 	for _, rule := range np.Spec.NimbusRules {
-		if rule.Rule.Mode == "strict" && !idpool.IsIdSupported(rule.ID) {
+		if rule.Rule.Mode == "strict" && !idpool.IsIdSupportedBy(rule.ID, "kubearmor") {
 			allStrictIntentsImplemented = false
 			logger.Info("The adapter does not support the strict mode intent", "ID", rule.ID)
 			break
