@@ -1,81 +1,78 @@
 # Getting Started
 
-This guide walks users through the steps to easily install and run the Nimbus operator. Each step includes the commands needed and their descriptions to help users understand and proceed with each step.
+This guide walks users through the steps to easily install and run the Nimbus operator. Each step includes the commands
+needed and their descriptions to help users understand and proceed with each step.
 
-## Preparation
+# Prerequisites
 
-Before you begin, you'll need to set up the following preferences :
+Before you begin, set up the following:
 
-- containerd + K8S + Cilium + Kubearmor (3-node/standalone)
-- Environment for using KubeBuilder
-    - go version v1.19.0+
-    - docker version 17.03+.
-    - kubectl version v1.11.3+.
-    - Access to a Kubernetes v1.11.3+ cluster.
-	- make
+- [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) version 1.26 or later.
+- A Kubernetes cluster running version 1.26 or later.
 
-## Installation
-### 1. Clone Nimbus source code:
-```
-$ git clone https://github.com/5GSEC/nimbus.git
-```
+# Nimbus
 
-### 2. Install Kubearmor:
-Install Kubearmor and related tools:<br>
+There are various ways of installing Nimbus.
 
-```
-$ curl -sfL http://get.kubearmor.io/ | sudo sh -s -- -b /usr/local/bin && karmor install
+## From source
+
+Install [go](https://go.dev/doc/install) version 1.20 or later.
+
+Clone the repository:
+
+```shell
+git clone https://github.com/5GSEC/nimbus.git
+cd nimbus
 ```
 
-Install the Discovery Engine:<br>
-```
-$ curl -o discovery-engine.yaml https://raw.githubusercontent.com/kubearmor/discovery-engine/dev/deployments/k8s/deployment.yaml
-$ kubectl apply -f discovery-engine.yaml
+Install CRDs:
+
+```shell
+make install
 ```
 
-### 3. Install KubeBuilder
-```
-$ curl -L -o kubebuilder https://go.kubebuilder.io/dl/latest/$(go env GOOS)/$(go env GOARCH)
-$ chmod +x kubebuilder
-$ sudo mv ./kubebuilder /usr/local/bin/
-$ kubebuilder version
-```
-    
-### 4. Install Kustomize
+Run the operator:
 
-```
-$ curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
-$ chmod +x kustomize
-$ sudo mv ./kustomize /usr/local/bin/
-$ kustomize version
+```shell
+make run
 ```
 
-## Running Nimbus
+## Using helm chart
 
-Commands to run Nimbus operators:
+Follow [this](../deployments/nimbus/Readme.md) guide to install `nimbus` operator.
 
-### 1. Apply API group resources 
-Apply API group resources 
-    
-```
-$ make generate
+# Adapters
+
+Just like Nimbus, there are various ways of installing Security engine adapters.
+
+## nimbus-kubearmor
+
+> [!Note]
+> The `nimbus-kubearmor` adapter leverages the [KubeArmor](https://kubearmor.io) security engine for its functionality.
+> To use this adapter, you'll need KubeArmor installed. Please
+> follow [this](https://github.com/kubearmor/KubeArmor/blob/main/getting-started/deployment_guide.md) guide for
+> installation.
+
+### From source
+
+Clone the repository:
+
+```shell
+git clone https://github.com/5GSEC/nimbus.git
 ```
 
+Go to nimbus-kubearmor directory:
 
-### 2. Install CRD
-Install Custom Resource Definitions in a Kubernetes Cluster
-    
-```
-$ make install
+```shell
+cd nimbus/pkg/adapter/nimbus-kubearmor
 ```
 
-📌  Steps 1 and 2 are required if you have a completely clean environment, as they allow the server to find the requested resources.
+Run `nimbus-kubearmor` adapter:
 
-### 3. Run Operators
-Run the operator in your local environment
+```shell
+make run
 ```
-$ make build
-$ make run
-```
-<br><br>
-📌 After completing these steps, the Nimbus operator is successfully installed and running.
+
+### Using helm chart
+
+Follow [this](../deployments/nimbus-kubearmor/Readme.md) guide to install `nimbus-kubearmor` adapter. 

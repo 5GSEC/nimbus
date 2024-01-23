@@ -1,10 +1,10 @@
 # Install KubeArmor adapter
 
-> [!NOTE]
-> `nimbus-kubearmor` adapter depends on [KubeArmor](https://kubearmor.io) security engine for its functionalities.
-> Follow [this](https://github.com/kubearmor/KubeArmor/blob/main/getting-started/deployment_guide.md) guide to install
-> KubeArmor.
-
+> [!Note]
+> The `nimbus-kubearmor` adapter leverages the [KubeArmor](https://kubearmor.io) security engine for its functionality.
+> To use this adapter, you'll need KubeArmor installed. Please
+> follow [this](https://github.com/kubearmor/KubeArmor/blob/main/getting-started/deployment_guide.md) guide for
+> installation.
 
 Install `nimbus-kubearmor` adapter using Helm charts locally (for testing)
 
