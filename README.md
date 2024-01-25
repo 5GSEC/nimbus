@@ -28,8 +28,8 @@ best implementation method available given the deployment.
 
 ![](docs/nimbus.png)
 
-* [Getting Started](docs/Getting-Started.md)
-* [Quick Tutorials](docs/Quick-tutorials.md)
+* [Getting Started](docs/getting-started.md)
+* [Quick Tutorials](docs/quick-tutorials.md)
 
 # Credits
 
