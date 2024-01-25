@@ -10,7 +10,7 @@ spec:
     id: swDeploymentTools
     description: "Do not allow the execution of package managers inside the containers"
     action: Block
-    mode: Strict
+    mode: strict
 ---
 apiVersion: intent.security.nimbus.com/v1
 kind: SecurityIntent
