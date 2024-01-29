@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 
 	v1 "github.com/5GSEC/nimbus/api/v1"
-	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kubearmor/idpool"
+	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 )
 
 func BuildKspsFrom(logger logr.Logger, np *v1.NimbusPolicy) []kubearmorv1.KubeArmorPolicy {
@@ -21,7 +21,7 @@ func BuildKspsFrom(logger logr.Logger, np *v1.NimbusPolicy) []kubearmorv1.KubeAr
 	var ksps []kubearmorv1.KubeArmorPolicy
 	for _, nimbusRule := range np.Spec.NimbusRules {
 		id := nimbusRule.ID
-		if idpool.IsIdSupported(id) {
+		if idpool.IsIdSupportedBy(id, "kubearmor") {
 			ksp := buildKspFor(id)
 			ksp.Name = np.Name + "-" + strings.ToLower(id)
 			ksp.Namespace = np.Namespace

@@ -3,7 +3,7 @@
 ## Create a sample deployment
 
 ```shell
-$ kubectl apply -f ./test/env/nginx-deploy.yaml
+kubectl apply -f ./test/env/nginx-deploy.yaml
 deployment.apps/nginx created
 ```
 
@@ -35,13 +35,36 @@ go run cmd/main.go
 2024-01-13T22:12:20+05:30       INFO    Starting workers        {"controller": "securityintentbinding", "controllerGroup": "intent.security.nimbus.com", "controllerKind": "SecurityIntentBinding", "worker count": 1}
 ```
 
-## Run Adapter (in this example, KubeArmor)
+## Run Adapters
+
+### KubeArmor
+
+> [!Note]
+> The `nimbus-kubearmor` adapter leverages the [KubeArmor](https://kubearmor.io) security engine for its functionality.
+> To use this adapter, you'll need KubeArmor installed. Please
+> follow [this](https://github.com/kubearmor/KubeArmor/blob/main/getting-started/deployment_guide.md) guide for
+> installation.
 
 ```shell
 $ cd pkg/adapter/nimbus-kubearmor
 $ make run
 {"level":"info","ts":"2024-01-13T22:13:25+05:30","msg":"KubeArmor Adapter started"}
 {"level":"info","ts":"2024-01-13T22:13:25+05:30","msg":"NimbusPolicy watcher started"}
+```
+
+### Network Policy
+
+> [!Note]
+> The `nimbus-netpol` adapter leverages
+> the [network plugin](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/).
+> To use network policies, you must be using a networking solution which supports NetworkPolicy.
+
+```shell
+$ cd pkg/adapter/nimbus-netpol
+$ make run
+{"level":"info","ts":"2024-01-23T17:20:46+05:30","msg":"Network Policy adapter started"}
+{"level":"info","ts":"2024-01-23T17:20:46+05:30","msg":"NimbusPolicy watcher started"}
+{"level":"info","ts":"2024-01-23T17:20:46+05:30","msg":"ClusterNimbusPolicy watcher started"}
 ```
 
 ## Create SecurityIntent and SecurityIntentBinding
@@ -74,67 +97,15 @@ NAME                            STATUS
 multiple-sis-nsscoped-binding   Created
 ```
 
-* Verify Nimbus policy
+## Verify the Security Engines policies
+
+### KubeArmorPolicy
+
+KubeArmor adapter logs that detected NimbusPolicy is shown below:
 
 ```shell
-$ kubectl get nimbuspolicy
-NAME                            STATUS
-multiple-sis-nsscoped-binding   Created
-```
-
-or inspect nimbuspolicy for detailed info:
-
-```shell
-$ kubectl get nimbuspolicy multiple-sis-nsscoped-binding -o yaml
-```
-
-```yaml
-apiVersion: intent.security.nimbus.com/v1
-kind: NimbusPolicy
-metadata:
-  creationTimestamp: "2024-01-13T16:43:56Z"
-  generation: 1
-  name: multiple-sis-nsscoped-binding
-  namespace: default
-  ownerReferences:
-    - apiVersion: intent.security.nimbus.com/v1
-      blockOwnerDeletion: true
-      controller: true
-      kind: SecurityIntentBinding
-      name: multiple-sis-nsscoped-binding
-      uid: b047d013-b402-4126-9798-529d96d2cc85
-  resourceVersion: "406627"
-  uid: 6ef05c5b-660f-4ba0-baa3-bbf87e501cca
-spec:
-  rules:
-    - description: Do not allow the execution of package managers inside the containers
-      id: swDeploymentTools
-      rule:
-        action: Block
-        mode: Strict
-    - id: unAuthorizedSaTokenAccess
-      rule:
-        action: Block
-        mode: strict
-    - id: dnsManipulation
-      rule:
-        action: Block
-        mode: best-effort
-  selector:
-    matchLabels:
-      app: nginx
-status:
-  status: Created
-```
-
-## Verify the Security Engine policy (in this example, KubeArmorPolicy)
-
-KubeArmor adapter logs can that that detected NimbusPolicy is shown below:
-
-```shell
-{"level":"info","ts":"2024-01-13T22:13:25+05:30","msg":"KubeArmor Adapter started"}
-{"level":"info","ts":"2024-01-13T22:13:25+05:30","msg":"NimbusPolicy watcher started"}
-{"level":"info","ts":"2024-01-13T22:13:56+05:30","msg":"NimbusPolicy found","NimbusPolicy.Name":"multiple-sis-nsscoped-binding","NimbusPolicy.Namespace":"default"}
+...
+...
 {"level":"info","ts":"2024-01-13T22:13:57+05:30","msg":"KubeArmor does not support this ID","ID":"dnsManipulation","NimbusPolicy":"multiple-sis-nsscoped-binding","NimbusPolicy.Namespace":"default"}
 {"level":"info","ts":"2024-01-13T22:13:57+05:30","msg":"KubeArmorPolicy Created","KubeArmorPolicy.Name":"multiple-sis-nsscoped-binding-swdeploymenttools","KubeArmorPolicy.Namespace":"default"}
 {"level":"info","ts":"2024-01-13T22:13:57+05:30","msg":"KubeArmorPolicy Created","KubeArmorPolicy.Name":"multiple-sis-nsscoped-binding-unauthorizedsatokenaccess","KubeArmorPolicy.Namespace":"default"}
@@ -161,12 +132,19 @@ kind: KubeArmorPolicy
 metadata:
   annotations:
     app.kubernetes.io/managed-by: nimbus-kubearmor
-  creationTimestamp: "2024-01-13T16:43:57Z"
+  creationTimestamp: "2024-01-23T12:05:54Z"
   generation: 1
   name: multiple-sis-nsscoped-binding-swdeploymenttools
   namespace: default
-  resourceVersion: "406628"
-  uid: b665ed3c-89de-40c4-bf24-1ac7e8ca63eb
+  ownerReferences:
+    - apiVersion: intent.security.nimbus.com/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: NimbusPolicy
+      name: multiple-sis-nsscoped-binding
+      uid: 2e634795-0e4d-4172-9d1d-bf783e6bc1c6
+  resourceVersion: "550197"
+  uid: 22f38fe4-3e71-437d-93e8-8eb517a12ad1
 spec:
   action: Block
   capabilities: { }
@@ -227,12 +205,19 @@ kind: KubeArmorPolicy
 metadata:
   annotations:
     app.kubernetes.io/managed-by: nimbus-kubearmor
-  creationTimestamp: "2024-01-13T16:43:57Z"
+  creationTimestamp: "2024-01-23T12:05:54Z"
   generation: 1
   name: multiple-sis-nsscoped-binding-unauthorizedsatokenaccess
   namespace: default
-  resourceVersion: "406629"
-  uid: 6644f0a9-46a2-4bde-9b5a-b01947da3311
+  ownerReferences:
+    - apiVersion: intent.security.nimbus.com/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: NimbusPolicy
+      name: multiple-sis-nsscoped-binding
+      uid: 2e634795-0e4d-4172-9d1d-bf783e6bc1c6
+  resourceVersion: "550198"
+  uid: 8ac4bf6f-d543-4dad-9c9d-c2dc96f53925
 spec:
   action: Block
   capabilities: { }
@@ -248,6 +233,72 @@ spec:
   syscalls: { }
 ```
 
+### NetworkPolicy
+
+Network Policy adapter logs that detected NimbusPolicy is shown below:
+
+```shell
+...
+...
+{"level":"info","ts":"2024-01-23T17:26:24+05:30","msg":"Network Policy adapter does not support this ID","ID":"swDeploymentTools","NimbusPolicy.Name":"multiple-sis-nsscoped-binding","NimbusPolicy.Namespace":"default"}
+{"level":"info","ts":"2024-01-23T17:26:24+05:30","msg":"Network Policy adapter does not support this ID","ID":"unAuthorizedSaTokenAccess","NimbusPolicy.Name":"multiple-sis-nsscoped-binding","NimbusPolicy.Namespace":"default"}
+{"level":"info","ts":"2024-01-23T17:26:24+05:30","msg":"NetworkPolicy created","NetworkPolicy.Name":"multiple-sis-nsscoped-binding-dnsmanipulation","NetworkPolicy.Namespace":"default"}
+```
+
+You can also review the network policies that were successfully generated:
+
+```shell
+$ kubectl get networkpolicy
+NAME                                            POD-SELECTOR   AGE
+multiple-sis-nsscoped-binding-dnsmanipulation   app=nginx      3m44s
+```
+
+Or, inspect policy for detailed info:
+
+```shell
+$ kubectl get networkpolicy multiple-sis-nsscoped-binding-dnsmanipulation -o yaml
+```
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  annotations:
+    app.kubernetes.io/managed-by: nimbus-netpol
+  creationTimestamp: "2024-01-23T11:56:24Z"
+  generation: 1
+  name: multiple-sis-nsscoped-binding-dnsmanipulation
+  namespace: default
+  ownerReferences:
+    - apiVersion: intent.security.nimbus.com/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: NimbusPolicy
+      name: multiple-sis-nsscoped-binding
+      uid: a151ee11-539f-4dad-92ae-9a813a681790
+  resourceVersion: "549724"
+  uid: 8018a181-d317-418f-a700-d41369235701
+spec:
+  egress:
+    - ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+      to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+  podSelector:
+    matchLabels:
+      app: nginx
+  policyTypes:
+    - Egress
+```
+
 ## Cleanup
 
 * The SecurityIntent and SecurityIntentBinding created earlier are no longer needed and can be deleted:
@@ -260,19 +311,23 @@ securityintent.intent.security.nimbus.com "dns-manipulation-multiple-nsscoped" d
 securityintentbinding.intent.security.nimbus.com "multiple-sis-nsscoped-binding" deleted
 ```
 
-* Check Security Engine adapter logs:
+* Check KubeArmor Security Engine adapter logs:
 
 ```shell
-{"level":"info","ts":"2024-01-13T22:13:25+05:30","msg":"KubeArmor Adapter started"}
-{"level":"info","ts":"2024-01-13T22:13:25+05:30","msg":"NimbusPolicy watcher started"}
-{"level":"info","ts":"2024-01-13T22:13:56+05:30","msg":"NimbusPolicy found","NimbusPolicy.Name":"multiple-sis-nsscoped-binding","NimbusPolicy.Namespace":"default"}
-{"level":"info","ts":"2024-01-13T22:13:57+05:30","msg":"KubeArmor does not support this ID","ID":"dnsManipulation","NimbusPolicy":"multiple-sis-nsscoped-binding","NimbusPolicy.Namespace":"default"}
-{"level":"info","ts":"2024-01-13T22:13:57+05:30","msg":"KubeArmorPolicy Created","KubeArmorPolicy.Name":"multiple-sis-nsscoped-binding-swdeploymenttools","KubeArmorPolicy.Namespace":"default"}
-{"level":"info","ts":"2024-01-13T22:13:57+05:30","msg":"KubeArmorPolicy Created","KubeArmorPolicy.Name":"multiple-sis-nsscoped-binding-unauthorizedsatokenaccess","KubeArmorPolicy.Namespace":"default"}
-{"level":"info","ts":"2024-01-13T22:17:48+05:30","msg":"NimbusPolicy deleted","NimbusPolicy.Name":"multiple-sis-nsscoped-binding","NimbusPolicy.Namespace":"default"}
-{"level":"info","ts":"2024-01-13T22:17:49+05:30","msg":"KubeArmor does not support this ID","ID":"dnsManipulation","NimbusPolicy":"multiple-sis-nsscoped-binding","NimbusPolicy.Namespace":"default"}
-{"level":"info","ts":"2024-01-13T22:17:49+05:30","msg":"KubeArmorPolicy deleted due to NimbusPolicy deletion","KubeArmorPolicy.Name":"multiple-sis-nsscoped-binding-swdeploymenttools","KubeArmorPolicy.Namespace":"default","NimbusPolicy.Name":"multiple-sis-nsscoped-binding","NimbusPolicy.Namespace":"default"}
-{"level":"info","ts":"2024-01-13T22:17:49+05:30","msg":"KubeArmorPolicy deleted due to NimbusPolicy deletion","KubeArmorPolicy.Name":"multiple-sis-nsscoped-binding-unauthorizedsatokenaccess","KubeArmorPolicy.Namespace":"default","NimbusPolicy.Name":"multiple-sis-nsscoped-binding","NimbusPolicy.Namespace":"default"}
+...
+{"level":"info","ts":"2024-01-23T17:40:51+05:30","msg":"KubeArmorPolicy already deleted, no action needed","KubeArmorPolicy.Name":"multiple-sis-nsscoped-binding-swdeploymenttools","KubeArmorPolicy.Namespace":"default"}
+{"level":"info","ts":"2024-01-23T17:40:51+05:30","msg":"KubeArmorPolicy already deleted, no action needed","KubeArmorPolicy.Name":"multiple-sis-nsscoped-binding-unauthorizedsatokenaccess","KubeArmorPolicy.Namespace":"default"}
+{"level":"info","ts":"2024-01-23T17:40:51+05:30","msg":"KubeArmorPolicy already deleted, no action needed","KubeArmorPolicy.Name":"multiple-sis-nsscoped-binding-dnsmanipulation","KubeArmorPolicy.Namespace":"default"}
+```
+
+* Check Network Policy adapter logs:
+
+```shell
+...
+...
+{"level":"info","ts":"2024-01-23T17:33:28+05:30","msg":"Network Policy adapter does not support this ID","ID":"swDeploymentTools","NimbusPolicy.Name":"multiple-sis-nsscoped-binding","NimbusPolicy.Namespace":"default"}
+{"level":"info","ts":"2024-01-23T17:33:28+05:30","msg":"Network Policy adapter does not support this ID","ID":"unAuthorizedSaTokenAccess","NimbusPolicy.Name":"multiple-sis-nsscoped-binding","NimbusPolicy.Namespace":"default"}
+{"level":"info","ts":"2024-01-23T17:33:28+05:30","msg":"NetworkPolicy already deleted, no action needed","NetworkPolicy.Name":"multiple-sis-nsscoped-binding-dnsmanipulation","NetworkPolicy.Namespace":"default"}
 ```
 
 * Delete deployment
@@ -285,6 +340,6 @@ deployment.apps "nginx" deleted
 * Confirm all resources have been deleted (Optional)
 
 ```shell
-$ kubectl get securityintent,securityintentbinding,nimbuspolicy,kubearmorpolicy -A
+$ kubectl get securityintent,securityintentbinding,kubearmorpolicy,netpol -A
 No resources found
 ```

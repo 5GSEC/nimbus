@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2023 Authors of Nimbus
 
-# Build the nimbus-kubearmor binary
+# Build the nimbus-netpol binary
 FROM golang:1.21 as builder
 ARG TARGETOS
 ARG TARGETARCH
@@ -24,11 +24,11 @@ COPY processor/ processor/
 # was called. For example, if we call make docker-build in a local env which has the Apple Silicon M1 SO
 # the docker BUILDPLATFORM arg will be linux/arm64 when for Apple x86 it will be linux/amd64. Therefore,
 # by leaving it empty we can ensure that the container and binary shipped on it will have the same platform.
-RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -ldflags="-w" -a -o nimbus-kubearmor main.go
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -ldflags="-w" -a -o nimbus-netpol main.go
 
 FROM gcr.io/distroless/static:nonroot
 WORKDIR /
-COPY --from=builder /workspace/nimbus-kubearmor .
+COPY --from=builder /workspace/nimbus-netpol .
 USER 65532:65532
 
-ENTRYPOINT ["/nimbus-kubearmor"]
+ENTRYPOINT ["/nimbus-netpol"]

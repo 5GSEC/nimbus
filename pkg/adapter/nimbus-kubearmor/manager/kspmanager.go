@@ -18,8 +18,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1 "github.com/5GSEC/nimbus/api/v1"
-	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kubearmor/idpool"
-	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kubearmor/k8s"
+	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
+	"github.com/5GSEC/nimbus/pkg/adapter/k8s"
 	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kubearmor/processor"
 )
 
@@ -99,7 +99,7 @@ func createKsp(ctx context.Context, npName, npNamespace string) {
 	// Check if all strict mode intents are implemented by the adapter.
 	allStrictIntentsImplemented := true
 	for _, rule := range np.Spec.NimbusRules {
-		if rule.Rule.Mode == "strict" && !idpool.IsIdSupported(rule.ID) {
+		if rule.Rule.Mode == "strict" && !idpool.IsIdSupportedBy(rule.ID, "kubearmor") {
 			allStrictIntentsImplemented = false
 			logger.Info("The adapter does not support the strict mode intent", "ID", rule.ID)
 			break
