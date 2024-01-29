@@ -37,7 +37,7 @@ NAME                                          DESIRED   CURRENT   READY   AGE
 replicaset.apps/nimbus-kubearmor-7f6854cf8f   1         1         1       3m25s
 ```
 
-## Uninstall the Operator
+## Uninstall the KubeArmor adapter
 
 To uninstall, just run:
 
