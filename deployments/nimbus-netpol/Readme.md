@@ -18,7 +18,7 @@ helm upgrade --install nimbus-netpol . -n nimbus
 | Key              | Type   | Default             | Description                                                             |
 |------------------|--------|---------------------|-------------------------------------------------------------------------|
 | image.repository | string | 5gsec/nimbus-netpol | Image repository from which to pull the `nimbus-netpol` adapter's image |
-| image.pullPolicy | string | IfNotPresent        | `nimbus-netpol` adapter image pull policy                               |
+| image.pullPolicy | string | Always              | `nimbus-netpol` adapter image pull policy                               |
 | image.tag        | string | latest              | `nimbus-netpol` adapter image tag                                       |
 
 ## Verify if all the resources are up and running

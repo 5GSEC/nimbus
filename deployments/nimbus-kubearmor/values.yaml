@@ -4,7 +4,7 @@ replicaCount: 1
 
 image:
   repository: 5gsec/nimbus-kubearmor
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: "latest"
 

@@ -12,7 +12,7 @@ helm upgrade --install nimbus-operator . -n nimbus --create-namespace
 | Key              | Type   | Default      | Description                                            |
 |------------------|--------|--------------|--------------------------------------------------------|
 | image.repository | string | 5gsec/nimbus | Image repository from which to pull the operator image |
-| image.pullPolicy | string | IfNotPresent | Operator image pull policy                             |
+| image.pullPolicy | string | Always       | Operator image pull policy                             |
 | image.tag        | string | latest       | Operator image tag                                     |
 
 ## Verify if all the resources are up and running
