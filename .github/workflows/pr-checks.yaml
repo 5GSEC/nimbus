@@ -82,3 +82,18 @@ jobs:
 
       - name: Build image
         run: make docker-build
+
+  build-adapters-image:
+    strategy:
+      matrix:
+        adapters: [ "nimbus-kubearmor", "nimbus-netpol" ]
+    name: Build ${{ matrix.adapters }} adapter's image
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Build image
+        working-directory: ./pkg/adapter/${{ matrix.adapters }}
+        run: make docker-build
