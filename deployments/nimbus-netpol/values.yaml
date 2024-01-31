@@ -1,15 +1,15 @@
-# Default values for nimbus-kubearmor.
+# Default values for nimbus-netpol.
 
 replicaCount: 1
 
 image:
-  repository: 5gsec/nimbus-kubearmor
+  repository: 5gsec/nimbus-netpol
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: "latest"
 
 nameOverride: ""
-fullnameOverride: "nimbus-kubearmor"
+fullnameOverride: "nimbus-netpol"
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -18,8 +18,8 @@ serviceAccount:
   automount: true
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
-  name: "nimbus-kubearmor"
+  name: "nimbus-netpol"
 
 securityContext:
   runAsNonRoot: true
-  runAsUser: 65533
+  runAsUser: 65532

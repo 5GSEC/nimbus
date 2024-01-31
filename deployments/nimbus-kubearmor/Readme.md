@@ -18,7 +18,7 @@ helm upgrade --install nimbus-kubearmor . -n nimbus
 | Key              | Type   | Default                | Description                                                                |
 |------------------|--------|------------------------|----------------------------------------------------------------------------|
 | image.repository | string | 5gsec/nimbus-kubearmor | Image repository from which to pull the `nimbus-kubearmor` adapter's image |
-| image.pullPolicy | string | IfNotPresent           | `nimbus-kubearmor` adapter image pull policy                               |
+| image.pullPolicy | string | Always                 | `nimbus-kubearmor` adapter image pull policy                               |
 | image.tag        | string | latest                 | `nimbus-kubearmor` adapter image tag                                       |
 
 ## Verify if all the resources are up and running
@@ -37,7 +37,7 @@ NAME                                          DESIRED   CURRENT   READY   AGE
 replicaset.apps/nimbus-kubearmor-7f6854cf8f   1         1         1       3m25s
 ```
 
-## Uninstall the Operator
+## Uninstall the KubeArmor adapter
 
 To uninstall, just run:
 
