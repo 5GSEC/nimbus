@@ -5,6 +5,15 @@
 > To use this adapter, you'll need KubeArmor installed. Please
 > follow [this](https://github.com/kubearmor/KubeArmor/blob/main/getting-started/deployment_guide.md) guide for
 > installation.
+> Creating a KubeArmorPolicy resource without KubeArmor will have no effect.
+
+Install `nimbus-kubearmor` adapter using the official 5GSEC Helm charts.
+
+```shell
+helm repo add 5gsec https://5gsec.github.io/charts
+helm repo update 5gsec
+helm upgrade --install nimbus-kubearmor 5gsec/nimbus-kubearmor -n nimbus
+```
 
 Install `nimbus-kubearmor` adapter using Helm charts locally (for testing)
 
