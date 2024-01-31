@@ -46,8 +46,25 @@ func buildKspFor(id string) kubearmorv1.KubeArmorPolicy {
 		return swDeploymentToolsKsp()
 	case idpool.UnAuthorizedSaTokenAccess:
 		return unAuthorizedSaTokenAccessKsp()
+	case idpool.DNSManipulation:
+		return dnsManipulationKsp()
 	default:
 		return kubearmorv1.KubeArmorPolicy{}
+	}
+}
+
+func dnsManipulationKsp() kubearmorv1.KubeArmorPolicy {
+	return kubearmorv1.KubeArmorPolicy{
+		Spec: kubearmorv1.KubeArmorPolicySpec{
+			File: kubearmorv1.FileType{
+				MatchPaths: []kubearmorv1.FilePathType{
+					{
+						Path:     "/etc/resolv.conf",
+						ReadOnly: true,
+					},
+				},
+			},
+		},
 	}
 }
 
