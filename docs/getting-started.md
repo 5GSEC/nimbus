@@ -52,6 +52,7 @@ Just like Nimbus, there are various ways of installing Security engine adapters.
 > To use this adapter, you'll need KubeArmor installed. Please
 > follow [this](https://github.com/kubearmor/KubeArmor/blob/main/getting-started/deployment_guide.md) guide for
 > installation.
+> Creating a KubeArmorPolicy resource without KubeArmor will have no effect.
 
 ### From source
 
@@ -75,4 +76,36 @@ make run
 
 ### Using helm chart
 
-Follow [this](../deployments/nimbus-kubearmor/Readme.md) guide to install `nimbus-kubearmor` adapter. 
+Follow [this](../deployments/nimbus-kubearmor/Readme.md) guide to install `nimbus-kubearmor` adapter.
+
+## nimbus-netpol
+
+> [!Note]
+> The `nimbus-netpol` adapter leverages
+> the [network plugin](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/).
+> To use network policies, you must be using a networking solution which supports NetworkPolicy. Creating a
+> NetworkPolicy resource without a controller that implements it will have no effect.
+
+### From source
+
+Clone the repository:
+
+```shell
+git clone https://github.com/5GSEC/nimbus.git
+```
+
+Go to nimbus-netpol directory:
+
+```shell
+cd nimbus/pkg/adapter/nimbus-netpol
+```
+
+Run `nimbus-netpol` adapter:
+
+```shell
+make run
+```
+
+### Using helm chart
+
+Follow [this](../deployments/nimbus-netpol/Readme.md) guide to install `nimbus-netpol` adapter.

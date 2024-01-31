@@ -2,9 +2,17 @@
 
 > [!Note]
 > The `nimbus-netpol` adapter leverages
-> the [network plugin](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/)
-> for its functionality.
-> To use this adapter, you must be using a networking solution which supports NetworkPolicy.
+> the [network plugin](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/).
+> To use network policies, you must be using a networking solution which supports NetworkPolicy. Creating a
+> NetworkPolicy resource without a controller that implements it will have no effect.
+
+Install `nimbus-netpol` adapter using the official 5GSEC Helm charts.
+
+```shell
+helm repo add 5gsec https://5gsec.github.io/charts
+helm repo update 5gsec
+helm upgrade --install nimbus-netpol 5gsec/nimbus-netpol -n nimbus
+```
 
 Install `nimbus-netpol` adapter using Helm charts locally (for testing)
 
