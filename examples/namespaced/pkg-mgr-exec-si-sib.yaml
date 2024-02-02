@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: intent.security.nimbus.com/v1
+kind: SecurityIntent
+metadata:
+  name: pkg-mgr-execution
+spec:
+  intent:
+    id: swDeploymentTools
+    description: >
+      Adversaries may gain access to and use third-party software suites installed within an enterprise network, such as administration, monitoring,
+      and deployment systems, to move laterally through the network.
+    action: Block
+---
+apiVersion: intent.security.nimbus.com/v1
+kind: SecurityIntentBinding
+metadata:
+  name: pkg-mgr-execution-binding
+spec:
+  intents:
+    - name: pkg-mgr-execution
+  selector:
+    any:
+      - resources:
+          kind: Pod
+          namespace: default
+          matchLabels:
+            app: nginx

@@ -1,66 +1,35 @@
 # Quick Tutorials
 
-## Create a sample deployment
-
-```shell
-kubectl apply -f ./test/env/nginx-deploy.yaml
-deployment.apps/nginx created
-```
-
 ## Install Nimbus Operator
 
 Follow [this](../deployments/nimbus/Readme.md) guide to install `nimbus` operator.
 
-## Run Adapters
+## Install Adapters
 
 ### KubeArmor
 
-> [!Note]
-> The `nimbus-kubearmor` adapter leverages the [KubeArmor](https://kubearmor.io) security engine for its functionality.
-> To use this adapter, you'll need KubeArmor installed. Please
-> follow [this](https://github.com/kubearmor/KubeArmor/blob/main/getting-started/deployment_guide.md) guide for
-> installation.
-> Creating a KubeArmorPolicy resource without KubeArmor will have no effect.
-
 Follow [this](../deployments/nimbus-kubearmor/Readme.md) guide to install `nimbus-kubearmor` adapter.
-
-Open a new terminal and execute following command to check logs:
-
-```shell
-$ kubectl -n nimbus logs -f deploy/nimbus-kubearmor
-{"level":"info","ts":"2024-01-31T14:55:11+05:30","msg":"KubeArmor adapter started"}
-{"level":"info","ts":"2024-01-31T14:55:11+05:30","msg":"ClusterNimbusPolicy watcher started"}
-{"level":"info","ts":"2024-01-31T14:55:11+05:30","msg":"NimbusPolicy watcher started"}
-```
 
 ### Network Policy
 
-> [!Note]
-> The `nimbus-netpol` adapter leverages
-> the [network plugin](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/).
-> To use network policies, you must be using a networking solution which supports NetworkPolicy. Creating a
-> NetworkPolicy resource without a controller that implements it will have no effect.
-
-
 Follow [this](../deployments/nimbus-netpol/Readme.md) guide to install `nimbus-netpol` adapter.
 
-Open a new terminal and execute following command to check logs:
+## Create a sample deployment
 
 ```shell
-$ kubectl -n nimbus logs -f deploy/nimbus-netpol
-{"level":"info","ts":"2024-01-31T14:53:36+05:30","msg":"NimbusPolicy watcher started"}
-{"level":"info","ts":"2024-01-31T14:53:36+05:30","msg":"ClusterNimbusPolicy watcher started"}
-{"level":"info","ts":"2024-01-31T14:53:36+05:30","msg":"Network Policy adapter started"}
+kubectl apply -f ./examples/env/nginx-deploy.yaml
 ```
 
 ## Create SecurityIntent and SecurityIntentBinding
 
+### [DNS Manipulation](https://fight.mitre.org/techniques/FGT5006)
+
+Create SecurityIntent and SecurityIntentBinding to prevent DNS Manipulation.
+
 ```shell
-$ kubectl apply -f ./test/v2/namespaced/multiple-si-sib-namespaced.yaml
-securityintent.intent.security.nimbus.com/pkg-mgr-exec-multiple-nsscoped created
-securityintent.intent.security.nimbus.com/unauthorized-sa-token-access-multiple-nsscoped created
-securityintent.intent.security.nimbus.com/dns-manipulation-multiple-nsscoped created
-securityintentbinding.intent.security.nimbus.com/multiple-sis-nsscoped-binding created
+$ kubectl apply -f ./examples/namespaced/dns-manipulation-si-sib.yaml
+securityintent.intent.security.nimbus.com/dns-manipulation created
+securityintentbinding.intent.security.nimbus.com/dns-manipulation-binding created
 ```
 
 ## Verify SecurityIntent and SecurityIntentBinding
@@ -69,49 +38,35 @@ securityintentbinding.intent.security.nimbus.com/multiple-sis-nsscoped-binding c
 
 ```shell
 $ kubectl get securityintent
-NAME                                             STATUS
-pkg-mgr-exec-multiple-nsscoped                   Created
-unauthorized-sa-token-access-multiple-nsscoped   Created
-dns-manipulation-multiple-nsscoped               Created
+NAME               STATUS
+dns-manipulation   Created
 ```
 
 * Verify SecurityIntentBinding
 
 ```shell
 $ kubectl get securityintentbinding
-NAME                            STATUS
-multiple-sis-nsscoped-binding   Created
+NAME                       STATUS
+dns-manipulation-binding   Created
 ```
 
 ## Verify the Security Engines policies
 
 ### KubeArmorPolicy
 
-KubeArmor adapter logs that detected NimbusPolicy is shown below:
-
-```shell
-...
-...
-{"level":"info","ts":"2024-01-31T14:55:18+05:30","msg":"NimbusPolicy found","NimbusPolicy.Name":"multiple-sis-nsscoped-binding","NimbusPolicy.Namespace":"default"}
-{"level":"info","ts":"2024-01-31T14:55:19+05:30","msg":"KubeArmorPolicy Created","KubeArmorPolicy.Name":"multiple-sis-nsscoped-binding-swdeploymenttools","KubeArmorPolicy.Namespace":"default"}
-{"level":"info","ts":"2024-01-31T14:55:19+05:30","msg":"KubeArmorPolicy Created","KubeArmorPolicy.Name":"multiple-sis-nsscoped-binding-unauthorizedsatokenaccess","KubeArmorPolicy.Namespace":"default"}
-{"level":"info","ts":"2024-01-31T14:55:19+05:30","msg":"KubeArmorPolicy Created","KubeArmorPolicy.Name":"multiple-sis-nsscoped-binding-dnsmanipulation","KubeArmorPolicy.Namespace":"default"}
-```
-
-You can also review the policies that were successfully generated:
+Review the policies that were successfully generated as part of `DNSManipulation` SecurityIntent and
+SecurityIntentBinding:
 
 ```shell
 $ kubectl get kubearmorpolicy
-NAME                                                      AGE
-multiple-sis-nsscoped-binding-swdeploymenttools           2m
-multiple-sis-nsscoped-binding-unauthorizedsatokenaccess   2m
-multiple-sis-nsscoped-binding-dnsmanipulation             2m
+NAME                                       AGE
+dns-manipulation-binding-dnsmanipulation   2m44s
 ```
 
-Or, inspect each individual policy for detailed info:
+Inspect the policy for detailed info:
 
 ```shell
-$ kubectl get kubearmorpolicy multiple-sis-nsscoped-binding-swdeploymenttools -o yaml
+$ kubectl get kubearmorpolicy dns-manipulation-binding-dnsmanipulation -o yaml
 ```
 
 ```yaml
@@ -120,130 +75,19 @@ kind: KubeArmorPolicy
 metadata:
   annotations:
     app.kubernetes.io/managed-by: nimbus-kubearmor
-  creationTimestamp: "2024-01-31T09:25:19Z"
+  creationTimestamp: "2024-02-02T08:27:03Z"
   generation: 1
-  name: multiple-sis-nsscoped-binding-swdeploymenttools
+  name: dns-manipulation-binding-dnsmanipulation
   namespace: default
   ownerReferences:
     - apiVersion: intent.security.nimbus.com/v1
       blockOwnerDeletion: true
       controller: true
       kind: NimbusPolicy
-      name: multiple-sis-nsscoped-binding
-      uid: d2176ea3-3e0b-4671-8f58-dbff376d87b0
-  resourceVersion: "594438"
-  uid: 363d5191-20b9-471e-80c2-a142f8396e13
-spec:
-  action: Block
-  capabilities: { }
-  file: { }
-  message: Do not allow the execution of package managers inside the containers
-  network: { }
-  process:
-    matchPaths:
-      - path: /usr/bin/apt
-      - path: /usr/bin/apt-get
-      - path: /bin/apt-get
-      - path: /bin/apt
-      - path: /usr/bin/dpkg
-      - path: /bin/dpkg
-      - path: /usr/bin/gdebi
-      - path: /bin/gdebi
-      - path: /usr/bin/make
-      - path: /bin/make
-      - path: /usr/bin/yum
-      - path: /bin/yum
-      - path: /usr/bin/rpm
-      - path: /bin/rpm
-      - path: /usr/bin/dnf
-      - path: /bin/dnf
-      - path: /usr/bin/pacman
-      - path: /usr/sbin/pacman
-      - path: /bin/pacman
-      - path: /sbin/pacman
-      - path: /usr/bin/makepkg
-      - path: /usr/sbin/makepkg
-      - path: /bin/makepkg
-      - path: /sbin/makepkg
-      - path: /usr/bin/yaourt
-      - path: /usr/sbin/yaourt
-      - path: /bin/yaourt
-      - path: /sbin/yaourt
-      - path: /usr/bin/zypper
-      - path: /bin/zypper
-    severity: 5
-  selector:
-    matchLabels:
-      app: nginx
-  syscalls: { }
-  tags:
-    - NIST
-    - CM-7(5)
-    - SI-4
-    - Package Manager
-```
-
-```shell
-$ kubectl get kubearmorpolicy multiple-sis-nsscoped-binding-unauthorizedsatokenaccess -o yaml
-```
-
-```yaml
-apiVersion: security.kubearmor.com/v1
-kind: KubeArmorPolicy
-metadata:
-  annotations:
-    app.kubernetes.io/managed-by: nimbus-kubearmor
-  creationTimestamp: "2024-01-31T09:25:19Z"
-  generation: 1
-  name: multiple-sis-nsscoped-binding-unauthorizedsatokenaccess
-  namespace: default
-  ownerReferences:
-    - apiVersion: intent.security.nimbus.com/v1
-      blockOwnerDeletion: true
-      controller: true
-      kind: NimbusPolicy
-      name: multiple-sis-nsscoped-binding
-      uid: d2176ea3-3e0b-4671-8f58-dbff376d87b0
-  resourceVersion: "594439"
-  uid: 166b1193-751c-4b6b-acbd-a68ed1dd26e8
-spec:
-  action: Block
-  capabilities: { }
-  file:
-    matchDirectories:
-      - dir: /run/secrets/kubernetes.io/serviceaccount/
-        recursive: true
-  network: { }
-  process: { }
-  selector:
-    matchLabels:
-      app: nginx
-  syscalls: { }
-```
-
-```shell
-$ kubectl get kubearmorpolicy multiple-sis-nsscoped-binding-dnsmanipulation -o yaml
-```
-
-```yaml
-apiVersion: security.kubearmor.com/v1
-kind: KubeArmorPolicy
-metadata:
-  annotations:
-    app.kubernetes.io/managed-by: nimbus-kubearmor
-  creationTimestamp: "2024-01-31T09:25:19Z"
-  generation: 1
-  name: multiple-sis-nsscoped-binding-dnsmanipulation
-  namespace: default
-  ownerReferences:
-    - apiVersion: intent.security.nimbus.com/v1
-      blockOwnerDeletion: true
-      controller: true
-      kind: NimbusPolicy
-      name: multiple-sis-nsscoped-binding
-      uid: d2176ea3-3e0b-4671-8f58-dbff376d87b0
-  resourceVersion: "594440"
-  uid: cbce8ea8-988d-4033-9d9d-c597acbe496a
+      name: dns-manipulation-binding
+      uid: c2571f5b-8299-4e0f-9594-b6804a5a4d8f
+  resourceVersion: "610470"
+  uid: 7f23a7f3-3012-449d-92ee-1ea2a741b7ec
 spec:
   action: Block
   capabilities: { }
@@ -261,26 +105,16 @@ spec:
 
 ### NetworkPolicy
 
-Network Policy adapter logs that detected NimbusPolicy is shown below:
-
-```shell
-...
-...
-{"level":"info","ts":"2024-01-31T14:55:18+05:30","msg":"NimbusPolicy found","NimbusPolicy.Name":"multiple-sis-nsscoped-binding","NimbusPolicy.Namespace":"default"}
-{"level":"info","ts":"2024-01-31T14:55:18+05:30","msg":"Network Policy adapter does not support this ID","ID":"swDeploymentTools","NimbusPolicy.Name":"multiple-sis-nsscoped-binding","NimbusPolicy.Namespace":"default"}
-{"level":"info","ts":"2024-01-31T14:55:18+05:30","msg":"Network Policy adapter does not support this ID","ID":"unAuthorizedSaTokenAccess","NimbusPolicy.Name":"multiple-sis-nsscoped-binding","NimbusPolicy.Namespace":"default"}
-{"level":"info","ts":"2024-01-31T14:55:18+05:30","msg":"NetworkPolicy created","NetworkPolicy.Name":"multiple-sis-nsscoped-binding-dnsmanipulation","NetworkPolicy.Namespace":"default"}
-```
-
-You can also review the network policies that were successfully generated:
+Review the network policies that were successfully generated as part of `DNSManipulation` SecurityIntent and
+SecurityIntentBinding:
 
 ```shell
 $ kubectl get networkpolicy
-NAME                                            POD-SELECTOR   AGE
-multiple-sis-nsscoped-binding-dnsmanipulation   app=nginx      5m6s
+NAME                                       POD-SELECTOR   AGE
+dns-manipulation-binding-dnsmanipulation   app=nginx      5m54s
 ```
 
-Or, inspect policy for detailed info:
+Inspect policy for detailed info:
 
 ```shell
 $ kubectl get networkpolicy multiple-sis-nsscoped-binding-dnsmanipulation -o yaml
@@ -292,19 +126,19 @@ kind: NetworkPolicy
 metadata:
   annotations:
     app.kubernetes.io/managed-by: nimbus-netpol
-  creationTimestamp: "2024-01-31T09:25:18Z"
+  creationTimestamp: "2024-02-02T08:27:03Z"
   generation: 1
-  name: multiple-sis-nsscoped-binding-dnsmanipulation
+  name: dns-manipulation-binding-dnsmanipulation
   namespace: default
   ownerReferences:
     - apiVersion: intent.security.nimbus.com/v1
       blockOwnerDeletion: true
       controller: true
       kind: NimbusPolicy
-      name: multiple-sis-nsscoped-binding
-      uid: d2176ea3-3e0b-4671-8f58-dbff376d87b0
-  resourceVersion: "594436"
-  uid: 5d7743e6-7dfd-4d3e-b503-6c43bea4473d
+      name: dns-manipulation-binding
+      uid: c2571f5b-8299-4e0f-9594-b6804a5a4d8f
+  resourceVersion: "610469"
+  uid: 7cbf50e3-8c47-443e-8851-01b0ca167bd3
 spec:
   egress:
     - ports:
@@ -326,44 +160,30 @@ spec:
     - Egress
 ```
 
+From the `DNSManipulation` SecurityIntent two security policies were generated:
+
+- KubeArmor Policy: This policy prevents modification of the `/etc/resolv.conf` file, ensuring the integrity of DNS
+  configuration and preventing potential DNS hijacking.
+
+
+- Kubernetes Network Policy: This policy allows outbound traffic on UDP and TCP ports 53 only to the
+  `kube-dns` pods within the `kube-system` namespace. This restricts access to the DNS server, enhancing security while
+  enabling pods to resolve DNS names.
+
 ## Cleanup
 
 * The SecurityIntent and SecurityIntentBinding created earlier are no longer needed and can be deleted:
 
 ```shell
-$ kubectl delete -f ./test/v2/namespaced/multiple-si-sib-namespaced.yaml
-securityintent.intent.security.nimbus.com "pkg-mgr-exec-multiple-nsscoped" deleted
-securityintent.intent.security.nimbus.com "unauthorized-sa-token-access-multiple-nsscoped" deleted
-securityintent.intent.security.nimbus.com "dns-manipulation-multiple-nsscoped" deleted
-securityintentbinding.intent.security.nimbus.com "multiple-sis-nsscoped-binding" deleted
-```
-
-* Check KubeArmor Security Engine adapter logs:
-
-```shell
-...
-...
-{"level":"info","ts":"2024-01-31T15:01:09+05:30","msg":"NimbusPolicy deleted","NimbusPolicy.Name":"multiple-sis-nsscoped-binding","NimbusPolicy.Namespace":"default"}
-{"level":"info","ts":"2024-01-31T15:01:10+05:30","msg":"KubeArmorPolicy already deleted, no action needed","KubeArmorPolicy.Name":"multiple-sis-nsscoped-binding-swdeploymenttools","KubeArmorPolicy.Namespace":"default"}
-{"level":"info","ts":"2024-01-31T15:01:10+05:30","msg":"KubeArmorPolicy already deleted, no action needed","KubeArmorPolicy.Name":"multiple-sis-nsscoped-binding-unauthorizedsatokenaccess","KubeArmorPolicy.Namespace":"default"}
-{"level":"info","ts":"2024-01-31T15:01:10+05:30","msg":"KubeArmorPolicy already deleted, no action needed","KubeArmorPolicy.Name":"multiple-sis-nsscoped-binding-dnsmanipulation","KubeArmorPolicy.Namespace":"default"}
-```
-
-* Check Network Policy adapter logs:
-
-```shell
-...
-...
-{"level":"info","ts":"2024-01-31T15:01:09+05:30","msg":"NimbusPolicy deleted","NimbusPolicy.Name":"multiple-sis-nsscoped-binding","NimbusPolicy.Namespace":"default"}
-{"level":"info","ts":"2024-01-31T15:01:09+05:30","msg":"Network Policy adapter does not support this ID","ID":"swDeploymentTools","NimbusPolicy.Name":"multiple-sis-nsscoped-binding","NimbusPolicy.Namespace":"default"}
-{"level":"info","ts":"2024-01-31T15:01:09+05:30","msg":"Network Policy adapter does not support this ID","ID":"unAuthorizedSaTokenAccess","NimbusPolicy.Name":"multiple-sis-nsscoped-binding","NimbusPolicy.Namespace":"default"}
-{"level":"info","ts":"2024-01-31T15:01:09+05:30","msg":"NetworkPolicy already deleted, no action needed","NetworkPolicy.Name":"multiple-sis-nsscoped-binding-dnsmanipulation","NetworkPolicy.Namespace":"default"}
+$ kubectl delete -f ./examples/namespaced/dns-manipulation-si-sib.yaml
+securityintent.intent.security.nimbus.com "dns-manipulation" deleted
+securityintentbinding.intent.security.nimbus.com "dns-manipulation-binding" deleted
 ```
 
 * Delete deployment
 
 ```shell
-$ kubectl delete -f ./test/env/nginx-deploy.yaml
+$ kubectl delete -f ./examples/env/nginx-deploy.yaml
 deployment.apps "nginx" deleted
 ```
 
@@ -373,3 +193,8 @@ deployment.apps "nginx" deleted
 $ kubectl get securityintent,securityintentbinding,kubearmorpolicy,netpol -A
 No resources found
 ```
+
+## Next steps
+
+- Try out other sample [SecurityIntents](../examples/namespaced) and review the policy generation.
+- Checkout [Security Intents](https://github.com/5GSEC/security-intents).
