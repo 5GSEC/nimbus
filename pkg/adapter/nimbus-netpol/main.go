@@ -25,7 +25,8 @@ func main() {
 
 	nimbusPolicyCh := make(chan [2]string)
 	nimbusPolicyToDeleteCh := make(chan [2]string)
-	go watcher.WatchNimbusPolicies(ctx, nimbusPolicyCh, nimbusPolicyToDeleteCh)
+	nimbusPolicyUpdateCh := make(chan [2]string)
+	go watcher.WatchNimbusPolicies(ctx, nimbusPolicyCh, nimbusPolicyToDeleteCh, nimbusPolicyUpdateCh)
 
 	clusterNpChan := make(chan string)
 	clusterNpToDeleteChan := make(chan string)

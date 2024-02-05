@@ -6,6 +6,7 @@ package manager
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	kubearmorv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorController/api/security.kubearmor.com/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -41,7 +42,7 @@ func init() {
 	}
 }
 
-func ManageKsps(ctx context.Context, nimbusPolicyCh chan [2]string, nimbusPolicyToDeleteCh chan [2]string, clusterNpChan chan string, clusterNpToDeleteChan chan string) {
+func ManageKsps(ctx context.Context, nimbusPolicyCh chan [2]string, nimbusPolicyToDeleteCh chan [2]string, clusterNpChan chan string, clusterNpToDeleteChan chan string, nimbusPolicyUpdateCh chan [2]string) {
 	for {
 		select {
 		case _ = <-ctx.Done():
@@ -49,9 +50,12 @@ func ManageKsps(ctx context.Context, nimbusPolicyCh chan [2]string, nimbusPolicy
 			close(nimbusPolicyToDeleteCh)
 			close(clusterNpChan)
 			close(clusterNpToDeleteChan)
+			close(nimbusPolicyUpdateCh)
 			return
 		case npToCreate := <-nimbusPolicyCh:
 			createKsp(ctx, npToCreate[0], npToCreate[1])
+		case npToUpdate := <-nimbusPolicyUpdateCh:
+			createKsp(ctx, npToUpdate[0], npToUpdate[1])
 		case npToDelete := <-nimbusPolicyToDeleteCh:
 			deleteKsp(ctx, npToDelete[0], npToDelete[1])
 		case _ = <-clusterNpChan: // Fixme: CreateKSP based on ClusterNP
@@ -140,7 +144,20 @@ func createKsp(ctx context.Context, npName, npNamespace string) {
 				logger.Error(err, "failed to configure existing KubeArmorPolicy", "KubeArmorPolicy.Name", existingKsp.Name, "KubeArmorPolicy.Namespace", existingKsp.Namespace)
 				return
 			}
-			logger.Info("KubeArmorPolicy Configured", "KubeArmorPolicy.Name", existingKsp.Name, "KubeArmorPolicy.Namespace", existingKsp.Namespace)
+			if !reflect.DeepEqual(ksp.Spec, existingKsp.Spec) {
+				if err = k8sClient.Update(ctx, &ksp); err != nil {
+					logger.Error(err, "failed to update KubeArmorPolicy", "KubeArmorPolicy.Name", ksp.Name, "KubeArmorPolicy.Namespace", ksp.Namespace)
+					return
+				}
+				logger.Info("KubeArmorPolicy configured", "KubeArmorPolicy.Name", existingKsp.Name, "KubeArmorPolicy.Namespace", existingKsp.Namespace)
+			} else {
+				logger.Info("KubeArmorPolicy unchanged", "KubeArmorPolicy.Name", ksp.Name, "KubeArmorPolicy.Namespace", ksp.Namespace)
+			}
 		}
 	}
 }
+
+//func updateKsp(ctx context.Context, npName, npNamespace string) {
+// KSP 업데이트 로직 구현
+// 이 함수는 createKsp 함수의 로직을 재사용하거나, 필요한 경우에는 KSP의 특정 부분만을 업데이트하는 등의 구현을 포함할 수 있습니다.
+//}

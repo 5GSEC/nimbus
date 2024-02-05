@@ -23,7 +23,7 @@ func init() {
 	factory = dynamicinformer.NewDynamicSharedInformerFactory(k8sClient, time.Minute)
 }
 
-func WatchNimbusPolicies(ctx context.Context, nimbusPolicyCh chan [2]string, nimbusPolicyToDeleteCh chan [2]string) {
+func WatchNimbusPolicies(ctx context.Context, nimbusPolicyCh chan [2]string, nimbusPolicyToDeleteCh chan [2]string, nimbusPolicyUpdateCh chan [2]string) {
 	nimbusPolicyInformer := setupNpInformer()
 	logger := log.FromContext(ctx)
 	handlers := cache.ResourceEventHandlerFuncs{
@@ -32,6 +32,12 @@ func WatchNimbusPolicies(ctx context.Context, nimbusPolicyCh chan [2]string, nim
 			npNamespacedName := [2]string{u.GetName(), u.GetNamespace()}
 			nimbusPolicyCh <- npNamespacedName
 			logger.Info("NimbusPolicy found", "NimbusPolicy.Name", npNamespacedName[0], "NimbusPolicy.Namespace", npNamespacedName[1])
+		},
+		UpdateFunc: func(oldObj, newObj interface{}) {
+			u := newObj.(*unstructured.Unstructured)
+			npNamespacedName := [2]string{u.GetName(), u.GetNamespace()}
+			nimbusPolicyUpdateCh <- npNamespacedName
+			logger.Info("NimbusPolicy update detected, event sent to channel", "NimbusPolicy.Name", npNamespacedName[0], "NimbusPolicy.Namespace", npNamespacedName[1])
 		},
 		DeleteFunc: func(obj interface{}) {
 			u := obj.(*unstructured.Unstructured)

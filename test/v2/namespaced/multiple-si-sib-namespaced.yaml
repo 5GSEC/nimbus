@@ -26,6 +26,16 @@ spec:
 apiVersion: intent.security.nimbus.com/v1
 kind: SecurityIntent
 metadata:
+  name: sys-path-exec
+spec:
+  intent:
+    id: sysPathExec
+    action: Block
+    mode: best-effort
+---
+apiVersion: intent.security.nimbus.com/v1
+kind: SecurityIntent
+metadata:
   name: dns-manipulation-multiple-nsscoped
 spec:
   intent:
@@ -40,6 +50,7 @@ metadata:
   name: multiple-sis-nsscoped-binding
 spec:
   intents:
+    #- name: sys-path-exec
     - name: pkg-mgr-exec-multiple-nsscoped
     - name: unauthorized-sa-token-access-multiple-nsscoped
     - name: dns-manipulation-multiple-nsscoped

@@ -28,8 +28,9 @@ func BuildKspsFrom(logger logr.Logger, np *v1.NimbusPolicy) []kubearmorv1.KubeAr
 			ksp.Spec.Message = nimbusRule.Description
 			ksp.Spec.Selector.MatchLabels = np.Spec.Selector.MatchLabels
 			ksp.Spec.Action = kubearmorv1.ActionType(nimbusRule.Rule.RuleAction)
-			processRuleParams(&ksp, nimbusRule.Rule)
+			//processRuleParams(&ksp, nimbusRule.Rule)
 			addManagedByAnnotation(&ksp)
+			setDefaultValues(&ksp)
 			ksps = append(ksps, ksp)
 		} else {
 			logger.Info("KubeArmor does not support this ID", "ID", id,
@@ -37,6 +38,19 @@ func BuildKspsFrom(logger logr.Logger, np *v1.NimbusPolicy) []kubearmorv1.KubeAr
 		}
 	}
 	return ksps
+}
+
+func setDefaultValues(ksp *kubearmorv1.KubeArmorPolicy) {
+	if len(ksp.Spec.Network.MatchProtocols) == 0 {
+		ksp.Spec.Network.MatchProtocols = append(ksp.Spec.Network.MatchProtocols, kubearmorv1.MatchNetworkProtocolType{
+			Protocol: "raw",
+		})
+	}
+	if len(ksp.Spec.Capabilities.MatchCapabilities) == 0 {
+		ksp.Spec.Capabilities.MatchCapabilities = append(ksp.Spec.Capabilities.MatchCapabilities, kubearmorv1.MatchCapabilitiesType{
+			Capability: "lease",
+		})
+	}
 }
 
 // buildKspFor builds a KubeArmorPolicy based on intent ID supported by KubeArmor Security Engine.

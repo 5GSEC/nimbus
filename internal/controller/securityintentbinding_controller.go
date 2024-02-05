@@ -5,8 +5,11 @@ package controller
 
 import (
 	"context"
+	"reflect"
+	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -46,6 +49,7 @@ func (r *SecurityIntentBindingReconciler) Reconcile(ctx context.Context, req ctr
 
 	if sib.Status.Status == "" {
 		sib.Status.Status = StatusCreated
+		sib.Status.LastUpdated = metav1.Now()
 		if err := r.Status().Update(ctx, sib); err != nil {
 			logger.Error(err, "failed to update SecurityIntentBinding status", "SecurityIntentBinding.Name", sib.Name, "SecurityIntentBinding.Namespace", sib.Namespace)
 			return ctrl.Result{}, err
@@ -69,21 +73,43 @@ func (r *SecurityIntentBindingReconciler) Reconcile(ctx context.Context, req ctr
 
 	existingNp := &v1.NimbusPolicy{}
 	err = r.Get(ctx, req.NamespacedName, existingNp)
+
+	// NimbusPolicy가 존재하지 않을 때, 즉 새로 NimbusPolicy를 생성해야 할 때
 	if err != nil && errors.IsNotFound(err) {
+		// NimbusPolicy 생성 로직
+		nimbusPolicy.Status.LastUpdated = metav1.Now()
 		if err := r.Create(ctx, nimbusPolicy); err != nil {
 			logger.Error(err, "failed to create NimbusPolicy", "NimbusPolicy.Name", nimbusPolicy.Name, "NimbusPolicy.Namespace", nimbusPolicy.Namespace)
 			return ctrl.Result{}, err
 		}
+		// 잠시 대기하여 Kubernetes API 서버가 NimbusPolicy 정보를 업데이트할 시간을 준다.
+		time.Sleep(time.Second * 10)
 		return ctrl.Result{}, nil
 	}
-	nimbusPolicy.ObjectMeta = existingNp.ObjectMeta
-	if err := r.Update(ctx, nimbusPolicy); err != nil {
-		logger.Error(err, "failed to update NimbusPolicy")
-		return ctrl.Result{}, err
+
+	// NimbusPolicy가 이미 존재할 때, 즉 NimbusPolicy를 업데이트해야 할 때
+	if err == nil {
+		// 생성된 NimbusPolicy와 기존 NimbusPolicy를 비교하여 업데이트가 필요한지 확인
+		if !reflect.DeepEqual(existingNp.Spec, nimbusPolicy.Spec) || !reflect.DeepEqual(existingNp.Status, nimbusPolicy.Status) {
+			nimbusPolicy.ObjectMeta.ResourceVersion = existingNp.ObjectMeta.ResourceVersion
+			logger.Info("Updating NimbusPolicy due to changes", "NimbusPolicy.Name", existingNp.Name)
+			if err := r.Update(ctx, nimbusPolicy); err != nil {
+				logger.Error(err, "Failed to update NimbusPolicy", "NimbusPolicy.Name", nimbusPolicy.Name)
+				return ctrl.Result{}, err
+			}
+		}
 	}
+
+	//nimbusPolicy.ObjectMeta = existingNp.ObjectMeta
+	//nimbusPolicy.Status.LastUpdated = metav1.Now()
+	//if err := r.Update(ctx, nimbusPolicy); err != nil {
+	//	logger.Error(err, "failed to update NimbusPolicy")
+	//	return ctrl.Result{}, err
+	//}
 
 	if nimbusPolicy.Status.Status == "" || nimbusPolicy.Status.Status == StatusPending {
 		nimbusPolicy.Status.Status = StatusCreated
+		nimbusPolicy.Status.LastUpdated = metav1.Now()
 		if err := r.Status().Update(ctx, nimbusPolicy); err != nil {
 			logger.Error(err, "failed to update NimbusPolicy status", "NimbusPolicy.Name", nimbusPolicy.Name, "NimbusPolicy.Namespace", nimbusPolicy.Namespace)
 			return ctrl.Result{}, err
