@@ -112,12 +112,6 @@ func (r *SecurityIntentBindingReconciler) Reconcile(ctx context.Context, req ctr
 }
 
 // shouldUpdateNimbusPolicy checks if the existing np should be updated
-//func shouldUpdateNimbusPolicy(newNp, existingNp *v1.NimbusPolicy) bool {
-// Compare timestamps, update only if the new one is later
-//	return newNp.Status.LastUpdated.Time.After(existingNp.Status.LastUpdated.Time)
-//}
-
-// shouldUpdateNimbusPolicy checks if the existing np should be updated
 func shouldUpdateNimbusPolicy(newNp, existingNp *v1.NimbusPolicy) bool {
 	// Compare timestamps, update only if the new one is later
 	if newNp.Status.LastUpdated.Time.After(existingNp.Status.LastUpdated.Time) {
@@ -135,33 +129,25 @@ func shouldUpdateNimbusPolicy(newNp, existingNp *v1.NimbusPolicy) bool {
 func sibChanged(ctx context.Context, client client.Client, sib *v1.SecurityIntentBinding, np *v1.NimbusPolicy) bool {
 	logger := log.FromContext(ctx)
 
-	// SIB의 LastUpdated 시간이 NP의 LastUpdated 시간보다 이전인 경우, NP가 업데이트된 것으로 간주
-	if sib.Status.LastUpdated.Time.Before(np.Status.LastUpdated.Time) {
-		// SIB에서 참조하는 각 Intent의 ID를 확인하고, NP의 Rules에 정의된 ID와 비교
-		for _, intentRef := range sib.Spec.Intents {
-			var si v1.SecurityIntent
-			if err := client.Get(ctx, types.NamespacedName{Name: intentRef.Name}, &si); err != nil {
-				logger.Error(err, "failed to get SecurityIntent", "SecurityIntent.Name", intentRef.Name)
-				// SecurityIntent를 찾을 수 없는 경우, 변경 감지를 위해 true를 반환할 수 있습니다.
-				return true
-			}
+	for _, intentRef := range sib.Spec.Intents {
+		var si v1.SecurityIntent
+		if err := client.Get(ctx, types.NamespacedName{Name: intentRef.Name}, &si); err != nil {
+			logger.Error(err, "failed to get SecurityIntent", "SecurityIntent.Name", intentRef.Name)
+			return true
+		}
 
-			intentIdFound := false
-			for _, rule := range np.Spec.NimbusRules {
-				if rule.ID == si.Spec.Intent.ID {
-					intentIdFound = true
-					break
-				}
-			}
-
-			// NP의 Rules에 SIB의 Intent ID가 없는 경우, 변경이 발생한 것으로 간주
-			if !intentIdFound {
-				return true
+		intentIdFound := false
+		for _, rule := range np.Spec.NimbusRules {
+			if rule.ID == si.Spec.Intent.ID {
+				intentIdFound = true
+				break
 			}
 		}
-	}
 
-	// 위 조건들에 해당하지 않는 경우, 변경이 없는 것으로 간주
+		if !intentIdFound {
+			return true
+		}
+	}
 	return false
 }
 
