@@ -37,7 +37,7 @@ Run the operator:
 make run
 ```
 
-## Using helm chart
+## From Helm Chart
 
 Follow [this](../deployments/nimbus/Readme.md) guide to install `nimbus` operator.
 
@@ -74,7 +74,7 @@ Run `nimbus-kubearmor` adapter:
 make run
 ```
 
-### Using helm chart
+### From Helm Chart
 
 Follow [this](../deployments/nimbus-kubearmor/Readme.md) guide to install `nimbus-kubearmor` adapter.
 
@@ -106,6 +106,6 @@ Run `nimbus-netpol` adapter:
 make run
 ```
 
-### Using helm chart
+### From Helm Chart
 
 Follow [this](../deployments/nimbus-netpol/Readme.md) guide to install `nimbus-netpol` adapter.

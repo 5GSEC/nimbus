@@ -4,21 +4,20 @@
 apiVersion: intent.security.nimbus.com/v1
 kind: SecurityIntent
 metadata:
-  name: pkg-mgr-exec-single-nsscoped
+  name: dns-manipulation
 spec:
   intent:
-    id: swDeploymentTools
-    description: "Do not allow the execution of package managers inside the containers"
+    id: dnsManipulation
+    description: "An adversary can manipulate DNS requests to redirect network traffic and potentially reveal end user activity."
     action: Block
-    mode: strict
 ---
 apiVersion: intent.security.nimbus.com/v1
 kind: SecurityIntentBinding
 metadata:
-  name: pkg-mgr-exec-single-nsscoped-binding
+  name: dns-manipulation-binding
 spec:
   intents:
-    - name: pkg-mgr-exec-single-nsscoped
+    - name: dns-manipulation
   selector:
     any:
       - resources:

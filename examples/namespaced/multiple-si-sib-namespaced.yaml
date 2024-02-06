@@ -8,9 +8,7 @@ metadata:
 spec:
   intent:
     id: swDeploymentTools
-    description: "Do not allow the execution of package managers inside the containers"
     action: Block
-    mode: strict
 ---
 apiVersion: intent.security.nimbus.com/v1
 kind: SecurityIntent
@@ -20,8 +18,6 @@ spec:
   intent:
     id: unAuthorizedSaTokenAccess
     action: Block
-    mode: strict
-    #mode: best-effort
 ---
 apiVersion: intent.security.nimbus.com/v1
 kind: SecurityIntent
@@ -31,8 +27,6 @@ spec:
   intent:
     id: dnsManipulation
     action: Block
-    mode: best-effort
-    #mode: strict
 ---
 apiVersion: intent.security.nimbus.com/v1
 kind: SecurityIntentBinding
