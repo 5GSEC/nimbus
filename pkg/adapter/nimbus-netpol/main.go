@@ -12,7 +12,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-netpol/manager"
+	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kubearmor/manager"
 	"github.com/5GSEC/nimbus/pkg/adapter/watcher"
 )
 
@@ -41,6 +41,6 @@ func main() {
 		logger.Info("All workers finished, shutting down")
 	}()
 
-	logger.Info("Network Policy adapter started")
-	manager.ManageNetPols(ctx, nimbusPolicyCh, nimbusPolicyToDeleteCh, clusterNpChan, clusterNpToDeleteChan)
+	logger.Info("KubeArmor adapter started")
+	manager.ManageKsps(ctx, nimbusPolicyCh, nimbusPolicyToDeleteCh, nimbusPolicyUpdateCh, clusterNpChan, clusterNpToDeleteChan)
 }
