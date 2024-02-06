@@ -38,7 +38,6 @@ func WatchNimbusPolicies(ctx context.Context, nimbusPolicyCh chan [2]string, nim
 			oldU := oldObj.(*unstructured.Unstructured)
 			newU := newObj.(*unstructured.Unstructured)
 
-			// spec을 JSON으로 마샬링하여 문자열 비교
 			oldSpec, errOld := oldU.Object["spec"].(map[string]interface{})
 			newSpec, errNew := newU.Object["spec"].(map[string]interface{})
 

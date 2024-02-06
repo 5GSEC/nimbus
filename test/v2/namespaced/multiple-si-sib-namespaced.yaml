@@ -50,8 +50,8 @@ metadata:
   name: multiple-sis-nsscoped-binding
 spec:
   intents:
-    #- name: sys-path-exec
-    - name: pkg-mgr-exec-multiple-nsscoped
+    - name: sys-path-exec
+    #- name: pkg-mgr-exec-multiple-nsscoped
     - name: unauthorized-sa-token-access-multiple-nsscoped
     - name: dns-manipulation-multiple-nsscoped
   selector:
