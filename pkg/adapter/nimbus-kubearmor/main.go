@@ -42,6 +42,5 @@ func main() {
 	}()
 
 	logger.Info("KubeArmor adapter started")
-	manager.ManageKsps(ctx, nimbusPolicyCh, nimbusPolicyToDeleteCh, clusterNpChan, clusterNpToDeleteChan, nimbusPolicyUpdateCh)
-
+	manager.ManageKsps(ctx, nimbusPolicyCh, nimbusPolicyToDeleteCh, nimbusPolicyUpdateCh, clusterNpChan, clusterNpToDeleteChan)
 }
