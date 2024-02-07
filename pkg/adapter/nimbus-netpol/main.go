@@ -13,7 +13,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-netpol/manager"
-	"github.com/5GSEC/nimbus/pkg/adapter/watcher"
 )
 
 func main() {
@@ -22,14 +21,6 @@ func main() {
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	ctrl.LoggerInto(ctx, logger)
-
-	nimbusPolicyCh := make(chan [2]string)
-	nimbusPolicyToDeleteCh := make(chan [2]string)
-	go watcher.WatchNimbusPolicies(ctx, nimbusPolicyCh, nimbusPolicyToDeleteCh)
-
-	clusterNpChan := make(chan string)
-	clusterNpToDeleteChan := make(chan string)
-	go watcher.WatchClusterNimbusPolicies(ctx, clusterNpChan, clusterNpToDeleteChan)
 
 	go func() {
 		termChan := make(chan os.Signal)
@@ -40,6 +31,6 @@ func main() {
 		logger.Info("All workers finished, shutting down")
 	}()
 
-	logger.Info("Network Policy adapter started")
-	manager.ManageNetPols(ctx, nimbusPolicyCh, nimbusPolicyToDeleteCh, clusterNpChan, clusterNpToDeleteChan)
+	logger.Info("NetworkPolicy adapter started")
+	manager.Run(ctx)
 }
