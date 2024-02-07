@@ -51,3 +51,41 @@ func NewDynamicClient() dynamic.Interface {
 	}
 	return clientSet
 }
+
+// NewOrDie returns a new Kubernetes client and panics if there is an error in
+// the config.
+func NewOrDie(scheme *runtime.Scheme) client.Client {
+	config, err := rest.InClusterConfig()
+	if err != nil && errors.Is(err, rest.ErrNotInCluster) {
+		kubeconfig := filepath.Join(os.Getenv("HOME"), ".kube", "config")
+		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
+		if err != nil {
+			panic(fmt.Sprintf("failed to load kubeconfig '%v', error: %v\n", kubeconfig, err))
+		}
+	}
+	k8sClient, err := client.New(config, client.Options{
+		Scheme: scheme,
+	})
+	if err != nil {
+		panic(fmt.Sprintf("failed to create client, error: %v", err))
+	}
+	return k8sClient
+}
+
+// NewDynamicClientOrDie returns a Dynamic Kubernetes client and panics if there
+// is an error in the config.
+func NewDynamicClientOrDie() dynamic.Interface {
+	config, err := rest.InClusterConfig()
+	if err != nil && errors.Is(err, rest.ErrNotInCluster) {
+		kubeconfig := filepath.Join(os.Getenv("HOME"), ".kube", "config")
+		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
+		if err != nil {
+			panic(err)
+		}
+	}
+	clientSet, err := dynamic.NewForConfig(config)
+	if err != nil {
+		panic(err)
+	}
+	return clientSet
+}
