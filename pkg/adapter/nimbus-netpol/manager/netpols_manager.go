@@ -19,10 +19,11 @@ import (
 	intentv1 "github.com/5GSEC/nimbus/api/v1"
 	"github.com/5GSEC/nimbus/pkg/adapter/common"
 	"github.com/5GSEC/nimbus/pkg/adapter/k8s"
-	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-netpol/processor"
-	netpolwatcher "github.com/5GSEC/nimbus/pkg/adapter/nimbus-netpol/watcher"
 	adapterutil "github.com/5GSEC/nimbus/pkg/adapter/util"
 	globalwatcher "github.com/5GSEC/nimbus/pkg/adapter/watcher"
+
+	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-netpol/processor"
+	netpolwatcher "github.com/5GSEC/nimbus/pkg/adapter/nimbus-netpol/watcher"
 )
 
 var (
