@@ -94,7 +94,7 @@ func WatchNimbusPolicies(ctx context.Context, npCh, deleteNpCh chan common.Reque
 				Name:      u.GetName(),
 				Namespace: u.GetNamespace(),
 			}
-			logger.Info("NimbusPolicy uted", "NimbusPolicy.Name", u.GetName(), "NimbusPolicy.Namespace", u.GetNamespace())
+			logger.Info("NimbusPolicy deleted", "NimbusPolicy.Name", u.GetName(), "NimbusPolicy.Namespace", u.GetNamespace())
 			deleteNpCh <- npNamespacedName
 		},
 	}

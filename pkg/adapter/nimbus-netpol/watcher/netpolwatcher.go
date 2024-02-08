@@ -88,6 +88,6 @@ func WatchNetpols(ctx context.Context, updatedNetpolCh, deletedNetpolCh chan com
 		logger.Error(err, "failed to add event handlers")
 		return
 	}
-	logger.Info("KubeArmorPolicy watcher started")
+	logger.Info("NetworkPolicy watcher started")
 	informer.Run(ctx.Done())
 }
