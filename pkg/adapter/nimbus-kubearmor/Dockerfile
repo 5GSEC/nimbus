@@ -18,6 +18,7 @@ RUN go mod download
 COPY main.go main.go
 COPY manager/ manager/
 COPY processor/ processor/
+COPY watcher/ watcher/
 
 # Build
 # the GOARCH has not a default value to allow the binary be built according to the host where the command
