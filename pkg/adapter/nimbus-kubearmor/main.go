@@ -13,7 +13,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kubearmor/manager"
-	"github.com/5GSEC/nimbus/pkg/adapter/watcher"
 )
 
 func main() {
@@ -22,14 +21,6 @@ func main() {
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	ctrl.LoggerInto(ctx, logger)
-
-	nimbusPolicyCh := make(chan [2]string)
-	nimbusPolicyToDeleteCh := make(chan [2]string)
-	go watcher.WatchNimbusPolicies(ctx, nimbusPolicyCh, nimbusPolicyToDeleteCh)
-
-	clusterNpChan := make(chan string)
-	clusterNpToDeleteChan := make(chan string)
-	go watcher.WatchClusterNimbusPolicies(ctx, clusterNpChan, clusterNpToDeleteChan)
 
 	go func() {
 		termChan := make(chan os.Signal)
@@ -41,5 +32,5 @@ func main() {
 	}()
 
 	logger.Info("KubeArmor adapter started")
-	manager.ManageKsps(ctx, nimbusPolicyCh, nimbusPolicyToDeleteCh, clusterNpChan, clusterNpToDeleteChan)
+	manager.Run(ctx)
 }

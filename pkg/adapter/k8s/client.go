@@ -16,38 +16,40 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// New returns a new Kubernetes client.
-func New(scheme *runtime.Scheme) (client.Client, error) {
+// NewOrDie returns a new Kubernetes client and panics if there is an error in
+// the config.
+func NewOrDie(scheme *runtime.Scheme) client.Client {
 	config, err := rest.InClusterConfig()
 	if err != nil && errors.Is(err, rest.ErrNotInCluster) {
 		kubeconfig := filepath.Join(os.Getenv("HOME"), ".kube", "config")
 		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
 		if err != nil {
-			return nil, fmt.Errorf("failed to load kubeconfig '%v', error: %v", kubeconfig, err)
+			panic(fmt.Sprintf("failed to load kubeconfig '%v', error: %v\n", kubeconfig, err))
 		}
 	}
 	k8sClient, err := client.New(config, client.Options{
 		Scheme: scheme,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create client, error: %v", err)
+		panic(fmt.Sprintf("failed to create client, error: %v", err))
 	}
-	return k8sClient, nil
+	return k8sClient
 }
 
-// NewDynamicClient returns a Dynamic Kubernetes client.
+// NewDynamicClient returns a Dynamic Kubernetes client and panics if there is an
+// error in the config.
 func NewDynamicClient() dynamic.Interface {
 	config, err := rest.InClusterConfig()
 	if err != nil && errors.Is(err, rest.ErrNotInCluster) {
 		kubeconfig := filepath.Join(os.Getenv("HOME"), ".kube", "config")
 		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
 		if err != nil {
-			return nil
+			panic(err)
 		}
 	}
 	clientSet, err := dynamic.NewForConfig(config)
 	if err != nil {
-		return nil
+		panic(err)
 	}
 	return clientSet
 }
