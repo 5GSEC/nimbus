@@ -150,14 +150,15 @@ func updateKsp(ctx context.Context, npName, npNamespace string) {
 	kspsToCreate := processor.BuildKspsFrom(logger, &np)
 
 	for _, kspToCreate := range kspsToCreate {
+		kspToCreateCopy := kspToCreate
 		var existingKsp kubearmorv1.KubeArmorPolicy
-		err := k8sClient.Get(ctx, types.NamespacedName{Name: kspToCreate.Name, Namespace: kspToCreate.Namespace}, &existingKsp)
+		err := k8sClient.Get(ctx, types.NamespacedName{Name: kspToCreateCopy.Name, Namespace: kspToCreateCopy.Namespace}, &existingKsp)
 		if err != nil && errors.IsNotFound(err) {
-			createOrUpdateKsp(ctx, &kspToCreate, nil, logger)
+			createOrUpdateKsp(ctx, &kspToCreateCopy, nil, logger)
 		} else if err == nil {
-			createOrUpdateKsp(ctx, &kspToCreate, &existingKsp, logger)
+			createOrUpdateKsp(ctx, &kspToCreateCopy, &existingKsp, logger)
 		} else {
-			logger.Error(err, "failed to get KubeArmorPolicy for update", "KubeArmorPolicy.Name", kspToCreate.Name, "KubeArmorPolicy.Namespace", kspToCreate.Namespace)
+			logger.Error(err, "failed to get KubeArmorPolicy for update", "KubeArmorPolicy.Name", kspToCreateCopy.Name, "KubeArmorPolicy.Namespace", kspToCreateCopy.Namespace)
 		}
 	}
 
@@ -177,11 +178,12 @@ func deleteUnnecessaryKsps(ctx context.Context, currentKsps []kubearmorv1.KubeAr
 	}
 
 	for _, existingKsp := range existingKsps.Items {
-		if _, needed := currentKspNames[existingKsp.Name]; !needed {
-			if err := k8sClient.Delete(ctx, &existingKsp); err != nil {
-				logger.Error(err, "Failed to delete unnecessary KubeArmorPolicy", "KubeArmorPolicy.Name", existingKsp.Name)
+		existingKspCopy := existingKsp
+		if _, needed := currentKspNames[existingKspCopy.Name]; !needed {
+			if err := k8sClient.Delete(ctx, &existingKspCopy); err != nil {
+				logger.Error(err, "Failed to delete unnecessary KubeArmorPolicy", "KubeArmorPolicy.Name", existingKspCopy.Name)
 			} else {
-				logger.Info("Deleted unnecessary KubeArmorPolicy", "KubeArmorPolicy.Name", existingKsp.Name)
+				logger.Info("Deleted unnecessary KubeArmorPolicy", "KubeArmorPolicy.Name", existingKspCopy.Name)
 			}
 		}
 	}
