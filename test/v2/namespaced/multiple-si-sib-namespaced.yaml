@@ -8,9 +8,7 @@ metadata:
 spec:
   intent:
     id: swDeploymentTools
-    description: "Do not allow the execution of package managers inside the containers"
     action: Block
-    mode: strict
 ---
 apiVersion: intent.security.nimbus.com/v1
 kind: SecurityIntent
@@ -20,18 +18,6 @@ spec:
   intent:
     id: unAuthorizedSaTokenAccess
     action: Block
-    mode: strict
-    #mode: best-effort
----
-apiVersion: intent.security.nimbus.com/v1
-kind: SecurityIntent
-metadata:
-  name: sys-path-exec
-spec:
-  intent:
-    id: sysPathExec
-    action: Block
-    mode: best-effort
 ---
 apiVersion: intent.security.nimbus.com/v1
 kind: SecurityIntent
@@ -41,8 +27,6 @@ spec:
   intent:
     id: dnsManipulation
     action: Block
-    mode: best-effort
-    #mode: strict
 ---
 apiVersion: intent.security.nimbus.com/v1
 kind: SecurityIntentBinding
@@ -50,7 +34,6 @@ metadata:
   name: multiple-sis-nsscoped-binding
 spec:
   intents:
-    #- name: sys-path-exec
     - name: pkg-mgr-exec-multiple-nsscoped
     - name: unauthorized-sa-token-access-multiple-nsscoped
     - name: dns-manipulation-multiple-nsscoped
