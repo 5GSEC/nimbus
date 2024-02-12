@@ -9,17 +9,17 @@ import (
 	"runtime"
 	"testing"
 
+	nimbusv1 "github.com/5GSEC/nimbus/api/v1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	intentv1 "github.com/5GSEC/nimbus/api/v1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -30,10 +30,9 @@ var cfg *rest.Config
 var k8sClient client.Client
 var testEnv *envtest.Environment
 
-func TestControllers(t *testing.T) {
+func TestNimbus(t *testing.T) {
 	RegisterFailHandler(Fail)
-
-	RunSpecs(t, "Controller Suite")
+	RunSpecs(t, "Nimbus Suite")
 }
 
 var _ = BeforeSuite(func() {
@@ -59,7 +58,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 
-	err = intentv1.AddToScheme(scheme.Scheme)
+	err = nimbusv1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	//+kubebuilder:scaffold:scheme
@@ -68,10 +67,32 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
 
+	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
+		Scheme: scheme.Scheme,
+	})
+
+	err = (&SecurityIntentReconciler{
+		Client: k8sManager.GetClient(),
+		Scheme: scheme.Scheme,
+	}).SetupWithManager(k8sManager)
+	Expect(err).ToNot(HaveOccurred())
+
+	err = (&SecurityIntentBindingReconciler{
+		Client: k8sManager.GetClient(),
+		Scheme: scheme.Scheme,
+	}).SetupWithManager(k8sManager)
+	Expect(err).ToNot(HaveOccurred())
+
+	go func() {
+		defer GinkgoRecover()
+		err = k8sManager.Start(ctrl.SetupSignalHandler())
+		Expect(err).ToNot(HaveOccurred())
+	}()
+
 })
 
-var _ = AfterSuite(func() {
-	By("tearing down the test environment")
-	err := testEnv.Stop()
-	Expect(err).NotTo(HaveOccurred())
-})
+// var _ = AfterSuite(func() {
+// 	By("tearing down the test environment")
+// 	err := testEnv.Stop()
+// 	Expect(err).NotTo(HaveOccurred())
+// })
