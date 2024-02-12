@@ -1,0 +1,21 @@
+apiVersion: intent.security.nimbus.com/v1
+kind: NimbusPolicy
+metadata:
+  name: dns-manipulation-binding
+  ownerReferences:
+   - apiVersion: intent.security.nimbus.com/v1
+     blockOwnerDeletion: true
+     controller: true
+     kind: SecurityIntentBinding
+     name: dns-manipulation-binding
+spec:
+   rules:
+   - description: An adversary can manipulate DNS requests to redirect network traffic
+       and potentially reveal end user activity.
+     id: dnsManipulation
+     rule:
+       action: Block
+       mode: best-effort
+   selector:
+     matchLabels:
+       app: nginx
