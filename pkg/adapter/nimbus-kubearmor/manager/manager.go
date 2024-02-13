@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-logr/logr"
 	kubearmorv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorController/api/security.kubearmor.com/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -108,6 +109,7 @@ func createOrUpdateKsp(ctx context.Context, npName, npNamespace string) {
 	}
 
 	ksps := processor.BuildKspsFrom(logger, &np)
+	deleteUnnecessaryKsps(ctx, ksps, npNamespace, logger)
 	// Iterate using a separate index variable to avoid aliasing
 	for idx := range ksps {
 		ksp := ksps[idx]
@@ -159,5 +161,28 @@ func deleteKsp(ctx context.Context, npName, npNamespace string) {
 			"KubeArmorPolicy.Name", ksp.Name, "KubeArmorPolicy.Namespace", ksp.Namespace,
 			"NimbusPolicy.Name", npName, "NimbusPolicy.Namespace", npNamespace,
 		)
+	}
+}
+
+func deleteUnnecessaryKsps(ctx context.Context, currentKsps []kubearmorv1.KubeArmorPolicy, namespace string, logger logr.Logger) {
+	var existingKsps kubearmorv1.KubeArmorPolicyList
+	if err := k8sClient.List(ctx, &existingKsps, client.InNamespace(namespace)); err != nil {
+		logger.Error(err, "Failed to list KubeArmorPolicies for cleanup")
+		return
+	}
+
+	currentKspNames := make(map[string]bool)
+	for _, ksp := range currentKsps {
+		currentKspNames[ksp.Name] = true
+	}
+
+	for _, existingKsp := range existingKsps.Items {
+		if _, needed := currentKspNames[existingKsp.Name]; !needed {
+			if err := k8sClient.Delete(ctx, &existingKsp); err != nil {
+				logger.Error(err, "Failed to delete unnecessary KubeArmorPolicy", "KubeArmorPolicy.Name", existingKsp.Name)
+			} else {
+				logger.Info("Deleted unnecessary KubeArmorPolicy", "KubeArmorPolicy.Name", existingKsp.Name)
+			}
+		}
 	}
 }
