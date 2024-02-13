@@ -67,9 +67,14 @@ func BuildNimbusPolicy(ctx context.Context, client client.Client, scheme *runtim
 	}
 
 	// Extracts match labels from the binding selector.
-	matchLabels, err := extractSelector(binding.Spec.Selector)
+	matchLabels, err := extractSelector(ctx, client, bindingNamespace, binding.Spec.Selector)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(matchLabels) == 0 {
+		logger.Error(err, "No labels matched the CEL expressions, aborting NimbusPolicy creation due to missing keys in labels")
+		return nil, nil
 	}
 
 	// Creates a NimbusPolicy.
@@ -110,12 +115,13 @@ func fetchBinding(ctx context.Context, client client.Client, name string, namesp
 }
 
 // extractSelector extracts match labels from a Selector.
-func extractSelector(selector v1.Selector) (map[string]string, error) {
+func extractSelector(ctx context.Context, k8sClient client.Client, namespace string, selector v1.Selector) (map[string]string, error) {
 	matchLabels := make(map[string]string) // Initialize map for match labels.
 
 	// Process CEL expressions.
 	if len(selector.CEL) > 0 {
-		celMatchLabels, err := ProcessCEL(selector.CEL)
+		celExpressions := selector.CEL
+		celMatchLabels, err := ProcessCEL(ctx, k8sClient, namespace, celExpressions)
 		if err != nil {
 			return nil, fmt.Errorf("error processing CEL: %v", err)
 		}

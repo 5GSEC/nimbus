@@ -106,6 +106,9 @@ spec:
             description: SecurityIntentBindingStatus defines the observed state of
               SecurityIntentBinding
             properties:
+              lastUpdated:
+                format: date-time
+                type: string
               status:
                 type: string
             required:

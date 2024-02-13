@@ -7,6 +7,7 @@ import (
 	"context"
 
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -46,6 +47,7 @@ func (r *SecurityIntentBindingReconciler) Reconcile(ctx context.Context, req ctr
 
 	if sib.Status.Status == "" {
 		sib.Status.Status = StatusCreated
+		sib.Status.LastUpdated = metav1.Now()
 		if err := r.Status().Update(ctx, sib); err != nil {
 			logger.Error(err, "failed to update SecurityIntentBinding status", "SecurityIntentBinding.Name", sib.Name, "SecurityIntentBinding.Namespace", sib.Namespace)
 			return ctrl.Result{}, err
@@ -74,24 +76,46 @@ func (r *SecurityIntentBindingReconciler) Reconcile(ctx context.Context, req ctr
 			logger.Error(err, "failed to create NimbusPolicy", "NimbusPolicy.Name", nimbusPolicy.Name, "NimbusPolicy.Namespace", nimbusPolicy.Namespace)
 			return ctrl.Result{}, err
 		}
-		return ctrl.Result{}, nil
-	}
-	nimbusPolicy.ObjectMeta = existingNp.ObjectMeta
-	if err := r.Update(ctx, nimbusPolicy); err != nil {
-		logger.Error(err, "failed to update NimbusPolicy")
-		return ctrl.Result{}, err
+		logger.Info("NimbusPolicy created", "NimbusPolicy.Name", nimbusPolicy.Name, "NimbusPolicy.Namespace", nimbusPolicy.Namespace)
+	} else if err == nil {
+		nimbusPolicy.ObjectMeta.ResourceVersion = existingNp.ObjectMeta.ResourceVersion
+
+		// Check if np needs to be updated
+		if sibChanged(sib, existingNp) {
+			nimbusPolicy.Status.LastUpdated = metav1.Now()
+			if err := r.Update(ctx, nimbusPolicy); err != nil {
+				logger.Error(err, "failed to update NimbusPolicy")
+				return ctrl.Result{}, err
+			}
+			logger.Info("NimbusPolicy updated", "NimbusPolicy.Name", nimbusPolicy.Name, "NimbusPolicy.Namespace", nimbusPolicy.Namespace)
+
+			if err := r.updateSIBStatus(ctx, sib); err != nil {
+				logger.Error(err, "failed to update SecurityIntentBinding status after NimbusPolicy operation", "SecurityIntentBinding.Name", sib.Name, "SecurityIntentBinding.Namespace", sib.Namespace)
+				return ctrl.Result{}, err
+			}
+			return ctrl.Result{}, err
+		}
 	}
 
 	if nimbusPolicy.Status.Status == "" || nimbusPolicy.Status.Status == StatusPending {
 		nimbusPolicy.Status.Status = StatusCreated
+		nimbusPolicy.Status.LastUpdated = metav1.Now()
 		if err := r.Status().Update(ctx, nimbusPolicy); err != nil {
 			logger.Error(err, "failed to update NimbusPolicy status", "NimbusPolicy.Name", nimbusPolicy.Name, "NimbusPolicy.Namespace", nimbusPolicy.Namespace)
 			return ctrl.Result{}, err
 		}
 		logger.Info("NimbusPolicy created", "NimbusPolicy.Name", nimbusPolicy.Name, "NimbusPolicy.Namespace", nimbusPolicy.Namespace)
 	}
-
 	return ctrl.Result{}, nil
+}
+
+func sibChanged(sib *v1.SecurityIntentBinding, np *v1.NimbusPolicy) bool {
+	return sib.Status.LastUpdated.Time.Before(np.Status.LastUpdated.Time)
+}
+
+func (r *SecurityIntentBindingReconciler) updateSIBStatus(ctx context.Context, sib *v1.SecurityIntentBinding) error {
+	sib.Status.LastUpdated = metav1.Now()
+	return r.Status().Update(ctx, sib)
 }
 
 // SetupWithManager sets up the controller with the Manager.

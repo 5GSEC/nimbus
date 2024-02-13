@@ -39,7 +39,8 @@ type Resources struct {
 
 // SecurityIntentBindingStatus defines the observed state of SecurityIntentBinding
 type SecurityIntentBindingStatus struct {
-	Status string `json:"status"`
+	Status      string      `json:"status"`
+	LastUpdated metav1.Time `json:"lastUpdated,omitempty"`
 }
 
 // +kubebuilder:object:root=true

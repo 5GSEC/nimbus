@@ -94,6 +94,9 @@ spec:
           status:
             description: NimbusPolicyStatus defines the observed state of NimbusPolicy
             properties:
+              lastUpdated:
+                format: date-time
+                type: string
               status:
                 type: string
             required:
