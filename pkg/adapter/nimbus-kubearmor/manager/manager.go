@@ -176,7 +176,8 @@ func deleteUnnecessaryKsps(ctx context.Context, currentKsps []kubearmorv1.KubeAr
 		currentKspNames[ksp.Name] = true
 	}
 
-	for _, existingKsp := range existingKsps.Items {
+	for i := range existingKsps.Items {
+		existingKsp := existingKsps.Items[i]
 		if _, needed := currentKspNames[existingKsp.Name]; !needed {
 			if err := k8sClient.Delete(ctx, &existingKsp); err != nil {
 				logger.Error(err, "Failed to delete unnecessary KubeArmorPolicy", "KubeArmorPolicy.Name", existingKsp.Name)

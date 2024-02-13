@@ -46,20 +46,18 @@ func (r *SecurityIntentReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, err
 	}
 
-	// SI가 성공적으로 조회됐다면, 이 SI를 참조하는 모든 SIB를 찾아야 합니다.
 	var sibList v1.SecurityIntentBindingList
 	if err := r.List(ctx, &sibList, client.InNamespace(req.Namespace)); err != nil {
 		logger.Error(err, "unable to list SecurityIntentBindings for update")
 		return ctrl.Result{}, err
 	}
 
-	for _, sib := range sibList.Items {
-		// 현재 처리 중인 SI가 참조된 SIB 찾기
+	for i := range sibList.Items {
+		sib := &sibList.Items[i]
 		for _, intentRef := range sib.Spec.Intents {
 			if intentRef.Name == req.Name {
-				// SIB의 LastUpdated를 업데이트하여 변경사항을 트리거합니다.
 				sib.Status.LastUpdated = metav1.Now()
-				if err := r.Status().Update(ctx, &sib); err != nil {
+				if err := r.Status().Update(ctx, sib); err != nil {
 					logger.Error(err, "failed to update SecurityIntentBinding status for SI update", "SecurityIntentBinding.Name", sib.Name)
 					return ctrl.Result{}, err
 				}
@@ -99,22 +97,23 @@ func (r *SecurityIntentReconciler) updateRelatedSIBs(ctx context.Context, req ct
 	logger := log.FromContext(ctx)
 
 	for _, sib := range sibList.Items {
+		sibCopy := sib
 		updated := false
-		for idx, intentRef := range sib.Spec.Intents {
+		for idx, intentRef := range sibCopy.Spec.Intents {
 			if intentRef.Name == req.Name {
 				// Remove the reference to the deleted or updated SecurityIntent
-				sib.Spec.Intents = append(sib.Spec.Intents[:idx], sib.Spec.Intents[idx+1:]...)
+				sibCopy.Spec.Intents = append(sibCopy.Spec.Intents[:idx], sibCopy.Spec.Intents[idx+1:]...)
 				updated = true
-				break // Assuming one SI reference per SIB for simplicity
+				break
 			}
 		}
 		if updated {
 			// Mark SIB as needing an update
-			if err := r.Update(ctx, &sib); err != nil {
-				logger.Error(err, "Failed to update SecurityIntentBinding after SI deletion/update", "SecurityIntentBinding.Name", sib.Name)
+			if err := r.Update(ctx, &sibCopy); err != nil { // 수정된 복사본 사용
+				logger.Error(err, "Failed to update SecurityIntentBinding after SI deletion/update", "SecurityIntentBinding.Name", sibCopy.Name)
 				return err
 			}
-			logger.Info("Updated SecurityIntentBinding due to SecurityIntent deletion/update", "SecurityIntentBinding", sib.Name, "SecurityIntent", req.Name)
+			logger.Info("Updated SecurityIntentBinding due to SecurityIntent deletion/update", "SecurityIntentBinding", sibCopy.Name, "SecurityIntent", req.Name)
 		}
 	}
 
