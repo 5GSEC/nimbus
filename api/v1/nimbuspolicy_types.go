@@ -38,7 +38,8 @@ type Rule struct {
 
 // NimbusPolicyStatus defines the observed state of NimbusPolicy
 type NimbusPolicyStatus struct {
-	Status string `json:"status"`
+	Status      string      `json:"status"`
+	LastUpdated metav1.Time `json:"lastUpdated,omitempty"`
 }
 
 //+kubebuilder:object:root=true
