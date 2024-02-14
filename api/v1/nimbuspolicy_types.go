@@ -32,7 +32,6 @@ type NimbusRules struct {
 
 type Rule struct {
 	RuleAction string              `json:"action"`
-	Mode       string              `json:"mode"`
 	Params     map[string][]string `json:"params,omitempty"`
 }
 

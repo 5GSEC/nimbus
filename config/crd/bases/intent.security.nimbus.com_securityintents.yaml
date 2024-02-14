@@ -55,11 +55,6 @@ spec:
                       engines to generate corresponding security policies.
                     pattern: ^[a-zA-Z0-9]*$
                     type: string
-                  mode:
-                    default: best-effort
-                    description: Mode defines the enforcement behavior of the intent.
-                      Defaults to best-effort.
-                    type: string
                   params:
                     additionalProperties:
                       items:

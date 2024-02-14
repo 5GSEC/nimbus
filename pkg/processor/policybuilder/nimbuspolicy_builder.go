@@ -41,7 +41,6 @@ func BuildNimbusPolicy(ctx context.Context, client client.Client, scheme *runtim
 		// Constructs a rule from the intent parameters.
 		rule := v1.Rule{
 			RuleAction: intent.Spec.Intent.Action,
-			Mode:       intent.Spec.Intent.Mode,
 			Params:     map[string][]string{},
 		}
 

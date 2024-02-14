@@ -36,7 +36,6 @@ func BuildClusterNimbusPolicy(ctx context.Context, client client.Client, scheme 
 
 		rule := v1.Rule{
 			RuleAction: intent.Spec.Intent.Action,
-			Mode:       intent.Spec.Intent.Mode,
 			Params:     map[string][]string{},
 		}
 

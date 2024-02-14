@@ -25,11 +25,6 @@ type Intent struct {
 	// Action defines how the security policy will be enforced.
 	Action string `json:"action"`
 
-	// Mode defines the enforcement behavior of the intent.
-	// Defaults to best-effort.
-	//+kubebuilder:default:="best-effort"
-	Mode string `json:"mode,omitempty"`
-
 	// Severity defines the potential impact of a security violation related to the intent.
 	// Defaults to Low.
 	//+kubebuilder:default:=Low

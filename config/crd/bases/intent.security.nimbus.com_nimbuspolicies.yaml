@@ -55,8 +55,6 @@ spec:
                       properties:
                         action:
                           type: string
-                        mode:
-                          type: string
                         params:
                           additionalProperties:
                             items:
@@ -65,7 +63,6 @@ spec:
                           type: object
                       required:
                       - action
-                      - mode
                       type: object
                     type:
                       type: string
