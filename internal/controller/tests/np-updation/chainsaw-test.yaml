@@ -1,0 +1,27 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: np-updation
+spec:
+  timeouts:
+    assert: 10s
+  steps:
+
+  - name: step-01 
+    try:
+      - apply:
+          # file is relative to the test folder
+          file: ../../../../examples/namespaced/dns-manipulation-si-sib.yaml
+      - assert:
+          file: ../../../../examples/namespaced/dns-manipulation-si-sib.yaml
+  - name: step-02
+    try:
+      - apply:
+          file: updated-nimbus-policy.yaml
+  - name: step-03
+    try:
+      - script:
+          content: kubectl get np -n $NAMESPACE dns-manipulation-binding -o=jsonpath='{.spec.selector.matchLabels.app}'
+          check: 
+            (contains($stdout, 'frontend')): false
+
