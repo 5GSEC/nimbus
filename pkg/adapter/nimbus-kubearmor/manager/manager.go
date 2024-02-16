@@ -29,7 +29,6 @@ import (
 
 var (
 	scheme    = runtime.NewScheme()
-	np        intentv1.NimbusPolicy
 	k8sClient client.Client
 )
 
@@ -81,6 +80,7 @@ func Run(ctx context.Context) {
 func reconcileKsp(ctx context.Context, kspName, namespace string, deleted bool) {
 	logger := log.FromContext(ctx)
 	npName := adapterutil.ExtractNpName(kspName)
+	var np intentv1.NimbusPolicy
 	err := k8sClient.Get(ctx, types.NamespacedName{Name: npName, Namespace: namespace}, &np)
 	if err != nil {
 		if !errors.IsNotFound(err) {
@@ -98,18 +98,22 @@ func reconcileKsp(ctx context.Context, kspName, namespace string, deleted bool) 
 
 func createOrUpdateKsp(ctx context.Context, npName, npNamespace string) {
 	logger := log.FromContext(ctx)
+	var np intentv1.NimbusPolicy
 	if err := k8sClient.Get(ctx, types.NamespacedName{Name: npName, Namespace: npNamespace}, &np); err != nil {
 		logger.Error(err, "failed to get NimbusPolicy", "NimbusPolicy.Name", npName, "NimbusPolicy.Namespace", npNamespace)
 		return
 	}
 
 	if adapterutil.IsOrphan(np.GetOwnerReferences(), "SecurityIntentBinding") {
-		logger.V(4).Info("Ignoring orphan NimbusPolicy", "NimbusPolicy.Name", np.GetName(), "NimbusPolicy.Namespace", np.GetNamespace())
+		logger.V(4).Info("Ignoring orphan NimbusPolicy", "NimbusPolicy.Name", npName, "NimbusPolicy.Namespace", npNamespace)
 		return
 	}
 
 	ksps := processor.BuildKspsFrom(logger, &np)
-	deleteUnnecessaryKsps(ctx, ksps, npNamespace, logger)
+
+	// TODO: Fix loop due to unnecessary KSPs deletion
+	//deleteUnnecessaryKsps(ctx, ksps, npNamespace, logger)
+
 	// Iterate using a separate index variable to avoid aliasing
 	for idx := range ksps {
 		ksp := ksps[idx]
@@ -140,6 +144,18 @@ func createOrUpdateKsp(ctx context.Context, npName, npNamespace string) {
 			}
 			logger.Info("KubeArmorPolicy configured", "KubeArmorPolicy.Name", existingKsp.Name, "KubeArmorPolicy.Namespace", existingKsp.Namespace)
 		}
+
+		// Due to adapters' dependency on nimbus module, the docker image build is
+		// failing. The relevant code is commented out below (lines 153-155). We shall
+		// uncomment this code in a subsequent PR.
+
+		// Every adapter is responsible for updating the status field of the
+		// corresponding NimbusPolicy with the number and names of successfully created
+		// policies. This provides feedback to users about the translation and deployment
+		// of their security intent.
+		//if err = adapterutil.UpdateNpStatus(ctx, k8sClient, "KubeArmorPolicy/"+ksp.Name, np.Name, np.Namespace); err != nil {
+		//	logger.Error(err, "failed to update KubeArmorPolicies status in NimbusPolicy")
+		//}
 	}
 }
 

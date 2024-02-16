@@ -3,6 +3,7 @@ module github.com/5GSEC/nimbus
 go 1.21
 
 require (
+	github.com/go-logr/logr v1.4.1
 	github.com/onsi/ginkgo/v2 v2.14.0
 	github.com/onsi/gomega v1.30.0
 	k8s.io/apimachinery v0.29.1
@@ -11,11 +12,8 @@ require (
 )
 
 require (
-	github.com/5GSEC/nimbus/pkg/adapter/nimbus-kubearmor v0.0.0-20240208144202-ef6c819f09b3 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/evanphx/json-patch v5.7.0+incompatible // indirect
-	github.com/go-logr/logr v1.4.1 // indirect
-	github.com/kubearmor/KubeArmor/pkg/KubeArmorController v0.0.0-20240125171707-8e6641511fe3 // indirect
 	github.com/stoewer/go-strcase v1.2.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230822172742-b8732ec3820d // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230822172742-b8732ec3820d // indirect
@@ -71,7 +69,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.29.1 // indirect
+	k8s.io/api v0.29.1
 	k8s.io/apiextensions-apiserver v0.29.1 // indirect
 	k8s.io/component-base v0.29.1 // indirect
 	k8s.io/klog/v2 v2.120.1 // indirect
