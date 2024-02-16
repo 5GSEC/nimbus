@@ -20,6 +20,12 @@ spec:
     - jsonPath: .status.status
       name: Status
       type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - jsonPath: .status.numberOfAdapterPolicies
+      name: Policies
+      type: integer
     name: v1
     schema:
       openAPIV3Schema:
@@ -91,12 +97,20 @@ spec:
           status:
             description: NimbusPolicyStatus defines the observed state of NimbusPolicy
             properties:
+              adapterPolicies:
+                items:
+                  type: string
+                type: array
               lastUpdated:
                 format: date-time
                 type: string
+              numberOfAdapterPolicies:
+                format: int32
+                type: integer
               status:
                 type: string
             required:
+            - numberOfAdapterPolicies
             - status
             type: object
         type: object

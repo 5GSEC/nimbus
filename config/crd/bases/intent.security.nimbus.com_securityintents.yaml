@@ -20,6 +20,17 @@ spec:
     - jsonPath: .status.status
       name: Status
       type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - jsonPath: .spec.intent.id
+      name: ID
+      priority: 1
+      type: string
+    - jsonPath: .spec.intent.action
+      name: Action
+      priority: 1
+      type: string
     name: v1
     schema:
       openAPIV3Schema:
@@ -85,9 +96,15 @@ spec:
           status:
             description: SecurityIntentStatus defines the observed state of SecurityIntent
             properties:
+              action:
+                type: string
+              id:
+                type: string
               status:
                 type: string
             required:
+            - action
+            - id
             - status
             type: object
         type: object

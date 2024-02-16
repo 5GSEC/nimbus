@@ -40,14 +40,18 @@ type Intent struct {
 
 // SecurityIntentStatus defines the observed state of SecurityIntent
 type SecurityIntentStatus struct {
+	ID     string `json:"id"`
+	Action string `json:"action"`
 	Status string `json:"status"`
 }
 
-// SecurityIntent is the Schema for the securityintents API
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:shortName="si",scope="Cluster"
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status"
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:printcolumn:name="ID",type="string",JSONPath=".spec.intent.id",priority=1
+// +kubebuilder:printcolumn:name="Action",type="string",JSONPath=".spec.intent.action",priority=1
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // SecurityIntent is the Schema for the securityintents API
