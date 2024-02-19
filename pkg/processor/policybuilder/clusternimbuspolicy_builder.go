@@ -5,8 +5,10 @@ package policybuilder
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -18,12 +20,11 @@ import (
 
 // BuildClusterNimbusPolicy generates a ClusterNimbusPolicy based on given
 // SecurityIntents and ClusterSecurityIntentBinding.
-func BuildClusterNimbusPolicy(ctx context.Context, logger logr.Logger, k8sClient client.Client, scheme *runtime.Scheme, csib v1.ClusterSecurityIntentBinding) *v1.ClusterNimbusPolicy {
+func BuildClusterNimbusPolicy(ctx context.Context, logger logr.Logger, k8sClient client.Client, scheme *runtime.Scheme, csib v1.ClusterSecurityIntentBinding) (*v1.ClusterNimbusPolicy, error) {
 	logger.Info("Building ClusterNimbusPolicy")
 	intents := intentbinder.ExtractIntents(ctx, k8sClient, &csib)
 	if len(intents) == 0 {
-		logger.Info("No SecurityIntents found in the cluster")
-		return nil
+		return nil, fmt.Errorf("no SecurityIntents found in the cluster")
 	}
 
 	var nimbusRules []v1.NimbusRules
@@ -51,12 +52,11 @@ func BuildClusterNimbusPolicy(ctx context.Context, logger logr.Logger, k8sClient
 	}
 
 	if err := ctrl.SetControllerReference(&csib, clusterNp, scheme); err != nil {
-		logger.Error(err, "failed to set OwnerReference")
-		return nil
+		return nil, errors.Wrap(err, "failed to set NimbusPolicy OwnerReference")
 	}
 
 	logger.Info("ClusterNimbusPolicy built successfully", "ClusterNimbusPolicy.Name", clusterNp.Name)
-	return clusterNp
+	return clusterNp, nil
 }
 
 func extractClusterBindingSelector(cwSelector v1.CwSelector) v1.CwSelector {

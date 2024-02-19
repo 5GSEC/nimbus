@@ -116,14 +116,16 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateCwnp(ctx context.
 			return r.createCwnp(ctx, logger, csib)
 		}
 		logger.Error(err, "failed to fetch ClusterNimbusPolicy", "ClusterNimbusPolicy.Name", req.Name)
+		return err
 	}
 	return r.updateCwnp(ctx, logger, csib)
 }
 
 func (r *ClusterSecurityIntentBindingReconciler) createCwnp(ctx context.Context, logger logr.Logger, csib v1.ClusterSecurityIntentBinding) error {
-	clusterNp := policybuilder.BuildClusterNimbusPolicy(ctx, logger, r.Client, r.Scheme, csib)
-	if clusterNp == nil {
-		return nil
+	clusterNp, err := policybuilder.BuildClusterNimbusPolicy(ctx, logger, r.Client, r.Scheme, csib)
+	if err != nil {
+		logger.Error(err, "failed to build ClusterNimbusPolicy")
+		return err
 	}
 
 	if err := r.Create(ctx, clusterNp); err != nil {
@@ -142,9 +144,10 @@ func (r *ClusterSecurityIntentBindingReconciler) updateCwnp(ctx context.Context,
 		return err
 	}
 
-	clusterNp := policybuilder.BuildClusterNimbusPolicy(ctx, logger, r.Client, r.Scheme, csib)
-	if clusterNp == nil {
-		return nil
+	clusterNp, err := policybuilder.BuildClusterNimbusPolicy(ctx, logger, r.Client, r.Scheme, csib)
+	if err != nil {
+		logger.Error(err, "failed to build ClusterNimbusPolicy")
+		return err
 	}
 
 	clusterNp.ObjectMeta.ResourceVersion = existingCwnp.ObjectMeta.ResourceVersion

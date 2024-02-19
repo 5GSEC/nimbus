@@ -5,6 +5,7 @@ package controller
 
 import (
 	"context"
+	"strings"
 
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -123,9 +124,16 @@ func (r *SecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Context, 
 }
 
 func (r *SecurityIntentBindingReconciler) createNp(ctx context.Context, logger logr.Logger, sib v1.SecurityIntentBinding) error {
-	nimbusPolicy := policybuilder.BuildNimbusPolicy(ctx, logger, r.Client, r.Scheme, sib)
-	if nimbusPolicy == nil {
-		return nil
+	nimbusPolicy, err := policybuilder.BuildNimbusPolicy(ctx, logger, r.Client, r.Scheme, sib)
+	// TODO: Improve error handling for CEL
+	if err != nil {
+		// If error is caused due to CEL then we don't retry to build NimbusPolicy.
+		if strings.Contains(err.Error(), "error processing CEL") {
+			logger.Error(err, "failed to build NimbusPolicy")
+			return nil
+		}
+		logger.Error(err, "failed to build NimbusPolicy")
+		return err
 	}
 
 	if err := r.Create(ctx, nimbusPolicy); err != nil {
@@ -144,9 +152,16 @@ func (r *SecurityIntentBindingReconciler) updateNp(ctx context.Context, logger l
 		return err
 	}
 
-	nimbusPolicy := policybuilder.BuildNimbusPolicy(ctx, logger, r.Client, r.Scheme, sib)
-	if nimbusPolicy == nil {
-		return nil
+	nimbusPolicy, err := policybuilder.BuildNimbusPolicy(ctx, logger, r.Client, r.Scheme, sib)
+	// TODO: Improve error handling for CEL
+	if err != nil {
+		// If error is caused due to CEL then we don't retry to build NimbusPolicy.
+		if strings.Contains(err.Error(), "error processing CEL") {
+			logger.Error(err, "failed to build NimbusPolicy")
+			return nil
+		}
+		logger.Error(err, "failed to build NimbusPolicy")
+		return err
 	}
 
 	nimbusPolicy.ObjectMeta.ResourceVersion = existingNp.ObjectMeta.ResourceVersion

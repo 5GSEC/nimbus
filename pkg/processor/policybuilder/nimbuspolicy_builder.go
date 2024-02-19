@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -19,13 +20,12 @@ import (
 
 // BuildNimbusPolicy generates a NimbusPolicy based on given
 // SecurityIntentBinding.
-func BuildNimbusPolicy(ctx context.Context, logger logr.Logger, k8sClient client.Client, scheme *runtime.Scheme, sib v1.SecurityIntentBinding) *v1.NimbusPolicy {
+func BuildNimbusPolicy(ctx context.Context, logger logr.Logger, k8sClient client.Client, scheme *runtime.Scheme, sib v1.SecurityIntentBinding) (*v1.NimbusPolicy, error) {
 	logger.Info("Building NimbusPolicy")
 
 	intents := intentbinder.ExtractIntents(ctx, k8sClient, &sib)
 	if len(intents) == 0 {
-		logger.Info("No SecurityIntents found in the cluster")
-		return nil
+		return nil, fmt.Errorf("no SecurityIntents found in the cluster")
 	}
 
 	var nimbusRules []v1.NimbusRules
@@ -41,8 +41,11 @@ func BuildNimbusPolicy(ctx context.Context, logger logr.Logger, k8sClient client
 	}
 
 	matchLabels, err := extractSelector(ctx, k8sClient, sib.Namespace, sib.Spec.Selector)
-	if err != nil || len(matchLabels) == 0 {
-		return nil
+	if err != nil {
+		return nil, err
+	}
+	if len(matchLabels) == 0 {
+		return nil, errors.Wrap(err, "No labels matched the CEL expressions, aborting NimbusPolicy creation due to missing keys in labels")
 	}
 
 	nimbusPolicy := &v1.NimbusPolicy{
@@ -60,12 +63,11 @@ func BuildNimbusPolicy(ctx context.Context, logger logr.Logger, k8sClient client
 	}
 
 	if err = ctrl.SetControllerReference(&sib, nimbusPolicy, scheme); err != nil {
-		logger.Error(err, "failed to set NimbusPolicy OwnerReference")
-		return nil
+		return nil, errors.Wrap(err, "failed to set NimbusPolicy OwnerReference")
 	}
 
 	logger.Info("NimbusPolicy built successfully", "NimbusPolicy.Name", nimbusPolicy.Name, "NimbusPolicy.Namespace", nimbusPolicy.Namespace)
-	return nimbusPolicy
+	return nimbusPolicy, nil
 }
 
 // extractSelector extracts match labels from a Selector.
