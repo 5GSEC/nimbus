@@ -13,6 +13,15 @@ rules:
       - list
       - watch
   - apiGroups:
+      - intent.security.nimbus.com
+    resources:
+      - nimbuspolicies/status
+      - clusternimbuspolicies/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
       - networking.k8s.io
     resources:
       - networkpolicies

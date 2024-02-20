@@ -1,7 +1,5 @@
 # Default values for nimbus-netpol.
 
-replicaCount: 1
-
 image:
   repository: 5gsec/nimbus-netpol
   pullPolicy: Always
