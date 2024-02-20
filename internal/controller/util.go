@@ -51,9 +51,9 @@ func ownerExists(c client.Client, controllee client.Object) bool {
 	var objToGet client.Object
 
 	switch controllee.(type) {
-	case *v1.SecurityIntentBinding:
+	case *v1.NimbusPolicy:
 		objToGet = &v1.SecurityIntentBinding{}
-	case *v1.ClusterSecurityIntentBinding:
+	case *v1.ClusterNimbusPolicy:
 		objToGet = &v1.ClusterSecurityIntentBinding{}
 	}
 
