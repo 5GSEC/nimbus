@@ -9,7 +9,6 @@ spec:
   intent:
     id: swDeploymentTools
     action: Block
-    mode: strict
 ---
 apiVersion: intent.security.nimbus.com/v1
 kind: SecurityIntent
@@ -19,7 +18,6 @@ spec:
   intent:
     id: unAuthorizedSaTokenAccess
     action: Block
-    mode: strict
 ---
 apiVersion: intent.security.nimbus.com/v1
 kind: SecurityIntent
@@ -29,8 +27,6 @@ spec:
   intent:
     id: dnsManipulation
     action: Block
-    mode: best-effort
-    #mode: strict
 ---
 apiVersion: intent.security.nimbus.com/v1
 kind: SecurityIntentBinding
