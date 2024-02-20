@@ -97,3 +97,52 @@ jobs:
       - name: Build image
         working-directory: ./pkg/adapter/${{ matrix.adapters }}
         run: make docker-build
+
+  chainsaw-tests:
+    runs-on: ubuntu-latest
+    steps:
+        - name: Checkout
+          uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+        - name: Install helm
+          id: helm
+          uses: azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78 # v3.5
+          with:
+            token: ${{ secrets.GITHUB_TOKEN }}
+          
+ 
+
+        - name: Install go
+          uses: actions/setup-go@v5
+          with:
+            go-version: '1.21' # The Go version to download (if necessary) and use.
+          
+
+
+        - name: Install chainsaw
+          uses: kyverno/action-install-chainsaw@8307cf9038333ce168dd4339ae24f9ab16ab7a00 # v0.1.4
+
+
+        - name: Create k8s Kind Cluster
+          uses: helm/kind-action@v1
+          with:
+            cluster_name: testing
+
+
+        - name: Build image and load in the kind cluster
+          run: |
+            make docker-build
+            kind load docker-image 5gsec/nimbus:latest --name=testing
+
+        - name: Install Nimbus
+          run: |
+            helm upgrade --install nimbus-operator deployments/nimbus -n nimbus --create-namespace --set image.pullPolicy=Never
+
+        - name: Wait for Nimbus to start
+          run: |
+            kubectl wait --for=condition=ready --timeout=5m -n nimbus pod -l app.kubernetes.io/name=nimbus
+            kubectl get pods -A
+          
+        - name: Run Tests
+          run: |
+            chainsaw test --test-dir=tests/controllers/  --config tests/chainsaw-config.yaml
