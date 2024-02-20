@@ -1,0 +1,33 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "nimbus-kubearmor.fullname" . }}-clusterrole
+rules:
+  - apiGroups:
+      - intent.security.nimbus.com
+    resources:
+      - nimbuspolicies
+      - clusternimbuspolicies
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - intent.security.nimbus.com
+    resources:
+      - nimbuspolicies/status
+      - clusternimbuspolicies/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - security.kubearmor.com
+    resources:
+      - kubearmorpolicies
+    verbs:
+      - create
+      - list
+      - get
+      - update
+      - watch

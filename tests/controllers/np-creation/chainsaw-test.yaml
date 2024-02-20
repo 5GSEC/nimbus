@@ -1,0 +1,20 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: np-creation
+spec:
+  timeouts:
+    assert: 10s
+  steps:
+  - try:
+    # first operation: create the config map
+    - apply:
+        # file is relative to the test folder
+        file: ../../../examples/namespaced/dns-manipulation-si-sib.yaml
+    # second operation: verify the config map exists and contains the expected data
+    - assert:
+        # file is relative to the test folder
+        file: ../../../examples/namespaced/dns-manipulation-si-sib.yaml
+    - assert:
+        file: nimbus-policy.yaml
+

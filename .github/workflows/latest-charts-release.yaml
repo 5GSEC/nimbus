@@ -1,0 +1,42 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+name: Release Charts
+
+on:
+  push:
+    branches:
+      - main
+      - "v*"
+    paths:
+      - "deployments/**"
+  create:
+    branches:
+      - "v*"
+
+jobs:
+  release:
+    if: github.repository == '5GSEC/nimbus'
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+
+      - name: Publish Helm chart
+        uses: stefanprodan/helm-gh-pages@master
+        with:
+          # Access token which can push to a different repo in the same org
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
+          charts_dir: deployments/
+          # repo where charts would be published
+          owner: 5GSEC
+          repository: charts
+          branch: gh-pages
+          charts_url: https://5gsec.github.io/charts/
+          commit_username: "github-actions[bot]"
+          commit_email: "github-actions[bot]@users.noreply.github.com"

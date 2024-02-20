@@ -1,0 +1,149 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+name: PR checks
+
+on:
+  pull_request:
+    types: [ opened, reopened, synchronize, ready_for_review ]
+    paths-ignore:
+      - '**.md'
+      - '**.sh'
+      - 'docs/**'
+      - 'LICENSE'
+
+permissions: read-all
+
+jobs:
+  license:
+    name: License
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Check License Header
+        uses: apache/skywalking-eyes@a790ab8dd23a7f861c18bd6aaa9b012e3a234bce
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+
+      - name: go fmt
+        run: make fmt
+
+      - name: Lint
+        id: lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.54
+          args: --deadline=30m --out-format=line-number
+          skip-cache: true # https://github.com/golangci/golangci-lint-action/issues/244#issuecomment-1052197778
+
+      - name: Run unit tests
+        run: make test
+
+  go-sec:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    env:
+      GO111MODULE: on
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v3
+
+      - name: Run Gosec Security Scanner
+        uses: securego/gosec@master
+        with:
+          # we let the report trigger content trigger a failure using the GitHub Security features.
+          args: '-no-fail -fmt sarif -out results.sarif ./...'
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: results.sarif
+
+  build-nimbus-image:
+    name: Build Nimbus Operator image
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Build image
+        run: make docker-build
+
+  build-adapters-image:
+    strategy:
+      matrix:
+        adapters: [ "nimbus-kubearmor", "nimbus-netpol" ]
+    name: Build ${{ matrix.adapters }} adapter's image
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Build image
+        working-directory: ./pkg/adapter/${{ matrix.adapters }}
+        run: make docker-build
+
+
+  chainsaw-tests:
+    runs-on: ubuntu-latest
+    steps:
+        - name: Checkout
+          uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+          # install tools
+        - name: Install helm
+          id: helm
+          uses: azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78 # v3.5
+          with:
+            token: ${{ secrets.GITHUB_TOKEN }}
+          
+          # install go
+
+        - name: Install go
+          uses: actions/setup-go@v5
+          with:
+            go-version: '1.21.7' # The Go version to download (if necessary) and use.
+          
+
+        # install chainsaw
+
+        - name: Install chainsaw
+          uses: kyverno/action-install-chainsaw@8307cf9038333ce168dd4339ae24f9ab16ab7a00 # v0.1.4
+
+        # create kind cluster
+
+        - name: Create k8s Kind Cluster
+          uses: helm/kind-action@v1
+
+
+        - name: start server
+          run: |
+            make install
+            make run &
+
+
+        - name: Wait for server to start
+          run: |
+            until $(wget http://localhost:8081/readyz); do
+              echo 'Waiting for the server to start...'
+              sleep 5
+            done
+          
+        - name: Run Tests
+          run: |
+            chainsaw test --test-dir=tests/controllers/  --config tests/chainsaw-config.yaml

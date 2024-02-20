@@ -1,0 +1,14 @@
+apiVersion: intent.security.nimbus.com/v1
+kind: SecurityIntentBinding
+metadata:
+  name: dns-manipulation-binding
+spec:
+  intents:
+    - name: dns-manipulation
+  selector:
+    any:
+      - resources:
+          kind: Pod
+          namespace: default
+          matchLabels:
+            app: frontend

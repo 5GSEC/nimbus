@@ -1,0 +1,106 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: nimbus-operator
+rules:
+- apiGroups:
+  - intent.security.nimbus.com
+  resources:
+  - clusternimbuspolicies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - intent.security.nimbus.com
+  resources:
+  - clusternimbuspolicies/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - intent.security.nimbus.com
+  resources:
+  - clustersecurityintentbindings
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - intent.security.nimbus.com
+  resources:
+  - clustersecurityintentbindings/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - intent.security.nimbus.com
+  resources:
+  - nimbuspolicies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - intent.security.nimbus.com
+  resources:
+  - nimbuspolicies/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - intent.security.nimbus.com
+  resources:
+  - securityintentbindings
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - intent.security.nimbus.com
+  resources:
+  - securityintentbindings/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - intent.security.nimbus.com
+  resources:
+  - securityintents
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - intent.security.nimbus.com
+  resources:
+  - securityintents/status
+  verbs:
+  - get
+  - patch
+  - update

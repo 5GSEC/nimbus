@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    app.kubernetes.io/name: nimbus
+  name: nimbus
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nimbus-operator
+spec:
+  selector:
+    matchLabels:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: nimbus-operator
+          command:
+            - /manager
+          args:
+            - --leader-elect
+          image: controller:latest
+          securityContext:
+            allowPrivilegeEscalation: false
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      serviceAccountName: nimbus-operator
+      terminationGracePeriodSeconds: 10

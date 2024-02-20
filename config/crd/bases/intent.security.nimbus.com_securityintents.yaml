@@ -1,0 +1,114 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.13.0
+  name: securityintents.intent.security.nimbus.com
+spec:
+  group: intent.security.nimbus.com
+  names:
+    kind: SecurityIntent
+    listKind: SecurityIntentList
+    plural: securityintents
+    shortNames:
+    - si
+    singular: securityintent
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - jsonPath: .spec.intent.id
+      name: ID
+      priority: 1
+      type: string
+    - jsonPath: .spec.intent.action
+      name: Action
+      priority: 1
+      type: string
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: SecurityIntent is the Schema for the securityintents API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: SecurityIntentSpec defines the desired state of SecurityIntent
+            properties:
+              intent:
+                description: Intent defines the security policy details
+                properties:
+                  action:
+                    description: Action defines how the security policy will be enforced.
+                    type: string
+                  description:
+                    description: Description is human-readable explanation of the
+                      intent's purpose.
+                    type: string
+                  id:
+                    description: ID is predefined in adapter ID pool. Used by security
+                      engines to generate corresponding security policies.
+                    pattern: ^[a-zA-Z0-9]*$
+                    type: string
+                  params:
+                    additionalProperties:
+                      items:
+                        type: string
+                      type: array
+                    description: Params are key-value pairs that allows fine-tuning
+                      of intents to specific requirements.
+                    type: object
+                  severity:
+                    default: Low
+                    description: Severity defines the potential impact of a security
+                      violation related to the intent. Defaults to Low.
+                    type: string
+                  tags:
+                    description: Tags are additional metadata for categorization and
+                      grouping of intents. Facilitates searching, filtering, and management
+                      of security policies.
+                    items:
+                      type: string
+                    type: array
+                required:
+                - action
+                - id
+                type: object
+            required:
+            - intent
+            type: object
+          status:
+            description: SecurityIntentStatus defines the observed state of SecurityIntent
+            properties:
+              action:
+                type: string
+              id:
+                type: string
+              status:
+                type: string
+            required:
+            - action
+            - id
+            - status
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

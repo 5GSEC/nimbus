@@ -1,0 +1,10 @@
+# This kustomization.yaml is not intended to be run by itself,
+# since it depends on service name and namespace that are out of this kustomize package.
+# It should be run by config/default
+resources:
+- bases/intent.security.nimbus.com_securityintents.yaml
+- bases/intent.security.nimbus.com_securityintentbindings.yaml
+- bases/intent.security.nimbus.com_nimbuspolicies.yaml
+- bases/intent.security.nimbus.com_clusternimbuspolicies.yaml
+- bases/intent.security.nimbus.com_clustersecurityintentbindings.yaml
+#+kubebuilder:scaffold:crdkustomizeresource
