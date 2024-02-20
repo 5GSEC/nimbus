@@ -145,17 +145,14 @@ func createOrUpdateKsp(ctx context.Context, npName, npNamespace string) {
 			logger.Info("KubeArmorPolicy configured", "KubeArmorPolicy.Name", existingKsp.Name, "KubeArmorPolicy.Namespace", existingKsp.Namespace)
 		}
 
-		// Due to adapters' dependency on nimbus module, the docker image build is
-		// failing. The relevant code is commented out below (lines 153-155). We shall
-		// uncomment this code in a subsequent PR.
-
 		// Every adapter is responsible for updating the status field of the
 		// corresponding NimbusPolicy with the number and names of successfully created
-		// policies. This provides feedback to users about the translation and deployment
-		// of their security intent.
-		//if err = adapterutil.UpdateNpStatus(ctx, k8sClient, "KubeArmorPolicy/"+ksp.Name, np.Name, np.Namespace); err != nil {
-		//	logger.Error(err, "failed to update KubeArmorPolicies status in NimbusPolicy")
-		//}
+		// policies by calling the 'adapterutil.UpdateNpStatus' API. This provides
+		// feedback to users about the translation and deployment of their security
+		// intent.
+		if err = adapterutil.UpdateNpStatus(ctx, k8sClient, "KubeArmorPolicy/"+ksp.Name, np.Name, np.Namespace); err != nil {
+			logger.Error(err, "failed to update KubeArmorPolicies status in NimbusPolicy")
+		}
 	}
 }
 

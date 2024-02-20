@@ -1,5 +1,5 @@
-github.com/5GSEC/nimbus v0.0.0-20240208070656-624660f34768 h1:v2fY3lWXydstfekQSHs9n0TpNnTteC7Iws3ojwGtFJk=
-github.com/5GSEC/nimbus v0.0.0-20240208070656-624660f34768/go.mod h1:yw79m9f1+f3tBSZCMQKbNVKL39Q71FyGyoa8nClo1Hs=
+github.com/5GSEC/nimbus v0.0.0-20240220040009-4cc97b1338ad h1:vr8/EtADzXyAYOsZbG8KhSO7ClELdQMjWEfHde5C3yA=
+github.com/5GSEC/nimbus v0.0.0-20240220040009-4cc97b1338ad/go.mod h1:YgeRR5ijLJHHeapCUekTfLJXMVrqOMVT2rCsqHlKLdU=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
 github.com/cespare/xxhash/v2 v2.2.0 h1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj44=
@@ -152,6 +152,7 @@ golang.org/x/tools v0.0.0-20200619180055-7c47624df98f/go.mod h1:EkVYQZoAsY45+roY
 golang.org/x/tools v0.0.0-20210106214847-113979e3529a/go.mod h1:emZCQorbCU4vsT4fOWvOPXz4eW1wZW4PmDk9uLelYpA=
 golang.org/x/tools v0.1.12/go.mod h1:hNGJHUnrk76NpqgfD5Aqm5Crs+Hm0VOH/i9J2+nxYbc=
 golang.org/x/tools v0.17.0 h1:FvmRgNOcs3kOa+T20R1uhfP9F6HgG2mfxDv1vrx1Htc=
+golang.org/x/tools v0.17.0/go.mod h1:xsh6VxdV005rRVaS6SSAf9oiAqljS7UZUacMZ8Bnsps=
 golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
