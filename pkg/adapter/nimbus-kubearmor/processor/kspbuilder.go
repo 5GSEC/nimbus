@@ -83,6 +83,7 @@ func unAuthorizedSaTokenAccessKsp() kubearmorv1.KubeArmorPolicy {
 	}
 }
 
+// TODO: Instead of downloading the KSP build it locally
 func swDeploymentToolsKsp() kubearmorv1.KubeArmorPolicy {
 	var ksp kubearmorv1.KubeArmorPolicy
 	fileUrl := "https://raw.githubusercontent.com/kubearmor/policy-templates/main/nist/system/ksp-nist-si-4-execute-package-management-process-in-container.yaml"

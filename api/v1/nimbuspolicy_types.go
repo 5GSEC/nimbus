@@ -32,20 +32,23 @@ type NimbusRules struct {
 
 type Rule struct {
 	RuleAction string              `json:"action"`
-	Mode       string              `json:"mode"`
 	Params     map[string][]string `json:"params,omitempty"`
 }
 
 // NimbusPolicyStatus defines the observed state of NimbusPolicy
 type NimbusPolicyStatus struct {
-	Status      string      `json:"status"`
-	LastUpdated metav1.Time `json:"lastUpdated,omitempty"`
+	Status                  string      `json:"status"`
+	LastUpdated             metav1.Time `json:"lastUpdated,omitempty"`
+	NumberOfAdapterPolicies int32       `json:"numberOfAdapterPolicies"`
+	Policies                []string    `json:"adapterPolicies,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-//+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status"
 //+kubebuilder:resource: shortName="np"
+//+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status"
+//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
+//+kubebuilder:printcolumn:name="Policies",type="integer",JSONPath=".status.numberOfAdapterPolicies"
 
 // NimbusPolicy is the Schema for the nimbuspolicies API
 type NimbusPolicy struct {

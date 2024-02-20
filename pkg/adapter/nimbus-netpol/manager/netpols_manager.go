@@ -28,7 +28,6 @@ import (
 
 var (
 	scheme    = runtime.NewScheme()
-	np        intentv1.NimbusPolicy
 	k8sClient client.Client
 )
 
@@ -80,6 +79,7 @@ func Run(ctx context.Context) {
 func reconcileNetPol(ctx context.Context, netpolName, namespace string, deleted bool) {
 	logger := log.FromContext(ctx)
 	npName := adapterutil.ExtractNpName(netpolName)
+	var np intentv1.NimbusPolicy
 	err := k8sClient.Get(ctx, types.NamespacedName{Name: npName, Namespace: namespace}, &np)
 	if err != nil {
 		if !errors.IsNotFound(err) {
@@ -97,13 +97,14 @@ func reconcileNetPol(ctx context.Context, netpolName, namespace string, deleted 
 
 func createOrUpdateNetworkPolicy(ctx context.Context, npName, npNamespace string) {
 	logger := log.FromContext(ctx)
+	var np intentv1.NimbusPolicy
 	if err := k8sClient.Get(ctx, types.NamespacedName{Name: npName, Namespace: npNamespace}, &np); err != nil {
 		logger.Error(err, "failed to get NimbusPolicy", "NimbusPolicy.Name", npName[0], "NimbusPolicy.Namespace", npName[1])
 		return
 	}
 
 	if adapterutil.IsOrphan(np.GetOwnerReferences(), "SecurityIntentBinding") {
-		logger.V(4).Info("Ignoring orphan NimbusPolicy", "NimbusPolicy.Name", np.GetName(), "NimbusPolicy.Namespace", np.GetNamespace())
+		logger.V(4).Info("Ignoring orphan NimbusPolicy", "NimbusPolicy.Name", npName, "NimbusPolicy.Namespace", npNamespace)
 		return
 	}
 
@@ -138,6 +139,18 @@ func createOrUpdateNetworkPolicy(ctx context.Context, npName, npNamespace string
 			}
 			logger.Info("NetworkPolicy configured", "NetworkPolicy.Name", netpol.Name, "NetworkPolicy.Namespace", netpol.Namespace)
 		}
+
+		// Due to adapters' dependency on nimbus module, the docker image build is
+		// failing. The relevant code is commented out below (lines 153-155). We shall
+		// uncomment this code in a subsequent PR.
+
+		// Every adapter is responsible for updating the status field of the
+		// corresponding NimbusPolicy with the number and names of successfully created
+		// policies. This provides feedback to users about the translation and deployment
+		// of their security intent.
+		//if err = adapterutil.UpdateNpStatus(ctx, k8sClient, "NetworkPolicy/"+netpol.Name, np.Name, np.Namespace); err != nil {
+		//	logger.Error(err, "failed to update NetworkPolicies status in NimbusPolicy")
+		//}
 	}
 }
 

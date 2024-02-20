@@ -39,14 +39,20 @@ type Resources struct {
 
 // SecurityIntentBindingStatus defines the observed state of SecurityIntentBinding
 type SecurityIntentBindingStatus struct {
-	Status      string      `json:"status"`
-	LastUpdated metav1.Time `json:"lastUpdated,omitempty"`
+	Status               string      `json:"status"`
+	LastUpdated          metav1.Time `json:"lastUpdated,omitempty"`
+	NumberOfBoundIntents int32       `json:"numberOfBoundIntents"`
+	BoundIntents         []string    `json:"boundIntents,omitempty"`
+	NimbusPolicy         string      `json:"nimbusPolicy"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:resource: shortName="sib"
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status"
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:printcolumn:name="Intents",type="integer",JSONPath=".status.numberOfBoundIntents"
+// +kubebuilder:printcolumn:name="NimbusPolicy",type="string",JSONPath=".status.nimbusPolicy"
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // SecurityIntentBinding is the Schema for the securityintentbindings API

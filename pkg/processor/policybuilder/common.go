@@ -11,24 +11,11 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1 "github.com/5GSEC/nimbus/api/v1"
 )
-
-// FetchIntentByName fetches a SecurityIntent by its name.
-func FetchIntentByName(ctx context.Context, client client.Client, name string) (*v1.SecurityIntent, error) {
-	logger := log.FromContext(ctx)
-
-	var intent v1.SecurityIntent
-	if err := client.Get(ctx, types.NamespacedName{Name: name}, &intent); err != nil {
-		logger.Error(err, "Failed to get SecurityIntent")
-		return nil, err
-	}
-	return &intent, nil
-}
 
 // ProcessCEL processes CEL expressions to generate matchLabels.
 func ProcessCEL(ctx context.Context, k8sClient client.Client, namespace string, expressions []string) (map[string]string, error) {

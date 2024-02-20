@@ -15,13 +15,18 @@ type ClusterNimbusPolicySpec struct {
 
 // ClusterNimbusPolicyStatus defines the observed state of ClusterNimbusPolicy
 type ClusterNimbusPolicyStatus struct {
-	Status string `json:"status"`
+	Status                  string      `json:"status"`
+	LastUpdated             metav1.Time `json:"lastUpdated,omitempty"`
+	NumberOfAdapterPolicies int32       `json:"numberOfAdapterPolicies"`
+	Policies                []string    `json:"adapterPolicies,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:resource:scope=Cluster,shortName="cwnp"
 //+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status"
+//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
+//+kubebuilder:printcolumn:name="Policies",type="integer",JSONPath=".status.numberOfAdapterPolicies"
 
 // ClusterNimbusPolicy is the Schema for the clusternimbuspolicies API
 type ClusterNimbusPolicy struct {

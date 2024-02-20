@@ -27,13 +27,20 @@ type ClusterSecurityIntentBindingSpec struct {
 
 // ClusterSecurityIntentBindingStatus defines the observed state of ClusterSecurityIntentBinding
 type ClusterSecurityIntentBindingStatus struct {
-	Status string `json:"status"`
+	Status               string      `json:"status"`
+	LastUpdated          metav1.Time `json:"lastUpdated,omitempty"`
+	NumberOfBoundIntents int32       `json:"numberOfBoundIntents"`
+	BoundIntents         []string    `json:"boundIntents,omitempty"`
+	ClusterNimbusPolicy  string      `json:"clusterNimbusPolicy"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-//+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status"
 //+kubebuilder:resource:scope=Cluster,shortName="csib"
+//+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status"
+//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
+//+kubebuilder:printcolumn:name="Intents",type="integer",JSONPath=".status.numberOfBoundIntents"
+//+kubebuilder:printcolumn:name="ClusterNimbusPolicy",type="string",JSONPath=".status.clusterNimbusPolicy"
 //+k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // ClusterSecurityIntentBinding is the Schema for the clustersecurityintentbindings API

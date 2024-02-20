@@ -20,6 +20,15 @@ spec:
     - jsonPath: .status.status
       name: Status
       type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - jsonPath: .status.numberOfBoundIntents
+      name: Intents
+      type: integer
+    - jsonPath: .status.nimbusPolicy
+      name: NimbusPolicy
+      type: string
     name: v1
     schema:
       openAPIV3Schema:
@@ -106,12 +115,23 @@ spec:
             description: SecurityIntentBindingStatus defines the observed state of
               SecurityIntentBinding
             properties:
+              boundIntents:
+                items:
+                  type: string
+                type: array
               lastUpdated:
                 format: date-time
                 type: string
+              nimbusPolicy:
+                type: string
+              numberOfBoundIntents:
+                format: int32
+                type: integer
               status:
                 type: string
             required:
+            - nimbusPolicy
+            - numberOfBoundIntents
             - status
             type: object
         type: object
