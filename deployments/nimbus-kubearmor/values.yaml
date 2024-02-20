@@ -1,7 +1,5 @@
 # Default values for nimbus-kubearmor.
 
-replicaCount: 1
-
 image:
   repository: 5gsec/nimbus-kubearmor
   pullPolicy: Always

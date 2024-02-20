@@ -1,6 +1,8 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.13.0
   name: clusternimbuspolicies.intent.security.nimbus.com
 spec:
   group: intent.security.nimbus.com
@@ -17,6 +19,12 @@ spec:
         - jsonPath: .status.status
           name: Status
           type: string
+        - jsonPath: .metadata.creationTimestamp
+          name: Age
+          type: date
+        - jsonPath: .status.numberOfAdapterPolicies
+          name: Policies
+          type: integer
       name: v1
       schema:
         openAPIV3Schema:
@@ -51,8 +59,6 @@ spec:
                         properties:
                           action:
                             type: string
-                          mode:
-                            type: string
                           params:
                             additionalProperties:
                               items:
@@ -61,7 +67,6 @@ spec:
                             type: object
                         required:
                           - action
-                          - mode
                         type: object
                       type:
                         type: string
@@ -102,9 +107,20 @@ spec:
             status:
               description: ClusterNimbusPolicyStatus defines the observed state of ClusterNimbusPolicy
               properties:
+                adapterPolicies:
+                  items:
+                    type: string
+                  type: array
+                lastUpdated:
+                  format: date-time
+                  type: string
+                numberOfAdapterPolicies:
+                  format: int32
+                  type: integer
                 status:
                   type: string
               required:
+                - numberOfAdapterPolicies
                 - status
               type: object
           type: object
@@ -116,6 +132,8 @@ spec:
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.13.0
   name: clustersecurityintentbindings.intent.security.nimbus.com
 spec:
   group: intent.security.nimbus.com
@@ -131,6 +149,15 @@ spec:
     - additionalPrinterColumns:
         - jsonPath: .status.status
           name: Status
+          type: string
+        - jsonPath: .metadata.creationTimestamp
+          name: Age
+          type: date
+        - jsonPath: .status.numberOfBoundIntents
+          name: Intents
+          type: integer
+        - jsonPath: .status.clusterNimbusPolicy
+          name: ClusterNimbusPolicy
           type: string
       name: v1
       schema:
@@ -198,9 +225,23 @@ spec:
               description: ClusterSecurityIntentBindingStatus defines the observed state
                 of ClusterSecurityIntentBinding
               properties:
+                boundIntents:
+                  items:
+                    type: string
+                  type: array
+                clusterNimbusPolicy:
+                  type: string
+                lastUpdated:
+                  format: date-time
+                  type: string
+                numberOfBoundIntents:
+                  format: int32
+                  type: integer
                 status:
                   type: string
               required:
+                - clusterNimbusPolicy
+                - numberOfBoundIntents
                 - status
               type: object
           type: object
@@ -212,6 +253,8 @@ spec:
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.13.0
   name: nimbuspolicies.intent.security.nimbus.com
 spec:
   group: intent.security.nimbus.com
@@ -228,6 +271,12 @@ spec:
         - jsonPath: .status.status
           name: Status
           type: string
+        - jsonPath: .metadata.creationTimestamp
+          name: Age
+          type: date
+        - jsonPath: .status.numberOfAdapterPolicies
+          name: Policies
+          type: integer
       name: v1
       schema:
         openAPIV3Schema:
@@ -263,8 +312,6 @@ spec:
                         properties:
                           action:
                             type: string
-                          mode:
-                            type: string
                           params:
                             additionalProperties:
                               items:
@@ -273,7 +320,6 @@ spec:
                             type: object
                         required:
                           - action
-                          - mode
                         type: object
                       type:
                         type: string
@@ -302,9 +348,20 @@ spec:
             status:
               description: NimbusPolicyStatus defines the observed state of NimbusPolicy
               properties:
+                adapterPolicies:
+                  items:
+                    type: string
+                  type: array
+                lastUpdated:
+                  format: date-time
+                  type: string
+                numberOfAdapterPolicies:
+                  format: int32
+                  type: integer
                 status:
                   type: string
               required:
+                - numberOfAdapterPolicies
                 - status
               type: object
           type: object
@@ -316,6 +373,8 @@ spec:
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.13.0
   name: securityintentbindings.intent.security.nimbus.com
 spec:
   group: intent.security.nimbus.com
@@ -331,6 +390,15 @@ spec:
     - additionalPrinterColumns:
         - jsonPath: .status.status
           name: Status
+          type: string
+        - jsonPath: .metadata.creationTimestamp
+          name: Age
+          type: date
+        - jsonPath: .status.numberOfBoundIntents
+          name: Intents
+          type: integer
+        - jsonPath: .status.nimbusPolicy
+          name: NimbusPolicy
           type: string
       name: v1
       schema:
@@ -418,9 +486,23 @@ spec:
               description: SecurityIntentBindingStatus defines the observed state of
                 SecurityIntentBinding
               properties:
+                boundIntents:
+                  items:
+                    type: string
+                  type: array
+                lastUpdated:
+                  format: date-time
+                  type: string
+                nimbusPolicy:
+                  type: string
+                numberOfBoundIntents:
+                  format: int32
+                  type: integer
                 status:
                   type: string
               required:
+                - nimbusPolicy
+                - numberOfBoundIntents
                 - status
               type: object
           type: object
@@ -432,6 +514,8 @@ spec:
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.13.0
   name: securityintents.intent.security.nimbus.com
 spec:
   group: intent.security.nimbus.com
@@ -447,6 +531,17 @@ spec:
     - additionalPrinterColumns:
         - jsonPath: .status.status
           name: Status
+          type: string
+        - jsonPath: .metadata.creationTimestamp
+          name: Age
+          type: date
+        - jsonPath: .spec.intent.id
+          name: ID
+          priority: 1
+          type: string
+        - jsonPath: .spec.intent.action
+          name: Action
+          priority: 1
           type: string
       name: v1
       schema:
@@ -483,11 +578,6 @@ spec:
                         engines to generate corresponding security policies.
                       pattern: ^[a-zA-Z0-9]*$
                       type: string
-                    mode:
-                      default: best-effort
-                      description: Mode defines the enforcement behavior of the intent.
-                        Defaults to best-effort.
-                      type: string
                     params:
                       additionalProperties:
                         items:
@@ -518,9 +608,15 @@ spec:
             status:
               description: SecurityIntentStatus defines the observed state of SecurityIntent
               properties:
+                action:
+                  type: string
+                id:
+                  type: string
                 status:
                   type: string
               required:
+                - action
+                - id
                 - status
               type: object
           type: object
