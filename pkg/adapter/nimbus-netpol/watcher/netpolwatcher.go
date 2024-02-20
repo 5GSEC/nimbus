@@ -4,9 +4,7 @@
 package watcher
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -53,15 +51,8 @@ func WatchNetpols(ctx context.Context, updatedNetpolCh, deletedNetpolCh chan com
 				return
 			}
 
-			oldSpec, errOld := oldU.Object["spec"].(map[string]interface{})
-			newSpec, errNew := newU.Object["spec"].(map[string]interface{})
-
-			if errOld && errNew {
-				oldSpecBytes, _ := json.Marshal(oldSpec)
-				newSpecBytes, _ := json.Marshal(newSpec)
-				if bytes.Equal(oldSpecBytes, newSpecBytes) {
-					return
-				}
+			if oldU.GetGeneration() == newU.GetGeneration() {
+				return
 			}
 
 			netpolNamespacedName := common.Request{
