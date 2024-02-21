@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: securityintentbinding-creation
+spec:
+  description: >
+    This test validates the automated creation of a NimbusPolicy resource when a corresponding SecurityIntent 
+    and SecurityIntentBinding are created.
+  steps:
+    - name: "Create a SecurityIntent"
+      try:
+        - apply:
+            file: ../../resources/namespaced/1-dns-manipulation-si.yaml
+
+    - name: "Create a SecurityIntentBinding"
+      try:
+        - apply:
+            file: ../../resources/namespaced/1-dns-manipulation-sib.yaml
+
+    - name: "Verity NimbusPolicy creation"
+      try:
+        - assert:
+            file: ../nimbus-policy-assert.yaml
+
+    - name: "Verify status of created SecurityIntentBinding"
+      description: >
+        Verify the created SecurityIntentBinding status subresource includes the number and names of bound intents, 
+        along with the generated NimbusPolicy name.
+      try:
+        - assert:
+            file: ../sib-status-assert.yaml
+
+    - name: "Verify status of created NimbusPolicy"
+      try:
+        - assert:
+            file: ../np-status-assert.yaml

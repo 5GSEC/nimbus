@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: nimbuspolicy-update
+spec:
+  description: >
+    This test validates that direct updates to a NimbusPolicy resource are ignored, to maintain consistency and 
+    prevent unintended modifications.
+  steps:
+    - name: "Create a SecurityIntent"
+      try:
+        - apply:
+            file: ../../resources/namespaced/1-dns-manipulation-si.yaml
+
+    - name: "Create a SecurityIntentBinding"
+      try:
+        - apply:
+            file: ../../resources/namespaced/1-dns-manipulation-sib.yaml
+
+    - name: "Verity NimbusPolicy creation"
+      try:
+        - assert:
+            file: ../nimbus-policy-assert.yaml
+
+    - name: "Update existing NimbusPolicy"
+      try:
+        - apply:
+            file: ../updated-nimbus-policy.yaml
+
+    - name: "Verify discarding of changes to NimbusPolicy"
+      try:
+        - assert:
+            file: ../nimbus-policy-assert.yaml

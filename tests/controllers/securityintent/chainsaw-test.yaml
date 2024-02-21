@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: securityintent-creation
+spec:
+  description: >
+    This test validates that the created SecurityIntent status subresource contains the ID and action 
+    fields with the corresponding intent values.
+  steps:
+    - name: "Create a SecurityIntent"
+      try:
+        - apply:
+            file: ../resources/namespaced/1-dns-manipulation-si.yaml
+
+    - name: "Verify status of created SecurityIntent"
+      try:
+        - assert:
+            file: si-status-assert.yaml
