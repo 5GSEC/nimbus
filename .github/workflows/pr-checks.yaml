@@ -26,8 +26,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  test:
-    name: Test
+  static-checks:
+    name: Static checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -35,7 +35,7 @@ jobs:
       - name: Setup go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.20'
+          go-version: '1.21'
 
       - name: go fmt
         run: make fmt
@@ -47,9 +47,6 @@ jobs:
           version: v1.54
           args: --deadline=30m --out-format=line-number
           skip-cache: true # https://github.com/golangci/golangci-lint-action/issues/244#issuecomment-1052197778
-
-      - name: Run unit tests
-        run: make test
 
   go-sec:
     runs-on: ubuntu-latest
@@ -99,6 +96,7 @@ jobs:
         run: make docker-build
 
   chainsaw-tests:
+    name: Test
     runs-on: ubuntu-latest
     steps:
         - name: Checkout
@@ -109,25 +107,16 @@ jobs:
           uses: azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78 # v3.5
           with:
             token: ${{ secrets.GITHUB_TOKEN }}
-          
- 
 
         - name: Install go
           uses: actions/setup-go@v5
           with:
-            go-version: '1.21' # The Go version to download (if necessary) and use.
-          
-
-
-        - name: Install chainsaw
-          uses: kyverno/action-install-chainsaw@8307cf9038333ce168dd4339ae24f9ab16ab7a00 # v0.1.4
-
+            go-version: '1.21'
 
         - name: Create k8s Kind Cluster
           uses: helm/kind-action@v1
           with:
             cluster_name: testing
-
 
         - name: Build image and load in the kind cluster
           run: |
@@ -144,5 +133,4 @@ jobs:
             kubectl get pods -A
           
         - name: Run Tests
-          run: |
-            chainsaw test --test-dir=tests/controllers/  --config tests/chainsaw-config.yaml
+          run: make test
