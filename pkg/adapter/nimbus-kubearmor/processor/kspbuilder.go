@@ -4,13 +4,10 @@
 package processor
 
 import (
-	"io"
-	"net/http"
 	"strings"
 
 	"github.com/go-logr/logr"
 	kubearmorv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorController/api/security.kubearmor.com/v1"
-	"k8s.io/apimachinery/pkg/util/yaml"
 
 	v1 "github.com/5GSEC/nimbus/api/v1"
 	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
@@ -83,31 +80,108 @@ func unAuthorizedSaTokenAccessKsp() kubearmorv1.KubeArmorPolicy {
 	}
 }
 
-// TODO: Instead of downloading the KSP build it locally
 func swDeploymentToolsKsp() kubearmorv1.KubeArmorPolicy {
-	var ksp kubearmorv1.KubeArmorPolicy
-	fileUrl := "https://raw.githubusercontent.com/kubearmor/policy-templates/main/nist/system/ksp-nist-si-4-execute-package-management-process-in-container.yaml"
-	response, err := http.Get(fileUrl)
-
-	if err != nil {
-		return ksp
+	return kubearmorv1.KubeArmorPolicy{
+		Spec: kubearmorv1.KubeArmorPolicySpec{
+			Process: kubearmorv1.ProcessType{
+				MatchPaths: []kubearmorv1.ProcessPathType{
+					{
+						Path: "/usr/bin/apt",
+					},
+					{
+						Path: "/usr/bin/apt-get",
+					},
+					{
+						Path: "/sbin/apk",
+					},
+					{
+						Path: "/bin/apt-get",
+					},
+					{
+						Path: "/bin/apt",
+					},
+					{
+						Path: "/usr/bin/dpkg",
+					},
+					{
+						Path: "/bin/dpkg",
+					},
+					{
+						Path: "/usr/bin/gdebi",
+					},
+					{
+						Path: "/bin/gdebi",
+					},
+					{
+						Path: "/usr/bin/make",
+					},
+					{
+						Path: "/bin/make",
+					},
+					{
+						Path: "/usr/bin/yum",
+					},
+					{
+						Path: "/bin/yum",
+					},
+					{
+						Path: "/usr/bin/rpm",
+					},
+					{
+						Path: "/bin/rpm",
+					},
+					{
+						Path: "/usr/bin/dnf",
+					},
+					{
+						Path: "/bin/dnf",
+					},
+					{
+						Path: "/usr/bin/pacman",
+					},
+					{
+						Path: "/usr/sbin/pacman",
+					},
+					{
+						Path: "/bin/pacman",
+					},
+					{
+						Path: "/sbin/pacman",
+					},
+					{
+						Path: "/usr/bin/makepkg",
+					},
+					{
+						Path: "/usr/sbin/makepkg",
+					},
+					{
+						Path: "/bin/makepkg",
+					},
+					{
+						Path: "/sbin/makepkg",
+					},
+					{
+						Path: "/usr/bin/yaourt",
+					},
+					{
+						Path: "/usr/sbin/yaourt",
+					},
+					{
+						Path: "/bin/yaourt",
+					},
+					{
+						Path: "/sbin/yaourt",
+					},
+					{
+						Path: "/usr/bin/zypper",
+					},
+					{
+						Path: "/bin/zypper",
+					},
+				},
+			},
+		},
 	}
-	defer func() {
-		err = response.Body.Close()
-		if err != nil {
-			return
-		}
-	}()
-
-	data, err := io.ReadAll(response.Body)
-	if err != nil {
-		return ksp
-	}
-	_ = yaml.Unmarshal(data, &ksp)
-
-	// remove explicit action
-	ksp.Spec.Process.Action = ""
-	return ksp
 }
 
 func addManagedByAnnotation(ksp *kubearmorv1.KubeArmorPolicy) {
