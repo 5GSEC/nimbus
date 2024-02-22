@@ -86,18 +86,19 @@ func (r *SecurityIntentReconciler) handleSecurityIntentDeletion(ctx context.Cont
 	}
 
 	for _, sib := range sibList.Items {
+		sibCopy := sib
 		// Check if the SecurityIntentBinding contains the deleted SecurityIntent
 		updatedBoundIntents := make([]string, 0)
-		for _, boundIntent := range sib.Status.BoundIntents {
+		for _, boundIntent := range sibCopy.Status.BoundIntents {
 			if boundIntent != siName {
 				updatedBoundIntents = append(updatedBoundIntents, boundIntent)
 			}
 		}
 		// Only update if there was a change
-		if len(updatedBoundIntents) != len(sib.Status.BoundIntents) {
-			sib.Status.LastUpdated = metav1.Now()
+		if len(updatedBoundIntents) != len(sibCopy.Status.BoundIntents) {
+			sibCopy.Status.LastUpdated = metav1.Now()
 		}
-		if err := r.Status().Update(ctx, &sib); err != nil {
+		if err := r.Status().Update(ctx, &sibCopy); err != nil {
 			return err
 		}
 	}
