@@ -31,8 +31,11 @@ func ExtractIntents(ctx context.Context, c client.Client, object client.Object) 
 	for _, intent := range givenIntents {
 		var si v1.SecurityIntent
 		if err := c.Get(ctx, types.NamespacedName{Name: intent.Name}, &si); err != nil && apierrors.IsNotFound(err) {
+			if apierrors.IsNotFound(err) {
+				continue
+			}
 			logger.V(2).Info("failed to fetch SecurityIntent", "SecurityIntent.Name", intent.Name)
-			continue
+			return nil
 		}
 		intents = append(intents, si)
 	}

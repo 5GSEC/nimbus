@@ -45,7 +45,7 @@ func BuildNimbusPolicy(ctx context.Context, logger logr.Logger, k8sClient client
 		return nil, err
 	}
 	if len(matchLabels) == 0 {
-		return nil, errors.Wrap(err, "No labels matched the CEL expressions, aborting NimbusPolicy creation due to missing keys in labels")
+		return nil, nil
 	}
 
 	nimbusPolicy := &v1.NimbusPolicy{

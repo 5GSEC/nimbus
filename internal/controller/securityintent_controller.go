@@ -7,6 +7,7 @@ import (
 	"context"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -35,6 +36,11 @@ func (r *SecurityIntentReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			logger.Info("SecurityIntent not found. Ignoring since object must be deleted")
+			if err := r.handleSecurityIntentDeletion(ctx, req.Name); err != nil {
+				logger.Error(err, "failed to handle SecurityIntent deletion", "SecurityIntent.Name", req.Name)
+				return requeueWithError(err)
+			}
+
 			return doNotRequeue()
 		}
 		logger.Error(err, "failed to fetch SecurityIntent", "SecurityIntent.Name", req.Name)
@@ -71,4 +77,29 @@ func (r *SecurityIntentReconciler) updateStatus(ctx context.Context, name string
 		Status: StatusCreated,
 	}
 	return r.Status().Update(ctx, latestSi)
+}
+
+func (r *SecurityIntentReconciler) handleSecurityIntentDeletion(ctx context.Context, siName string) error {
+	sibList := &v1.SecurityIntentBindingList{}
+	if err := r.List(ctx, sibList); err != nil {
+		return err
+	}
+
+	for _, sib := range sibList.Items {
+		// Check if the SecurityIntentBinding contains the deleted SecurityIntent
+		updatedBoundIntents := make([]string, 0)
+		for _, boundIntent := range sib.Status.BoundIntents {
+			if boundIntent != siName {
+				updatedBoundIntents = append(updatedBoundIntents, boundIntent)
+			}
+		}
+		// Only update if there was a change
+		if len(updatedBoundIntents) != len(sib.Status.BoundIntents) {
+			sib.Status.LastUpdated = metav1.Now()
+		}
+		if err := r.Status().Update(ctx, &sib); err != nil {
+			return err
+		}
+	}
+	return nil
 }
