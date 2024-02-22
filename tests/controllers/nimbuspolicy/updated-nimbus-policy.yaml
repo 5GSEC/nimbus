@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: intent.security.nimbus.com/v1
+kind: NimbusPolicy
+metadata:
+  name: dns-manipulation-binding
+spec:
+   rules:
+   - description: An adversary can manipulate DNS requests to redirect network traffic
+       and potentially reveal end user activity.
+     id: dnsManipulation
+     rule:
+       action: Allow
+   selector:
+     matchLabels:
+       app: frontend

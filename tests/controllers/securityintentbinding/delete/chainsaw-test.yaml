@@ -1,0 +1,45 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: securityintentbinding-deletion
+spec:
+  description: >
+    This test validates the expected behavior of NimbusPolicy deletion upon the removal of a corresponding
+    SecurityIntentBinding resource.
+  steps:
+    - name: "Create a SecurityIntent"
+      try:
+        - apply:
+            file: ../../resources/namespaced/1-dns-manipulation-si.yaml
+
+    - name: "Create a SecurityIntentBinding"
+      try:
+        - apply:
+            file: ../../resources/namespaced/1-dns-manipulation-sib.yaml
+      # This resource is intentionally left undeleted by chainsaw to avoid unnecessary errors during its cleanup phase, as it will be explicitly deleted in the following step.
+      skipDelete: true
+
+    - name: "Delete existing SecurityIntentBinding"
+      try:
+        - delete:
+            ref:
+              apiVersion: intent.security.nimbus.com/v1
+              kind: SecurityIntentBinding
+              name: dns-manipulation-binding
+            expect:
+              - match:
+                  apiVersion: intent.security.nimbus.com/v1
+                  kind: SecurityIntentBinding
+                  name: dns-manipulation-binding
+                check:
+                  ($error != null): true
+
+    - name: "Verify the NimbusPolicy deletion"
+      try:
+        - script:
+            content: kubectl get np -n $NAMESPACE dns-manipulation-binding
+            check:
+              ($error != null): true

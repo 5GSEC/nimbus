@@ -1,0 +1,46 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: nimbuspolicy-deletion
+spec:
+  description: >
+    This test validates that when a NimbusPolicy is directly deleted, nimbus automatically re-creates the
+    deleted NimbusPolicy or not.
+  steps:
+    - name: "Create a SecurityIntent"
+      try:
+        - apply:
+            file: ../../resources/namespaced/1-dns-manipulation-si.yaml
+
+    - name: "Create a SecurityIntentBinding"
+      try:
+        - apply:
+            file: ../../resources/namespaced/1-dns-manipulation-sib.yaml
+
+    - name: "Verity NimbusPolicy creation"
+      try:
+        - assert:
+            file: ../nimbus-policy-assert.yaml
+
+    - name: "Delete existing NimbusPolicy"
+      try:
+        - delete:
+            ref:
+              apiVersion: intent.security.nimbus.com/v1
+              kind: NimbusPolicy
+              name: dns-manipulation-binding
+            expect:
+              - match:
+                  apiVersion: intent.security.nimbus.com/v1
+                  kind: NimbusPolicy
+                  name: dns-manipulation-binding
+                check:
+                  ($error != null): true
+
+    - name: "Verify NimbusPolicy recreation"
+      try:
+        - assert:
+            file: ../nimbus-policy-assert.yaml

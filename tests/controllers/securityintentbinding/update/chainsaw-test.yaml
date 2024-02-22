@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: securityintentbinding-update
+spec:
+  description: This test validates the propagation of changes from a SecurityIntentBinding to the corresponding NimbusPolicy.
+  steps:
+    - name: "Create a SecurityIntent"
+      try:
+        - apply:
+            file: ../../resources/namespaced/1-dns-manipulation-si.yaml
+
+    - name: "Create a SecurityIntentBinding"
+      try:
+        - apply:
+            file: ../../resources/namespaced/1-dns-manipulation-sib.yaml
+
+    - name: "Update existing SecurityIntentBinding"
+      try:
+        - apply:
+            file: ../updated-sib.yaml
+
+    - name: "Verify the NimbusPolicy update"
+      try:
+        - assert:
+            file: ../updated-np.yaml
