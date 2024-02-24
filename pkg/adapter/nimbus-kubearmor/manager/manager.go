@@ -180,7 +180,7 @@ func deleteKsp(ctx context.Context, npName, npNamespace string) {
 func deleteUnnecessaryKsps(ctx context.Context, currentKsps []kubearmorv1.KubeArmorPolicy, namespace string, logger logr.Logger) {
 	var existingKsps kubearmorv1.KubeArmorPolicyList
 	if err := k8sClient.List(ctx, &existingKsps, client.InNamespace(namespace)); err != nil {
-		logger.Error(err, "Failed to list KubeArmorPolicies for cleanup")
+		logger.Error(err, "failed to list KubeArmorPolicies for cleanup")
 		return
 	}
 
@@ -193,9 +193,7 @@ func deleteUnnecessaryKsps(ctx context.Context, currentKsps []kubearmorv1.KubeAr
 		existingKsp := existingKsps.Items[i]
 		if _, needed := currentKspNames[existingKsp.Name]; !needed {
 			if err := k8sClient.Delete(ctx, &existingKsp); err != nil {
-				logger.Error(err, "Failed to delete unnecessary KubeArmorPolicy", "KubeArmorPolicy.Name", existingKsp.Name)
-			} else {
-				logger.Info("Deleted unnecessary KubeArmorPolicy", "KubeArmorPolicy.Name", existingKsp.Name)
+				logger.Error(err, "failed to delete unnecessary KubeArmorPolicy", "KubeArmorPolicy.Name", existingKsp.Name)
 			}
 		}
 	}
