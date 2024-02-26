@@ -54,8 +54,10 @@ func (r *SecurityIntentBindingReconciler) Reconcile(ctx context.Context, req ctr
 	}
 	logger.Info("SecurityIntentBinding found", "SecurityIntentBinding.Name", req.Name, "SecurityIntentBinding.Namespace", req.Namespace)
 
-	if err = r.createOrUpdateNp(ctx, logger, req); err != nil {
+	if np, err := r.createOrUpdateNp(ctx, logger, req); err != nil {
 		return requeueWithError(err)
+	} else if np == nil {
+		return doNotRequeue()
 	}
 
 	if err = r.updateStatus(ctx, logger, req); err != nil {
@@ -101,14 +103,13 @@ func (r *SecurityIntentBindingReconciler) deleteFn(deleteEvent event.DeleteEvent
 	return ownerExists(r.Client, obj)
 }
 
-func (r *SecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Context, logger logr.Logger, req ctrl.Request) error {
-	// Always fetch the latest CRs so that we have the latest state of the CRs on the
+func (r *SecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Context, logger logr.Logger, req ctrl.Request) (*v1.NimbusPolicy, error) { // Always fetch the latest CRs so that we have the latest state of the CRs on the
 	// cluster.
 
 	var sib v1.SecurityIntentBinding
 	if err := r.Get(ctx, req.NamespacedName, &sib); err != nil {
 		logger.Error(err, "failed to fetch SecurityIntentBinding", "SecurityIntentBinding.Name", req.Name, "SecurityIntentBinding.Namespace", req.Namespace)
-		return err
+		return nil, err
 	}
 
 	var np v1.NimbusPolicy
@@ -118,38 +119,42 @@ func (r *SecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Context, 
 			return r.createNp(ctx, logger, sib)
 		}
 		logger.Error(err, "failed to fetch NimbusPolicy", "NimbusPolicy.Name", req.Name, "NimbusPolicy.Namespace", req.Namespace)
-		return err
+		return nil, err
 	}
 	return r.updateNp(ctx, logger, sib)
 }
 
-func (r *SecurityIntentBindingReconciler) createNp(ctx context.Context, logger logr.Logger, sib v1.SecurityIntentBinding) error {
+func (r *SecurityIntentBindingReconciler) createNp(ctx context.Context, logger logr.Logger, sib v1.SecurityIntentBinding) (*v1.NimbusPolicy, error) {
 	nimbusPolicy, err := policybuilder.BuildNimbusPolicy(ctx, logger, r.Client, r.Scheme, sib)
 	// TODO: Improve error handling for CEL
 	if err != nil {
 		// If error is caused due to CEL then we don't retry to build NimbusPolicy.
 		if strings.Contains(err.Error(), "error processing CEL") {
 			logger.Error(err, "failed to build NimbusPolicy")
-			return nil
+			return nil, nil
 		}
 		logger.Error(err, "failed to build NimbusPolicy")
-		return err
+		return nil, err
+	}
+	if nimbusPolicy == nil {
+		logger.Info("Abort NimbusPolicy creation as no labels matched the CEL expressions")
+		return nil, nil
 	}
 
 	if err := r.Create(ctx, nimbusPolicy); err != nil {
 		logger.Error(err, "failed to create NimbusPolicy", "NimbusPolicy.Name", nimbusPolicy.Name, "NimbusPolicy.Namespace", nimbusPolicy.Namespace)
-		return err
+		return nil, err
 	}
 	logger.Info("NimbusPolicy created", "NimbusPolicy.Name", nimbusPolicy.Name, "NimbusPolicy.Namespace", nimbusPolicy.Namespace)
 
-	return nil
+	return nimbusPolicy, nil
 }
 
-func (r *SecurityIntentBindingReconciler) updateNp(ctx context.Context, logger logr.Logger, sib v1.SecurityIntentBinding) error {
+func (r *SecurityIntentBindingReconciler) updateNp(ctx context.Context, logger logr.Logger, sib v1.SecurityIntentBinding) (*v1.NimbusPolicy, error) {
 	var existingNp v1.NimbusPolicy
 	if err := r.Get(ctx, types.NamespacedName{Name: sib.Name, Namespace: sib.Namespace}, &existingNp); err != nil {
 		logger.Error(err, "failed to fetch NimbusPolicy", "NimbusPolicy.Name", sib.Name, "NimbusPolicy.Namespace", sib.Namespace)
-		return err
+		return nil, err
 	}
 
 	nimbusPolicy, err := policybuilder.BuildNimbusPolicy(ctx, logger, r.Client, r.Scheme, sib)
@@ -158,20 +163,24 @@ func (r *SecurityIntentBindingReconciler) updateNp(ctx context.Context, logger l
 		// If error is caused due to CEL then we don't retry to build NimbusPolicy.
 		if strings.Contains(err.Error(), "error processing CEL") {
 			logger.Error(err, "failed to build NimbusPolicy")
-			return nil
+			return nil, nil
 		}
 		logger.Error(err, "failed to build NimbusPolicy")
-		return err
+		return nil, err
+	}
+	if nimbusPolicy == nil {
+		logger.Info("Abort NimbusPolicy creation as no labels matched the CEL expressions")
+		return nil, nil
 	}
 
 	nimbusPolicy.ObjectMeta.ResourceVersion = existingNp.ObjectMeta.ResourceVersion
 	if err := r.Update(ctx, nimbusPolicy); err != nil {
 		logger.Error(err, "failed to configure NimbusPolicy", "NimbusPolicy.Name", nimbusPolicy.Name, "NimbusPolicy.Namespace", nimbusPolicy.Namespace)
-		return err
+		return nil, err
 	}
 	logger.Info("NimbusPolicy configured", "NimbusPolicy.Name", nimbusPolicy.Name, "NimbusPolicy.Namespace", nimbusPolicy.Namespace)
 
-	return nil
+	return nimbusPolicy, nil
 }
 
 func (r *SecurityIntentBindingReconciler) updateStatus(ctx context.Context, logger logr.Logger, req ctrl.Request) error {
