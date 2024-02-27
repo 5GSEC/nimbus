@@ -41,11 +41,16 @@ func (r *SecurityIntentReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return requeueWithError(err)
 	}
 
+	if si.GetGeneration() == 1 {
+		logger.Info("SecurityIntent found", "SecurityIntent.Name", si.Name)
+	} else {
+		logger.Info("SecurityIntent configured", "SecurityIntent.Name", si.Name)
+	}
+
 	if err = r.updateStatus(ctx, req.Name); err != nil {
 		logger.Error(err, "failed to update SecurityIntent status", "SecurityIntent.Name", req.Name)
 		return requeueWithError(err)
 	}
-	logger.Info("SecurityIntent found", "SecurityIntent.Name", si.Name)
 
 	return doNotRequeue()
 }
