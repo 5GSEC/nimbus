@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: intent.security.nimbus.com/v1
+kind: SecurityIntentBinding
+metadata:
+  name: multiple-sis-binding
+status:
+  boundIntents:
+    - unauthorized-sa-token-access-multiple
+    - dns-manipulation-multiple
+  nimbusPolicy: multiple-sis-binding
+  numberOfBoundIntents: 2
+  status: Created

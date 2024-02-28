@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: intent.security.nimbus.com/v1
+kind: SecurityIntent
+metadata:
+  name: pkg-mgr-exec-multiple
+spec:
+  intent:
+    id: swDeploymentTools
+    action: Block
+---
+apiVersion: intent.security.nimbus.com/v1
+kind: SecurityIntent
+metadata:
+  name: unauthorized-sa-token-access-multiple
+spec:
+  intent:
+    id: unAuthorizedSaTokenAccess
+    action: Audit
+---
+apiVersion: intent.security.nimbus.com/v1
+kind: SecurityIntent
+metadata:
+  name: dns-manipulation-multiple
+spec:
+  intent:
+    id: dnsManipulation
+    action: Block
