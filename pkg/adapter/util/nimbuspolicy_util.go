@@ -22,8 +22,12 @@ func ExtractNpName(policyName string) string {
 }
 
 // UpdateNpStatus updates the provided NimbusPolicy status with the number and
-// names of its descendant policies that were created.
-func UpdateNpStatus(ctx context.Context, k8sClient client.Client, currPolicyFullName, npName, namespace string) error {
+// names of its descendant policies that were created. Every adapter is
+// responsible for updating the status field of the corresponding NimbusPolicy
+// with the number and names of successfully created policies by calling this
+// API. This provides feedback to users about the translation and deployment of
+// their security intent
+func UpdateNpStatus(ctx context.Context, k8sClient client.Client, currPolicyFullName, npName, namespace string, decrement bool) error {
 	// Since multiple adapters may attempt to update the NimbusPolicy status
 	// concurrently, potentially leading to conflicts. To ensure data consistency,
 	// retry on write failures. On conflict, the update is retried with an
@@ -35,7 +39,7 @@ func UpdateNpStatus(ctx context.Context, k8sClient client.Client, currPolicyFull
 			return nil
 		}
 
-		updateCountAndPoliciesName(latestNp, currPolicyFullName)
+		updateCountAndPoliciesName(latestNp, currPolicyFullName, decrement)
 		if err := k8sClient.Status().Update(ctx, latestNp); err != nil {
 			return err
 		}
@@ -47,10 +51,20 @@ func UpdateNpStatus(ctx context.Context, k8sClient client.Client, currPolicyFull
 	return nil
 }
 
-func updateCountAndPoliciesName(latestNp *intentv1.NimbusPolicy, currPolicyFullName string) {
+func updateCountAndPoliciesName(latestNp *intentv1.NimbusPolicy, currPolicyFullName string, decrement bool) {
 	if !contains(latestNp.Status.Policies, currPolicyFullName) {
 		latestNp.Status.NumberOfAdapterPolicies++
 		latestNp.Status.Policies = append(latestNp.Status.Policies, currPolicyFullName)
+	}
+
+	if decrement {
+		latestNp.Status.NumberOfAdapterPolicies--
+		for idx, existingPolicyName := range latestNp.Status.Policies {
+			if existingPolicyName == currPolicyFullName {
+				latestNp.Status.Policies = append(latestNp.Status.Policies[:idx], latestNp.Status.Policies[idx+1:]...)
+				return
+			}
+		}
 	}
 }
 

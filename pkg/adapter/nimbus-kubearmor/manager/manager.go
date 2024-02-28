@@ -6,6 +6,7 @@ package manager
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/go-logr/logr"
 	kubearmorv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorController/api/security.kubearmor.com/v1"
@@ -89,9 +90,9 @@ func reconcileKsp(ctx context.Context, kspName, namespace string, deleted bool) 
 		return
 	}
 	if deleted {
-		logger.Info("Reconciling deleted KubeArmorPolicy", "KubeArmorPolicy.Name", kspName, "KubeArmorPolicy.Namespace", namespace)
+		logger.V(2).Info("Reconciling deleted KubeArmorPolicy", "KubeArmorPolicy.Name", kspName, "KubeArmorPolicy.Namespace", namespace)
 	} else {
-		logger.Info("Reconciling modified KubeArmorPolicy", "KubeArmorPolicy.Name", kspName, "KubeArmorPolicy.Namespace", namespace)
+		logger.V(2).Info("Reconciling modified KubeArmorPolicy", "KubeArmorPolicy.Name", kspName, "KubeArmorPolicy.Namespace", namespace)
 	}
 	createOrUpdateKsp(ctx, npName, namespace)
 }
@@ -109,10 +110,8 @@ func createOrUpdateKsp(ctx context.Context, npName, npNamespace string) {
 		return
 	}
 
+	deleteDanglingKsps(ctx, np, logger)
 	ksps := processor.BuildKspsFrom(logger, &np)
-
-	// TODO: Fix loop due to unnecessary KSPs deletion
-	//deleteUnnecessaryKsps(ctx, ksps, npNamespace, logger)
 
 	// Iterate using a separate index variable to avoid aliasing
 	for idx := range ksps {
@@ -130,12 +129,14 @@ func createOrUpdateKsp(ctx context.Context, npName, npNamespace string) {
 			logger.Error(err, "failed to get existing KubeArmorPolicy", "KubeArmorPolicy.Name", ksp.Name, "KubeArmorPolicy.Namespace", ksp.Namespace)
 			return
 		}
-		if err != nil && errors.IsNotFound(err) {
-			if err = k8sClient.Create(ctx, &ksp); err != nil {
-				logger.Error(err, "failed to create KubeArmorPolicy", "KubeArmorPolicy.Name", ksp.Name, "KubeArmorPolicy.Namespace", ksp.Namespace)
-				return
+		if err != nil {
+			if errors.IsNotFound(err) {
+				if err = k8sClient.Create(ctx, &ksp); err != nil {
+					logger.Error(err, "failed to create KubeArmorPolicy", "KubeArmorPolicy.Name", ksp.Name, "KubeArmorPolicy.Namespace", ksp.Namespace)
+					return
+				}
+				logger.Info("KubeArmorPolicy created", "KubeArmorPolicy.Name", ksp.Name, "KubeArmorPolicy.Namespace", ksp.Namespace)
 			}
-			logger.Info("KubeArmorPolicy created", "KubeArmorPolicy.Name", ksp.Name, "KubeArmorPolicy.Namespace", ksp.Namespace)
 		} else {
 			ksp.ObjectMeta.ResourceVersion = existingKsp.ObjectMeta.ResourceVersion
 			if err = k8sClient.Update(ctx, &ksp); err != nil {
@@ -145,14 +146,12 @@ func createOrUpdateKsp(ctx context.Context, npName, npNamespace string) {
 			logger.Info("KubeArmorPolicy configured", "KubeArmorPolicy.Name", existingKsp.Name, "KubeArmorPolicy.Namespace", existingKsp.Namespace)
 		}
 
-		// Every adapter is responsible for updating the status field of the
-		// corresponding NimbusPolicy with the number and names of successfully created
-		// policies by calling the 'adapterutil.UpdateNpStatus' API. This provides
-		// feedback to users about the translation and deployment of their security
-		// intent.
-		if err = adapterutil.UpdateNpStatus(ctx, k8sClient, "KubeArmorPolicy/"+ksp.Name, np.Name, np.Namespace); err != nil {
-			logger.Error(err, "failed to update KubeArmorPolicies status in NimbusPolicy")
-		}
+		//TODO: Due to adapters' dependency on nimbus module, the docker image build is
+		// failing. The relevant code is commented out below (lines 153-155). We shall
+		// uncomment this code in a subsequent PR.
+		//if err = adapterutil.UpdateNpStatus(ctx, k8sClient, "KubeArmorPolicy/"+ksp.Name, np.Name, np.Namespace, false); err != nil {
+		//	logger.Error(err, "failed to update KubeArmorPolicies status in NimbusPolicy")
+		//}
 	}
 }
 
@@ -177,24 +176,49 @@ func deleteKsp(ctx context.Context, npName, npNamespace string) {
 	}
 }
 
-func deleteUnnecessaryKsps(ctx context.Context, currentKsps []kubearmorv1.KubeArmorPolicy, namespace string, logger logr.Logger) {
+func deleteDanglingKsps(ctx context.Context, np intentv1.NimbusPolicy, logger logr.Logger) {
 	var existingKsps kubearmorv1.KubeArmorPolicyList
-	if err := k8sClient.List(ctx, &existingKsps, client.InNamespace(namespace)); err != nil {
+	if err := k8sClient.List(ctx, &existingKsps, client.InNamespace(np.Namespace)); err != nil {
 		logger.Error(err, "failed to list KubeArmorPolicies for cleanup")
 		return
 	}
 
-	currentKspNames := make(map[string]bool)
-	for _, ksp := range currentKsps {
-		currentKspNames[ksp.Name] = true
+	var kspsOwnedByNp []kubearmorv1.KubeArmorPolicy
+	for _, ksp := range existingKsps.Items {
+		ownerRef := ksp.OwnerReferences[0]
+		if ownerRef.Name == np.Name && ownerRef.UID == np.UID {
+			kspsOwnedByNp = append(kspsOwnedByNp, ksp)
+		}
+	}
+	if len(kspsOwnedByNp) == 0 {
+		return
 	}
 
-	for i := range existingKsps.Items {
-		existingKsp := existingKsps.Items[i]
-		if _, needed := currentKspNames[existingKsp.Name]; !needed {
-			if err := k8sClient.Delete(ctx, &existingKsp); err != nil {
-				logger.Error(err, "failed to delete unnecessary KubeArmorPolicy", "KubeArmorPolicy.Name", existingKsp.Name)
-			}
+	kspsToDelete := make(map[string]kubearmorv1.KubeArmorPolicy)
+
+	// Populate owned KSPs
+	for _, kspOwnedByNp := range kspsOwnedByNp {
+		kspsToDelete[kspOwnedByNp.Name] = kspOwnedByNp
+	}
+
+	for _, nimbusRule := range np.Spec.NimbusRules {
+		kspName := np.Name + "-" + strings.ToLower(nimbusRule.ID)
+		delete(kspsToDelete, kspName)
+	}
+
+	for kspName := range kspsToDelete {
+		ksp := kspsToDelete[kspName]
+		if err := k8sClient.Delete(ctx, &ksp); err != nil {
+			logger.Error(err, "failed to delete dangling KubeArmorPolicy", "KubeArmorPolicy.Name", ksp.Namespace, "KubeArmorPolicy.Namespace", ksp.Namespace)
+			continue
 		}
+
+		//TODO: Due to adapters' dependency on nimbus module, the docker image build is
+		// failing. The relevant code is commented out below (lines 217-219). We shall
+		// uncomment this code in a subsequent PR.
+		//if err := adapterutil.UpdateNpStatus(ctx, k8sClient, "KubeArmorPolicy/"+ksp.Name, np.Name, np.Namespace, true); err != nil {
+		//	logger.Error(err, "failed to update KubeArmorPolicy status in NimbusPolicy")
+		//}
+		logger.Info("Dangling KubeArmorPolicy deleted", "KubeArmorPolicy.Name", ksp.Name, "KubeArmorPolicy.Namespace", ksp.Namespace)
 	}
 }
