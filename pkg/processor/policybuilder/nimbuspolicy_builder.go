@@ -15,6 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1 "github.com/5GSEC/nimbus/api/v1"
+	processorerrors "github.com/5GSEC/nimbus/pkg/processor/errors"
 	"github.com/5GSEC/nimbus/pkg/processor/intentbinder"
 )
 
@@ -25,7 +26,8 @@ func BuildNimbusPolicy(ctx context.Context, logger logr.Logger, k8sClient client
 
 	intents := intentbinder.ExtractIntents(ctx, k8sClient, &sib)
 	if len(intents) == 0 {
-		return nil, fmt.Errorf("no SecurityIntents found in the cluster")
+		logger.Info("NimbusPolicy creation aborted since no SecurityIntents found")
+		return nil, processorerrors.ErrSecurityIntentsNotFound
 	}
 
 	var nimbusRules []v1.NimbusRules

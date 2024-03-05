@@ -6,7 +6,9 @@ package manager
 import (
 	"context"
 	"fmt"
+	"strings"
 
+	"github.com/go-logr/logr"
 	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -88,9 +90,9 @@ func reconcileNetPol(ctx context.Context, netpolName, namespace string, deleted 
 		return
 	}
 	if deleted {
-		logger.Info("Reconciling deleted NetworkPolicy", "NetworkPolicy.Name", netpolName, "NetworkPolicy.Namespace", namespace)
+		logger.V(2).Info("Reconciling deleted NetworkPolicy", "NetworkPolicy.Name", netpolName, "NetworkPolicy.Namespace", namespace)
 	} else {
-		logger.Info("Reconciling modified NetworkPolicy", "NetworkPolicy.Name", netpolName, "NetworkPolicy.Namespace", namespace)
+		logger.V(2).Info("Reconciling modified NetworkPolicy", "NetworkPolicy.Name", netpolName, "NetworkPolicy.Namespace", namespace)
 	}
 	createOrUpdateNetworkPolicy(ctx, npName, namespace)
 }
@@ -108,6 +110,7 @@ func createOrUpdateNetworkPolicy(ctx context.Context, npName, npNamespace string
 		return
 	}
 
+	deleteDanglingNetpols(ctx, np, logger)
 	netPols := processor.BuildNetPolsFrom(logger, np)
 	// Iterate using a separate index variable to avoid aliasing
 	for idx := range netPols {
@@ -125,12 +128,14 @@ func createOrUpdateNetworkPolicy(ctx context.Context, npName, npNamespace string
 			logger.Error(err, "failed to get existing NetworkPolicy", "NetworkPolicy.Name", netpol.Name, "NetworkPolicy.Namespace", netpol.Namespace)
 			return
 		}
-		if errors.IsNotFound(err) {
-			if err = k8sClient.Create(ctx, &netpol); err != nil {
-				logger.Error(err, "failed to create NetworkPolicy", "NetworkPolicy.Name", netpol.Name, "NetworkPolicy.Namespace", netpol.Namespace)
-				return
+		if err != nil {
+			if errors.IsNotFound(err) {
+				if err = k8sClient.Create(ctx, &netpol); err != nil {
+					logger.Error(err, "failed to create NetworkPolicy", "NetworkPolicy.Name", netpol.Name, "NetworkPolicy.Namespace", netpol.Namespace)
+					return
+				}
+				logger.Info("NetworkPolicy created", "NetworkPolicy.Name", netpol.Name, "NetworkPolicy.Namespace", netpol.Namespace)
 			}
-			logger.Info("NetworkPolicy created", "NetworkPolicy.Name", netpol.Name, "NetworkPolicy.Namespace", netpol.Namespace)
 		} else {
 			netpol.ObjectMeta.ResourceVersion = existingNetpol.ObjectMeta.ResourceVersion
 			if err = k8sClient.Update(ctx, &netpol); err != nil {
@@ -139,15 +144,12 @@ func createOrUpdateNetworkPolicy(ctx context.Context, npName, npNamespace string
 			}
 			logger.Info("NetworkPolicy configured", "NetworkPolicy.Name", netpol.Name, "NetworkPolicy.Namespace", netpol.Namespace)
 		}
-
-		// Every adapter is responsible for updating the status field of the
-		// corresponding NimbusPolicy with the number and names of successfully created
-		// policies by calling the 'adapterutil.UpdateNpStatus' API. This provides
-		// feedback to users about the translation and deployment of their security
-		// intent.
-		if err = adapterutil.UpdateNpStatus(ctx, k8sClient, "NetworkPolicy/"+netpol.Name, np.Name, np.Namespace); err != nil {
-			logger.Error(err, "failed to update NetworkPolicies status in NimbusPolicy")
-		}
+		//TODO: Due to adapters' dependency on nimbus module, the docker image build is
+		// failing. The relevant code is commented out below (lines 150-152). We shall
+		// uncomment this code in a subsequent PR.
+		//if err = adapterutil.UpdateNpStatus(ctx, k8sClient, "NetworkPolicy/"+netpol.Name, np.Name, np.Namespace, false); err != nil {
+		//	logger.Error(err, "failed to update NetworkPolicies status in NimbusPolicy")
+		//}
 	}
 }
 
@@ -169,5 +171,52 @@ func deleteNetworkPolicy(ctx context.Context, npName, npNamespace string) {
 			"NetworkPolicy.Name", netpol.Name, "NetworkPolicy.Namespace", netpol.Namespace,
 			"NetworkPolicy.Name", npName, "NetworkPolicy.Namespace", npNamespace,
 		)
+	}
+}
+
+func deleteDanglingNetpols(ctx context.Context, np intentv1.NimbusPolicy, logger logr.Logger) {
+	var existingNetpols netv1.NetworkPolicyList
+	if err := k8sClient.List(ctx, &existingNetpols, client.InNamespace(np.Namespace)); err != nil {
+		logger.Error(err, "failed to list NetworkPolicies for cleanup")
+		return
+	}
+
+	var netpolsOwnedByNp []netv1.NetworkPolicy
+	for _, netpol := range existingNetpols.Items {
+		ownerRef := netpol.OwnerReferences[0]
+		if ownerRef.Name == np.Name && ownerRef.UID == np.UID {
+			netpolsOwnedByNp = append(netpolsOwnedByNp, netpol)
+		}
+	}
+
+	if len(netpolsOwnedByNp) == 0 {
+		return
+	}
+
+	netpolsToDelete := make(map[string]netv1.NetworkPolicy)
+
+	// Populate owned Netpols
+	for _, netpolOwnedByNp := range netpolsOwnedByNp {
+		netpolsToDelete[netpolOwnedByNp.Name] = netpolOwnedByNp
+	}
+
+	for _, nimbusRule := range np.Spec.NimbusRules {
+		netpolName := np.Name + "-" + strings.ToLower(nimbusRule.ID)
+		delete(netpolsToDelete, netpolName)
+	}
+
+	for netpolName := range netpolsToDelete {
+		netpol := netpolsToDelete[netpolName]
+		if err := k8sClient.Delete(ctx, &netpol); err != nil {
+			logger.Error(err, "failed to delete dangling NetworkPolicy", "NetworkPolicy.Name", netpol.Namespace, "NetworkPolicy.Namespace", netpol.Namespace)
+			continue
+		}
+		//TODO: Due to adapters' dependency on nimbus module, the docker image build is
+		// failing. The relevant code is commented out below (lines 215-217). We shall
+		// uncomment this code in a subsequent PR.
+		//if err := adapterutil.UpdateNpStatus(ctx, k8sClient, "NetworkPolicy/"+netpol.Name, np.Name, np.Namespace, true); err != nil {
+		//	logger.Error(err, "failed to update NetworkPolicy status in NimbusPolicy")
+		//}
+		logger.Info("Dangling NetworkPolicy deleted", "NetworkPolicy.Name", netpol.Name, "NetworkPolicy.Namespace", netpol.Namespace)
 	}
 }

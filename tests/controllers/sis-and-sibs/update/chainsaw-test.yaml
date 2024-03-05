@@ -1,0 +1,58 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: update
+spec:
+  description: >
+    This test verifies that modifying a SecurityIntent triggers the desired updates in corresponding SecurityIntentBinding's 
+    status subresource and related NimbusPolicy.
+
+  steps:
+    - name: "Create a SecurityIntentBinding for multiple SecurityIntents"
+      try:
+        - apply:
+            file: ../../resources/namespaced/sib-for-multiple-sis.yaml
+
+    - name: "Create multiple SecurityIntents"
+      try:
+        - apply:
+            file: ../../resources/namespaced/multiple-sis.yaml
+
+    - name: "Verity NimbusPolicy creation"
+      try:
+        - assert:
+            file: nimbus-policy-for-multiple-sis.yaml
+
+    - name: "Update one SecurityIntent"
+      description: "Update the action of one of the previously created SecurityIntents"
+      try:
+        - apply:
+            file: updated-unauth-sa-si.yaml
+
+    - name: "Verify NimbusPolicy update"
+      description: "Verify the update of rule.action for corresponding SecurityIntent update"
+      try:
+        - assert:
+            file: nimbus-policy-after-updating-one-si.yaml
+
+    - name: "Update SecurityIntentBinding to remove one SecurityIntent"
+      description: "Remove one of the previously created SecurityIntents from the SecurityIntentBinding"
+      try:
+        - apply:
+            file: updated-sib.yaml
+
+    - name: "Verify the NimbusPolicy update after removal of SecurityIntent"
+      try:
+        - assert:
+            file: nimbus-policy-after-deleting-one-si.yaml
+
+    - name: "Verify status of SecurityIntentBinding after update"
+      description: >
+        This verifies that upon deletion of a NimbusPolicy, the corresponding SecurityIntentBinding's status subresource is
+        updated to reflect the current information.
+      try:
+        - assert:
+            file: sib-status-after-si-deletion-assert.yaml

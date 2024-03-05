@@ -1,0 +1,58 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: securityintent-deletion-after-creation-of-nimbuspolicy
+spec:
+  description: >
+    This test verifies that when a SecurityIntent is the only one referenced by a SecurityIntentBinding, and that 
+    SecurityIntent is deleted, the corresponding NimbusPolicy is also automatically deleted.
+
+  steps:
+    - name: "Create a SecurityIntentBinding"
+      try:
+        - apply:
+            file: ../../resources/namespaced/dns-manipulation-sib.yaml
+
+    - name: "Create a SecurityIntent"
+      try:
+        - apply:
+            file: ../../resources/namespaced/dns-manipulation-si.yaml
+      skipDelete: true
+
+    - name: "Verify NimbusPolicy creation"
+      try:
+        - assert:
+            file: ../nimbus-policy-assert.yaml
+
+    - name: "Delete previously created SecurityIntent"
+      try:
+        - delete:
+            ref:
+              apiVersion: intent.security.nimbus.com/v1
+              kind: SecurityIntent
+              name: dns-manipulation
+            expect:
+              - match:
+                  apiVersion: intent.security.nimbus.com/v1
+                  kind: SecurityIntent
+                  name: dns-manipulation
+                check:
+                  ($error != null): true
+
+    - name: "Verify the NimbusPolicy deletion"
+      try:
+        - script:
+            content: kubectl get np -n $NAMESPACE dns-manipulation-binding
+            check:
+              ($error != null): true
+
+    - name: "Verify status of SecurityIntentBinding"
+      description: >
+        This verifies that upon deletion of a NimbusPolicy, the corresponding SecurityIntentBinding's status subresource is
+        updated to reflect the current information.
+      try:
+        - assert:
+            file: sib-status-after-si-deletion-assert.yaml

@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1 "github.com/5GSEC/nimbus/api/v1"
 )
@@ -29,14 +30,45 @@ func requeueWithError(err error) (ctrl.Result, error) {
 	return ctrl.Result{}, err
 }
 
-func extractBoundIntentsInfo(intents []v1.MatchIntent) (int32, []string) {
-	var count int32
-	var names []string
-	for _, intent := range intents {
-		count++
-		names = append(names, intent.Name)
+func extractBoundIntentsNameFromSib(ctx context.Context, c client.Client, name, namespace string) []string {
+	logger := log.FromContext(ctx)
+
+	var boundIntentsName []string
+
+	var sib v1.SecurityIntentBinding
+	if err := c.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &sib); err != nil {
+		logger.Error(err, "failed to fetch SecurityIntentBinding", "securityIntentBindingName", name, "securityIntentBindingNamespace", namespace)
+		return boundIntentsName
 	}
-	return count, names
+
+	for _, intent := range sib.Spec.Intents {
+		var si v1.SecurityIntent
+		if err := c.Get(ctx, types.NamespacedName{Name: intent.Name}, &si); err == nil {
+			boundIntentsName = append(boundIntentsName, intent.Name)
+		}
+	}
+
+	return boundIntentsName
+}
+func extractBoundIntentsNameFromCSib(ctx context.Context, c client.Client, name string) []string {
+	logger := log.FromContext(ctx)
+
+	var boundIntentsName []string
+
+	var csib v1.ClusterSecurityIntentBinding
+	if err := c.Get(ctx, types.NamespacedName{Name: name}, &csib); err != nil {
+		logger.Error(err, "failed to fetch ClusterSecurityIntentBinding", "ClusterSecurityIntentBinding", name)
+		return boundIntentsName
+	}
+
+	for _, intent := range csib.Spec.Intents {
+		var si v1.SecurityIntent
+		if err := c.Get(ctx, types.NamespacedName{Name: intent.Name}, &si); err == nil {
+			boundIntentsName = append(boundIntentsName, intent.Name)
+		}
+	}
+
+	return boundIntentsName
 }
 
 func ownerExists(c client.Client, controllee client.Object) bool {

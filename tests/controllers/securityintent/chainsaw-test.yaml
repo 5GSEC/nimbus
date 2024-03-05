@@ -13,7 +13,7 @@ spec:
     - name: "Create a SecurityIntent"
       try:
         - apply:
-            file: ../resources/namespaced/1-dns-manipulation-si.yaml
+            file: ../resources/namespaced/dns-manipulation-si.yaml
 
     - name: "Verify status of created SecurityIntent"
       try:

@@ -11,12 +11,12 @@ spec:
     - name: "Create a SecurityIntent"
       try:
         - apply:
-            file: ../../resources/namespaced/1-dns-manipulation-si.yaml
+            file: ../../resources/namespaced/dns-manipulation-si.yaml
 
     - name: "Create a SecurityIntentBinding"
       try:
         - apply:
-            file: ../../resources/namespaced/1-dns-manipulation-sib.yaml
+            file: ../../resources/namespaced/dns-manipulation-sib.yaml
 
     - name: "Update existing SecurityIntentBinding"
       try:
