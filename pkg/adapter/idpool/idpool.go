@@ -16,6 +16,7 @@ const (
 	DNSManipulation           = "dnsManipulation"
 	NetPortExec               = "netPortExec"
 	SysPathExec               = "sysPathExec"
+	EscapeToHost              = "escapeToHost"
 )
 
 // KaIds are IDs supported by KubeArmor.
@@ -28,6 +29,11 @@ var NetPolIDs = []string{
 	DNSManipulation,
 }
 
+// KyvIds are IDs supported by Kyverno.
+var KyvIds = []string{
+	EscapeToHost,
+}
+
 // IsIdSupportedBy determines whether a given ID is supported by a security engine.
 func IsIdSupportedBy(id, securityEngine string) bool {
 	switch strings.ToLower(securityEngine) {
@@ -35,6 +41,8 @@ func IsIdSupportedBy(id, securityEngine string) bool {
 		return in(id, KaIds)
 	case "netpol":
 		return in(id, NetPolIDs)
+	case "kyverno":
+		return in(id, KyvIds)
 	default:
 		return false
 	}
