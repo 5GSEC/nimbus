@@ -40,9 +40,25 @@ spec:
   selector:
     cel:
       - labels["app"] == "nginx"
-      #- labels["app"].equals("nginx")
+
+      #- labels["app"] == "nginx"
+      #- "'labels[\"app\"] == \"nginx\"'"
+      #- labels["app"] in ["nginx", "nginx-2"]
       #- labels["app"].contains("nginx")
-      #- labels["app"] in ["nginx"]
       #- labels["app"].startsWith("nginx")
       #- labels["app"].endsWith("nginx")
-      #- labels["group"] == "group-1"
+      #- labels["app"].matches(".*nginx.*")
+
+      # Because certain characters or phrases are used as reserved words or have special meaning in YAML, 
+      # you can't use the negation operator '!' of the Common Expression Language (CEL) directly
+      # Represent negation statements as strings
+
+      #- "'labels[\"app\"] != \"nginx\"'"
+      #- "'!(labels[\"app\"] in [\"nginx\", \"httpd\"])'"
+      #- "'!(labels[\"app\"] in [\"nginx\", \"nginx-2\"])'"
+      #- "'!labels[\"app\"].contains(\"nginx\")'"
+      #- "'!labels[\"app\"].startsWith(\"nginx\")'"
+      #- "'!labels[\"app\"].endsWith(\"nginx\")'"
+      #- "'!labels["app"].matches(".*nginx.*")'"
+
+
