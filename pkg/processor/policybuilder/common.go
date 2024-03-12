@@ -68,7 +68,7 @@ func ProcessCEL(ctx context.Context, k8sClient client.Client, namespace string, 
 			if err != nil {
 				logger.Info("Error evaluating CEL expression for pod", "PodName", pod.Name, "error", err.Error())
 				// Instead of returning an error immediately, we log the error and continue.
-				break
+				continue
 			}
 
 			if outValue, ok := out.Value().(bool); ok && outValue {
