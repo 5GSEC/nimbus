@@ -3,7 +3,7 @@ module github.com/5GSEC/nimbus/pkg/adapter/nimbus-netpol
 go 1.21
 
 require (
-	github.com/5GSEC/nimbus v0.0.0-20240220040009-4cc97b1338ad
+	github.com/5GSEC/nimbus v0.0.0-20240305043055-359d519c1d9f
 	github.com/go-logr/logr v1.4.1
 	k8s.io/api v0.29.1
 	k8s.io/apimachinery v0.29.1

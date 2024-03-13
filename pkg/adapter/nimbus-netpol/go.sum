@@ -1,5 +1,5 @@
-github.com/5GSEC/nimbus v0.0.0-20240220040009-4cc97b1338ad h1:vr8/EtADzXyAYOsZbG8KhSO7ClELdQMjWEfHde5C3yA=
-github.com/5GSEC/nimbus v0.0.0-20240220040009-4cc97b1338ad/go.mod h1:YgeRR5ijLJHHeapCUekTfLJXMVrqOMVT2rCsqHlKLdU=
+github.com/5GSEC/nimbus v0.0.0-20240305043055-359d519c1d9f h1:FOwBcqhGFm8RXXjgJTdBhjhb3k5UbaDOJ6TpK+5Zmvk=
+github.com/5GSEC/nimbus v0.0.0-20240305043055-359d519c1d9f/go.mod h1:FflBHoOu8LpzZJucobgLdGG4j+22A97JX8cXlNY1fXc=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
 github.com/cespare/xxhash/v2 v2.2.0 h1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj44=
