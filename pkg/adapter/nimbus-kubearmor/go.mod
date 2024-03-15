@@ -2,8 +2,10 @@ module github.com/5GSEC/nimbus/pkg/adapter/nimbus-kubearmor
 
 go 1.22
 
+
+replace github.com/5GSEC/nimbus => ../../../../nimbus
 require (
-	github.com/5GSEC/nimbus v0.0.0-20240305043055-359d519c1d9f
+	github.com/5GSEC/nimbus v0.0.0-20240313065715-b91563b0ccd3
 	github.com/go-logr/logr v1.4.1
 	github.com/kubearmor/KubeArmor/pkg/KubeArmorController v0.0.0-20240125171707-8e6641511fe3
 	k8s.io/apimachinery v0.29.1

@@ -17,11 +17,22 @@ const (
 	NetPortExec               = "netPortExec"
 	SysPathExec               = "sysPathExec"
 	EscapeToHost              = "escapeToHost"
+	DisallowChRoot            = "disallowChRoot"
+	DisallowCapabilities      = "disallowCapabilities"
 )
 
 // KaIds are IDs supported by KubeArmor.
 var KaIds = []string{
-	SwDeploymentTools, UnAuthorizedSaTokenAccess, DNSManipulation,
+	SwDeploymentTools, UnAuthorizedSaTokenAccess, DNSManipulation, EscapeToHost,
+}
+
+// list of policies which satisfies the given ID by Kubearmor
+var KaIDPolicies = map[string][]string{
+	EscapeToHost: {
+		DisallowChRoot,
+		DisallowCapabilities,
+		SwDeploymentTools,
+	},
 }
 
 // NetPolIDs are IDs supported by Network Policy adapter.
