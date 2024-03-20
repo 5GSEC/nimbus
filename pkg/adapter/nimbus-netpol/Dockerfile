@@ -2,23 +2,37 @@
 # Copyright 2023 Authors of Nimbus
 
 # Build the nimbus-netpol binary
-FROM golang:1.21 as builder
+FROM golang:1.22 as builder
 ARG TARGETOS
 ARG TARGETARCH
 
-WORKDIR /workspace
-# Copy the Go Modules manifests
-COPY go.mod go.mod
-COPY go.sum go.sum
+WORKDIR /nimbus
+
+
+# relative deps requried by the adapter
+
+ADD api/ api/
+ADD pkg/ pkg/
+ADD go.mod go.mod
+ADD go.sum go.sum
+
+# nimbus-kubearmor directory
+ARG ADAPTER_DIR=pkg/adapter/nimbus-netpol
+WORKDIR /nimbus/$ADAPTER_DIR
+
+# # Copy Go modules and manifests
+COPY $ADAPTER_DIR/go.mod go.mod
+COPY $ADAPTER_DIR/go.sum go.sum    
+
 # cache deps before building and copying source so that we don't need to re-download as much
 # and so that source changes don't invalidate our downloaded layer
 RUN go mod download
 
-# Copy the go source
-COPY main.go main.go
-COPY manager/ manager/
-COPY processor/ processor/
-COPY watcher/ watcher/
+COPY $ADAPTER_DIR/manager manager
+COPY $ADAPTER_DIR/processor processor
+COPY $ADAPTER_DIR/watcher watcher
+COPY $ADAPTER_DIR/main.go main.go
+
 
 # Build
 # the GOARCH has not a default value to allow the binary be built according to the host where the command
@@ -29,7 +43,7 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -ldflags
 
 FROM gcr.io/distroless/static:nonroot
 WORKDIR /
-COPY --from=builder /workspace/nimbus-netpol .
+COPY --from=builder /nimbus/pkg/adapter/nimbus-netpol .
 USER 65532:65532
 
 ENTRYPOINT ["/nimbus-netpol"]

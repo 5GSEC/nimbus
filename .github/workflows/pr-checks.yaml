@@ -35,7 +35,7 @@ jobs:
       - name: Setup go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.21'
+          go-version: '1.22'
 
       - name: go fmt
         run: make fmt
@@ -107,11 +107,6 @@ jobs:
           uses: azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78 # v3.5
           with:
             token: ${{ secrets.GITHUB_TOKEN }}
-
-        - name: Install go
-          uses: actions/setup-go@v5
-          with:
-            go-version: '1.21'
 
         - name: Create k8s Kind Cluster
           uses: helm/kind-action@v1

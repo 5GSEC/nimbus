@@ -2,12 +2,12 @@
 # Copyright 2023 Authors of Nimbus
 
 # Image URL to use all building/pushing image targets
-IMG ?= 5gsec/nimbus-netpol
+IMG ?= 5gsec/nimbus-kyverno
 # Image Tag to use all building/pushing image targets
 TAG ?= v0.1
 
 CONTAINER_TOOL ?= docker
-BINARY ?= bin/nimbus-netpol
+BINARY ?= bin/nimbus-kyverno
 
 build:
 	@go build -ldflags="-w" -o ${BINARY}  main.go
