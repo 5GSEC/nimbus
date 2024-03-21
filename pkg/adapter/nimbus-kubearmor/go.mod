@@ -1,6 +1,6 @@
 module github.com/5GSEC/nimbus/pkg/adapter/nimbus-kubearmor
 
-go 1.21
+go 1.22
 
 require (
 	github.com/5GSEC/nimbus v0.0.0-20240305043055-359d519c1d9f

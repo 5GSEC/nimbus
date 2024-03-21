@@ -2,15 +2,13 @@
 # Copyright 2023 Authors of Nimbus
 
 # Build the nimbus-kubearmor binary
-FROM golang:1.21 as builder
+FROM golang:1.22 as builder
 ARG TARGETOS
 ARG TARGETARCH
 
 WORKDIR /nimbus
 
-
 # relative deps requried by the adapter
-
 ADD api/ api/
 ADD internal/ internal/
 ADD pkg/ pkg/
@@ -34,7 +32,6 @@ COPY $ADAPTER_DIR/processor processor
 COPY $ADAPTER_DIR/watcher watcher
 COPY $ADAPTER_DIR/utils utils
 COPY $ADAPTER_DIR/main.go main.go
-
 
 # Build
 # the GOARCH has not a default value to allow the binary be built according to the host where the command

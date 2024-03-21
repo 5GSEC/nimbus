@@ -2,7 +2,7 @@
 # Copyright 2023 Authors of Nimbus
 
 # Build the nimbus-kubearmor binary
-FROM golang:1.21 as builder
+FROM golang:1.22 as builder
 ARG TARGETOS
 ARG TARGETARCH
 
