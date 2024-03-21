@@ -144,12 +144,10 @@ func createOrUpdateNetworkPolicy(ctx context.Context, npName, npNamespace string
 			}
 			logger.Info("NetworkPolicy configured", "NetworkPolicy.Name", netpol.Name, "NetworkPolicy.Namespace", netpol.Namespace)
 		}
-		//TODO: Due to adapters' dependency on nimbus module, the docker image build is
-		// failing. The relevant code is commented out below (lines 150-152). We shall
-		// uncomment this code in a subsequent PR.
-		//if err = adapterutil.UpdateNpStatus(ctx, k8sClient, "NetworkPolicy/"+netpol.Name, np.Name, np.Namespace, false); err != nil {
-		//	logger.Error(err, "failed to update NetworkPolicies status in NimbusPolicy")
-		//}
+
+		if err = adapterutil.UpdateNpStatus(ctx, k8sClient, "NetworkPolicy/"+netpol.Name, np.Name, np.Namespace, false); err != nil {
+			logger.Error(err, "failed to update NetworkPolicies status in NimbusPolicy")
+		}
 	}
 }
 
@@ -211,12 +209,10 @@ func deleteDanglingNetpols(ctx context.Context, np intentv1.NimbusPolicy, logger
 			logger.Error(err, "failed to delete dangling NetworkPolicy", "NetworkPolicy.Name", netpol.Namespace, "NetworkPolicy.Namespace", netpol.Namespace)
 			continue
 		}
-		//TODO: Due to adapters' dependency on nimbus module, the docker image build is
-		// failing. The relevant code is commented out below (lines 215-217). We shall
-		// uncomment this code in a subsequent PR.
-		//if err := adapterutil.UpdateNpStatus(ctx, k8sClient, "NetworkPolicy/"+netpol.Name, np.Name, np.Namespace, true); err != nil {
-		//	logger.Error(err, "failed to update NetworkPolicy status in NimbusPolicy")
-		//}
+
+		if err := adapterutil.UpdateNpStatus(ctx, k8sClient, "NetworkPolicy/"+netpol.Name, np.Name, np.Namespace, true); err != nil {
+			logger.Error(err, "failed to update NetworkPolicy status in NimbusPolicy")
+		}
 		logger.Info("Dangling NetworkPolicy deleted", "NetworkPolicy.Name", netpol.Name, "NetworkPolicy.Namespace", netpol.Namespace)
 	}
 }

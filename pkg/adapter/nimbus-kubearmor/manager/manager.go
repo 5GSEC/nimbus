@@ -146,12 +146,9 @@ func createOrUpdateKsp(ctx context.Context, npName, npNamespace string) {
 			logger.Info("KubeArmorPolicy configured", "KubeArmorPolicy.Name", existingKsp.Name, "KubeArmorPolicy.Namespace", existingKsp.Namespace)
 		}
 
-		//TODO: Due to adapters' dependency on nimbus module, the docker image build is
-		// failing. The relevant code is commented out below (lines 153-155). We shall
-		// uncomment this code in a subsequent PR.
-		//if err = adapterutil.UpdateNpStatus(ctx, k8sClient, "KubeArmorPolicy/"+ksp.Name, np.Name, np.Namespace, false); err != nil {
-		//	logger.Error(err, "failed to update KubeArmorPolicies status in NimbusPolicy")
-		//}
+		if err = adapterutil.UpdateNpStatus(ctx, k8sClient, "KubeArmorPolicy/"+ksp.Name, np.Name, np.Namespace, false); err != nil {
+			logger.Error(err, "failed to update KubeArmorPolicies status in NimbusPolicy")
+		}
 	}
 }
 
@@ -213,12 +210,9 @@ func deleteDanglingKsps(ctx context.Context, np intentv1.NimbusPolicy, logger lo
 			continue
 		}
 
-		//TODO: Due to adapters' dependency on nimbus module, the docker image build is
-		// failing. The relevant code is commented out below (lines 217-219). We shall
-		// uncomment this code in a subsequent PR.
-		//if err := adapterutil.UpdateNpStatus(ctx, k8sClient, "KubeArmorPolicy/"+ksp.Name, np.Name, np.Namespace, true); err != nil {
-		//	logger.Error(err, "failed to update KubeArmorPolicy status in NimbusPolicy")
-		//}
+		if err := adapterutil.UpdateNpStatus(ctx, k8sClient, "KubeArmorPolicy/"+ksp.Name, np.Name, np.Namespace, true); err != nil {
+			logger.Error(err, "failed to update KubeArmorPolicy status in NimbusPolicy")
+		}
 		logger.Info("Dangling KubeArmorPolicy deleted", "KubeArmorPolicy.Name", ksp.Name, "KubeArmorPolicy.Namespace", ksp.Namespace)
 	}
 }
