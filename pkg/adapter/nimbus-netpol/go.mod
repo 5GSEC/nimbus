@@ -1,6 +1,7 @@
 module github.com/5GSEC/nimbus/pkg/adapter/nimbus-netpol
 
 go 1.22
+replace github.com/5GSEC/nimbus => ../../../../nimbus
 
 require (
 	github.com/5GSEC/nimbus v0.0.0-20240305043055-359d519c1d9f

@@ -17,7 +17,7 @@ run: build
 
 .PHONY: docker-build
 docker-build:
-	$(CONTAINER_TOOL) build -t ${IMG}:${TAG} -t ${IMG}:latest --build-arg VERSION=${TAG} .
+	$(CONTAINER_TOOL) build -t ${IMG}:${TAG} -t ${IMG}:latest --build-arg VERSION=${TAG} -f ./Dockerfile ../../../
 
 .PHONY: docker-push
 docker-push:
