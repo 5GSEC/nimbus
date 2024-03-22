@@ -8,9 +8,7 @@ ARG TARGETARCH
 
 WORKDIR /nimbus
 
-
 # relative deps requried by the adapter
-
 ADD api/ api/
 ADD pkg/ pkg/
 ADD go.mod go.mod
@@ -32,7 +30,6 @@ COPY $ADAPTER_DIR/manager manager
 COPY $ADAPTER_DIR/processor processor
 COPY $ADAPTER_DIR/watcher watcher
 COPY $ADAPTER_DIR/main.go main.go
-
 
 # Build
 # the GOARCH has not a default value to allow the binary be built according to the host where the command
