@@ -10,7 +10,6 @@ WORKDIR /nimbus
 
 # relative deps requried by the adapter
 ADD api/ api/
-ADD internal/ internal/
 ADD pkg/ pkg/
 ADD go.mod go.mod
 ADD go.sum go.sum
