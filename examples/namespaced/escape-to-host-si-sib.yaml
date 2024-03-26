@@ -23,4 +23,4 @@ spec:
           kind: Pod
           namespace: default
           matchLabels:
-            app: nginx    
+            app: nginx  
