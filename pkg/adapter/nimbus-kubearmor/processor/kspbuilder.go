@@ -22,7 +22,7 @@ func BuildKspsFrom(logger logr.Logger, np *v1.NimbusPolicy) []kubearmorv1.KubeAr
 		if idpool.IsIdSupportedBy(id, "kubearmor") {
 			if _, ok := idpool.KaIDPolicies[id]; ok {
 				for _, policyName := range idpool.KaIDPolicies[id] {
-					ksp = buildKspFor(policyName)
+					ksp = buildKspFor(policyName, nimbusRule.Rule)
 					ksp.Name = np.Name + "-" + strings.ToLower(id) + "-" + strings.ToLower(policyName)
 					ksp.Namespace = np.Namespace
 					ksp.Spec.Message = nimbusRule.Description
@@ -33,7 +33,7 @@ func BuildKspsFrom(logger logr.Logger, np *v1.NimbusPolicy) []kubearmorv1.KubeAr
 					ksps = append(ksps, ksp)
 				}
 			} else {
-				ksp = buildKspFor(id)
+				ksp = buildKspFor(id, nimbusRule.Rule)
 				ksp.Name = np.Name + "-" + strings.ToLower(id)
 				ksp.Namespace = np.Namespace
 				ksp.Spec.Message = nimbusRule.Description
@@ -42,7 +42,7 @@ func BuildKspsFrom(logger logr.Logger, np *v1.NimbusPolicy) []kubearmorv1.KubeAr
 				processRuleParams(&ksp, nimbusRule.Rule)
 				addManagedByAnnotation(&ksp)
 				ksps = append(ksps, ksp)
-			}	
+			}
 		} else {
 			logger.Info("KubeArmor does not support this ID", "ID", id,
 				"NimbusPolicy", np.Name, "NimbusPolicy.Namespace", np.Namespace)
@@ -52,7 +52,7 @@ func BuildKspsFrom(logger logr.Logger, np *v1.NimbusPolicy) []kubearmorv1.KubeAr
 }
 
 // buildKspFor builds a KubeArmorPolicy based on intent ID supported by KubeArmor Security Engine.
-func buildKspFor(id string) kubearmorv1.KubeArmorPolicy {
+func buildKspFor(id string, rule v1.Rule) kubearmorv1.KubeArmorPolicy {
 	switch id {
 	case idpool.SwDeploymentTools:
 		return swDeploymentToolsKsp()
@@ -63,7 +63,7 @@ func buildKspFor(id string) kubearmorv1.KubeArmorPolicy {
 	case idpool.DisallowChRoot:
 		return disallowChRoot()
 	case idpool.DisallowCapabilities:
-		return disallowCapabilities()
+		return disallowCapabilities(rule)
 	default:
 		return kubearmorv1.KubeArmorPolicy{}
 	}
@@ -221,30 +221,45 @@ func swDeploymentToolsKsp() kubearmorv1.KubeArmorPolicy {
 	}
 }
 
-func disallowCapabilities() kubearmorv1.KubeArmorPolicy {
-	return kubearmorv1.KubeArmorPolicy{
-		Spec: kubearmorv1.KubeArmorPolicySpec{
-			Capabilities: kubearmorv1.CapabilitiesType{
-				MatchCapabilities: []kubearmorv1.MatchCapabilitiesType{
-					{
-						Capability: "sys_admin",
-					},
-					{
-						Capability: "sys_ptrace",
-					},
-					{
-						Capability: "sys_module",
-					},
-					{
-						Capability: "dac_read_search",
-					},
-					{
-						Capability: "dac_override",
-					},
-				},
-			},
+func disallowCapabilities(rule v1.Rule) kubearmorv1.KubeArmorPolicy {
+
+	capabilities := []kubearmorv1.MatchCapabilitiesType{
+		{
+			Capability: "sys_admin",
+		},
+		{
+			Capability: "sys_ptrace",
+		},
+		{
+			Capability: "sys_module",
+		},
+		{
+			Capability: "dac_read_search",
+		},
+		{
+			Capability: "dac_override",
 		},
 	}
+
+	exclude_caps := rule.Params["exclude_caps"]
+	ksp := kubearmorv1.KubeArmorPolicy{}
+
+	if len(exclude_caps) > 0 {
+		capabilitiesNew := []kubearmorv1.MatchCapabilitiesType{}
+		for _, cap := range exclude_caps {
+			for _, includecap := range capabilities {
+					excludecap := kubearmorv1.MatchCapabilitiesStringType(strings.ToLower(cap))
+
+				if excludecap != includecap.Capability {
+					capabilitiesNew = append(capabilitiesNew, includecap)
+				}
+			}
+		}
+		ksp.Spec.Capabilities.MatchCapabilities = capabilitiesNew
+	} else {
+		ksp.Spec.Capabilities.MatchCapabilities = capabilities
+	}
+	return ksp
 }
 
 func disallowChRoot() kubearmorv1.KubeArmorPolicy {
@@ -263,7 +278,6 @@ func disallowChRoot() kubearmorv1.KubeArmorPolicy {
 		},
 	}
 }
-
 
 func addManagedByAnnotation(ksp *kubearmorv1.KubeArmorPolicy) {
 	ksp.Annotations = make(map[string]string)

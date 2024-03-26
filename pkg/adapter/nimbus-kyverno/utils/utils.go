@@ -19,6 +19,9 @@ func GetGVK(kind string) string {
 		"statefulset":           "apps/v1",
 		"daemonset":             "apps/v1",
 		"replicaset":            "apps/v1",
+		"configmap":             "v1",
+		"secret":                "v1",
+		"serviceaccount":        "v1",
 	}
 
 	// Convert kind to lowercase to handle case insensitivity
@@ -37,10 +40,16 @@ func GetGVK(kind string) string {
 		kind = "StatefulSet"
 	case "daemonset" :
 		kind = "DaemonSet"
+	case "configmap":
+		kind = "ConfigMap"
+	case "serviceaccount":
+		kind = "ServiceAccount"
+	default:
+		kind = Title(kind)
 	}
 
 	// Combine API version and kind to form the GroupVersionKind string
-	return fmt.Sprintf("%s/%s", apiVersion, Title(kind))
+	return fmt.Sprintf("%s/%s", apiVersion, kind)
 }
 
 func Title(input string) string {

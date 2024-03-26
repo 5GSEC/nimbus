@@ -8,22 +8,28 @@ spec:
     description: "A attacker can breach container boundaries and can gain access to the host machine"
     action: Block
     params:
-      exclude_resources: ["app:nginx" ]
-      exclude_caps: ["sys_module" ]
-
+      exclude_resources: ["app:nginx"]
 ---
 
+# resources which are having matchLables defined, will not incorporate the exclusion labels
+
 apiVersion: intent.security.nimbus.com/v1
-kind: SecurityIntentBinding
+kind: ClusterSecurityIntentBinding
 metadata:
   name: escape-to-host-binding
 spec:
   intents:
     - name: escape-to-host
   selector:
-    any:
-      - resources:
-          kind: Pod
-          namespace: default
-          matchLabels:
-            app: db  
+    resources:
+      - kind: Namespace 
+        name: default
+        
+      - kind: Pod
+        namespace: ns3
+        matchLabels:
+          app: db
+          database: mongo
+
+      - kind: Deployment
+        namespace: ns2

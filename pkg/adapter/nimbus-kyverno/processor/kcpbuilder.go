@@ -5,8 +5,10 @@ package processor
 
 import (
 	"strings"
+
 	v1 "github.com/5GSEC/nimbus/api/v1"
 	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
+	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kyverno/utils"
 	"github.com/go-logr/logr"
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,8 +21,8 @@ func BuildKcpsFrom(logger logr.Logger, cnp *v1.ClusterNimbusPolicy) []kyvernov1.
 	for _, nimbusRule := range cnp.Spec.NimbusRules {
 		id := nimbusRule.ID
 		if idpool.IsIdSupportedBy(id, "kyverno") {
-			kcp := buildKcpFor(id, cnp)
-			kcp.Name = cnp.Name + "-" + strings.ToLower(id)+ "-" +strings.ToLower(id)
+			kcp := buildKcpFor(id, cnp, nimbusRule.Rule)
+			kcp.Name = cnp.Name + "-" + strings.ToLower(id)
 			kcp.Annotations = make(map[string]string)
 			kcp.Annotations["policies.kyverno.io/description"] = nimbusRule.Description
 			if nimbusRule.Rule.RuleAction == "Block" {
@@ -39,62 +41,120 @@ func BuildKcpsFrom(logger logr.Logger, cnp *v1.ClusterNimbusPolicy) []kyvernov1.
 }
 
 // buildKpFor builds a KyvernoPolicy based on intent ID supported by Kyverno Policy Engine.
-func buildKcpFor(id string, cnp *v1.ClusterNimbusPolicy) kyvernov1.ClusterPolicy {
+func buildKcpFor(id string, cnp *v1.ClusterNimbusPolicy, rule v1.Rule) kyvernov1.ClusterPolicy {
 	switch id {
 	case idpool.EscapeToHost:
-		return clusterEscapeToHost(cnp)
+		return clusterEscapeToHost(cnp, rule)
 	default:
 		return kyvernov1.ClusterPolicy{}
 	}
 }
 
-func clusterEscapeToHost(cnp *v1.ClusterNimbusPolicy) kyvernov1.ClusterPolicy {
-
-	labelsPerNamespace := make(map[string]map[string]string) //todo: what if we want to apply policy to  multiple resources in different namespaces? 
-
-	// Function to add or update values for a key
-	addOrUpdate := func(key string, innerMap map[string]string) {
-		if val, ok := labelsPerNamespace[key]; ok {
-			// Key exists, update the inner map
-			for k, v := range innerMap {
-				val[k] = v
-			}
-			labelsPerNamespace[key] = val
-		} else {
-			// Key does not exist, add a new entry
-			labelsPerNamespace[key] = innerMap
+func clusterEscapeToHost(cnp *v1.ClusterNimbusPolicy, rule v1.Rule) kyvernov1.ClusterPolicy {
+	lis := rule.Params["exclude_resources"]
+	exclusionLables := make(map[string]string)
+	for _, item := range lis {
+		parts := strings.Split(item, ":")
+		if len(parts) == 2 {
+			key := parts[0]
+			value := parts[1]
+			exclusionLables[key] = value
 		}
 	}
-
-
-	for _,resource := range cnp.Spec.Selector.Resources {
-		namespace := resource.Namespace
-		addOrUpdate(namespace, resource.MatchLabels)
-	} 
 
 	var resourceFilters []kyvernov1.ResourceFilter
-	var resourceFilter kyvernov1.ResourceFilter
+	var exclusionFilters []kyvernov1.ResourceFilter
+	var kinds []string
 
-	for namespace, labels := range labelsPerNamespace {
-		resourceFilter = kyvernov1.ResourceFilter{
-			ResourceDescription: kyvernov1.ResourceDescription{
-				Kinds: []string{
-					"v1/Pod",
+	for _,resource := range cnp.Spec.Selector.Resources {
+		kind := resource.Kind
+		name := resource.Name
+		switch kind {
+		case "Namespace":			
+			kinds = append(kinds, utils.GetGVK("deployment"), utils.GetGVK("replicaset"), utils.GetGVK("statefulset"), utils.GetGVK("pod"), utils.GetGVK("daemonset"), utils.GetGVK("configmap"), utils.GetGVK("secret"), utils.GetGVK("serviceaccount"))
+			resourceFilterForNamespace := kyvernov1.ResourceFilter{
+				ResourceDescription: kyvernov1.ResourceDescription{
+					Kinds: kinds,
+					Namespaces: []string{
+						name,
+					},
 				},
-				Namespaces: []string{
-					namespace,
-				},
-				Selector: &metav1.LabelSelector{
-					MatchLabels: labels,
-				},
-			},
+			}
+			
+			if len(lis)>0 {
+				excludeFilterForNamespace := kyvernov1.ResourceFilter{
+					ResourceDescription: kyvernov1.ResourceDescription{
+						Kinds: kinds,
+						Namespaces: []string{
+							name,
+						},
+						Selector: &metav1.LabelSelector{
+							MatchLabels: exclusionLables,
+						},
+					},
+				}
+
+				exclusionFilters = append(exclusionFilters, excludeFilterForNamespace)
+			}
+			resourceFilters = append(resourceFilters, resourceFilterForNamespace)
+
+		default:
+			gvk := utils.GetGVK(kind)
+			namespace := resource.Namespace
+			labels := resource.MatchLabels
+			var resourceFilter kyvernov1.ResourceFilter
+			if len(labels) != 0 {
+				resourceFilter = kyvernov1.ResourceFilter{
+					ResourceDescription: kyvernov1.ResourceDescription{
+						Kinds: []string{
+							gvk,
+						},
+						Namespaces: []string{
+							namespace,
+						},
+						Selector: &metav1.LabelSelector{
+							MatchLabels: labels,
+						},
+					},
+				}
+			} else {
+				resourceFilter = kyvernov1.ResourceFilter{
+					ResourceDescription: kyvernov1.ResourceDescription{
+						Kinds: []string{
+							gvk,
+						},
+						Namespaces: []string{
+							namespace,
+						},
+					},
+				}
+			}
+
+			if len(lis) > 0 && len(labels) == 0 {
+				excludeFilterForNamespace := kyvernov1.ResourceFilter{
+					ResourceDescription: kyvernov1.ResourceDescription{
+						Kinds: []string{
+							gvk,
+						},
+						Namespaces: []string{
+							namespace,
+						},
+						Selector: &metav1.LabelSelector{
+							MatchLabels: exclusionLables,
+						},
+					},
+				}
+
+				exclusionFilters = append(exclusionFilters, excludeFilterForNamespace)
+			}
+
+			resourceFilters = append(resourceFilters, resourceFilter)
+			
 		}
-
-		resourceFilters = append(resourceFilters, resourceFilter)
-	}
+	} 
 
 	background := true
-	return kyvernov1.ClusterPolicy{
+	kcp := kyvernov1.ClusterPolicy{
 		Spec: kyvernov1.Spec{
 			Background: &background ,
 			Rules: []kyvernov1.Rule{
@@ -113,6 +173,14 @@ func clusterEscapeToHost(cnp *v1.ClusterNimbusPolicy) kyvernov1.ClusterPolicy {
 			},
 		},
 	}
+
+	if len(exclusionFilters) > 0 {
+		kcp.Spec.Rules[0].ExcludeResources  =  kyvernov1.MatchResources{
+			Any: exclusionFilters,			
+		}
+	}
+
+	return kcp
 }
 
 func addManagedByAnnotationForClusterScopedPolicy(kcp *kyvernov1.ClusterPolicy) {

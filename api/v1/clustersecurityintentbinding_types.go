@@ -9,7 +9,7 @@ import (
 
 type CwResource struct {
 	Kind        string            `json:"kind"`
-	Name        string            `json:"name"`
+	Name        string            `json:"name,omitempty"`
 	Namespace   string            `json:"namespace,omitempty"`
 	MatchLabels map[string]string `json:"matchLabels,omitempty"`
 }

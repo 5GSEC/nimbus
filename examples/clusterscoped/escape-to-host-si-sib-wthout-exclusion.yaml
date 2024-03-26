@@ -17,16 +17,22 @@ spec:
     - name: escape-to-host
   selector:
     resources:
-      - kind: Pod
-        name: pod1
-        namespace: ns1
-        matchLabels:
-          app: db
-          env: dev
 
       - kind: Pod
-        name: pod1
+        namespace: ns3
+        matchLabels:
+          app: db
+          database: mongo
+            
+
+      - kind: Deployment
         namespace: ns2
         matchLabels:
-          app: mongo
-          env: prod
+          app: db
+          database: mongo
+
+      - kind: StatefulSet
+        namespace: ns2
+        matchLabels:
+          app: db
+          database: mongo
