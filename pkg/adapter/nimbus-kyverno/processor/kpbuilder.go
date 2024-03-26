@@ -19,7 +19,7 @@ func BuildKpsFrom(logger logr.Logger, np *v1.NimbusPolicy) []kyvernov1.Policy {
 	for _, nimbusRule := range np.Spec.NimbusRules {
 		id := nimbusRule.ID
 		if idpool.IsIdSupportedBy(id, "kyverno") {
-			kp := buildKpFor(id, np)
+			kp := buildKpFor(id, np, nimbusRule.Rule)
 			kp.Name = np.Name + "-" + strings.ToLower(id)
 			kp.Namespace = np.Namespace
 			kp.Annotations = make(map[string]string)
@@ -40,18 +40,30 @@ func BuildKpsFrom(logger logr.Logger, np *v1.NimbusPolicy) []kyvernov1.Policy {
 }
 
 // buildKpFor builds a KyvernoPolicy based on intent ID supported by Kyverno Policy Engine.
-func buildKpFor(id string, np *v1.NimbusPolicy) kyvernov1.Policy {
+func buildKpFor(id string, np *v1.NimbusPolicy, rule v1.Rule) kyvernov1.Policy {
 	switch id {
 	case idpool.EscapeToHost:
-		return escapeToHost(np)
+		return escapeToHost(np, rule)
 	default:
 		return kyvernov1.Policy{}
 	}
 }
 
-func escapeToHost(np *v1.NimbusPolicy) kyvernov1.Policy {
+func escapeToHost(np *v1.NimbusPolicy, rule v1.Rule) kyvernov1.Policy {
+
+	lis := rule.Params["exclude_resources"]
+	exclusionLables := make(map[string]string)
+	for _, item := range lis {
+		parts := strings.Split(item, ":")
+		if len(parts) == 2 {
+			key := parts[0]
+			value := parts[1]
+			exclusionLables[key] = value
+		}
+	}
+
 	background := true
-	return kyvernov1.Policy{
+	 kp :=  kyvernov1.Policy{
 		Spec: kyvernov1.Spec{
 			Background: &background ,
 			Rules: []kyvernov1.Rule{
@@ -83,6 +95,22 @@ func escapeToHost(np *v1.NimbusPolicy) kyvernov1.Policy {
 			},
 		},
 	}
+
+	if len(lis) > 0 {
+		kp.Spec.Rules[0].ExcludeResources  =  kyvernov1.MatchResources{
+			Any: kyvernov1.ResourceFilters{
+				{
+					ResourceDescription: kyvernov1.ResourceDescription{
+						Selector: &metav1.LabelSelector{
+							MatchLabels: exclusionLables,
+						},
+					},
+				},
+			},
+		}
+	}
+
+	return kp
 }
 
 func addManagedByAnnotation(kp *kyvernov1.Policy) {
