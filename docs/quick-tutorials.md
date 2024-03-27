@@ -7,6 +7,7 @@
     - `nimbus-kubearmor`: Follow [this](../deployments/nimbus-kubearmor/Readme.md) guide to install `nimbus-kubearmor`
       adapter.
     - `nimbus-netpol`: Follow [this](../deployments/nimbus-netpol/Readme.md) guide to install `nimbus-netpol` adapter.
+    - `nimbus-kyverno`: Follow [this](../deployments/nimbus-kyverno/Readme.md) guide to install `nimbus-kyverno` adapter.
 
 ## Create a sample deployment
 
