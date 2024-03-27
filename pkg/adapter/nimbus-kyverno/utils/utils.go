@@ -19,6 +19,7 @@ func GetGVK(kind string) string {
 		"statefulset":           "apps/v1",
 		"daemonset":             "apps/v1",
 		"replicaset":            "apps/v1",
+		"namespace":             "v1",
 	}
 
 	// Convert kind to lowercase to handle case insensitivity

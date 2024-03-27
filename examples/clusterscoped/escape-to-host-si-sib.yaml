@@ -7,6 +7,8 @@ spec:
     id: escapeToHost
     description: "A attacker can breach container boundaries and can gain access to the host machine"
     action: Block
+    params:
+      exclude_resources: ["app:nginx"]
 ---
 apiVersion: intent.security.nimbus.com/v1
 kind: ClusterSecurityIntentBinding
@@ -17,12 +19,9 @@ spec:
     - name: escape-to-host
   selector:
     resources:
-      - kind: Pod
+      - kind: Pod  // to make sure that PSA applies to the entire namespace
         name: pod1
         namespace: ns1
-        matchLabels:
-          app: db
-          env: dev
 
       - kind: Pod
         name: pod1
