@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: intent.security.nimbus.com/v1
+kind: NimbusPolicy
+metadata:
+  name: dns-manipulation-binding
+  ownerReferences:
+    - apiVersion: intent.security.nimbus.com/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: SecurityIntentBinding
+      name: dns-manipulation-binding
+status:
+  numberOfAdapterPolicies: 2
+  status: Created
