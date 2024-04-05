@@ -5,12 +5,13 @@ package processor
 
 import (
 	"strings"
-	"github.com/go-logr/logr"
-	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
-	"k8s.io/pod-security-admission/api"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	v1 "github.com/5GSEC/nimbus/api/v1"
 	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
+	"github.com/go-logr/logr"
+	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/pod-security-admission/api"
 )
 
 func BuildKpsFrom(logger logr.Logger, np *v1.NimbusPolicy) []kyvernov1.Policy {
@@ -43,17 +44,46 @@ func BuildKpsFrom(logger logr.Logger, np *v1.NimbusPolicy) []kyvernov1.Policy {
 func buildKpFor(id string, np *v1.NimbusPolicy) kyvernov1.Policy {
 	switch id {
 	case idpool.EscapeToHost:
-		return escapeToHost(np)
+		return escapeToHost(np, np.Spec.NimbusRules[0].Rule)
 	default:
 		return kyvernov1.Policy{}
 	}
 }
 
-func escapeToHost(np *v1.NimbusPolicy) kyvernov1.Policy {
+func escapeToHost(np *v1.NimbusPolicy, rule v1.Rule) kyvernov1.Policy {
 	background := true
-	return kyvernov1.Policy{
+	var psa_level api.Level = api.LevelBaseline
+
+	if rule.Params["psa_level"] != nil {
+
+		switch rule.Params["psa_level"][0] {
+		case "restricted":
+			psa_level = api.LevelRestricted
+		
+		case "privileged":
+			psa_level = api.LevelPrivileged
+	
+		default:
+			psa_level = api.LevelBaseline
+		}
+		
+	}
+
+	labels := np.Spec.Selector.MatchLabels
+	lis := rule.Params["exclude_resources"]
+	exclusionLables := make(map[string]string)
+	for _, item := range lis {
+		parts := strings.Split(item, ":")
+		if len(parts) == 2 {
+			key := parts[0]
+			value := parts[1]
+			exclusionLables[key] = value
+		}
+	}
+
+	kp := kyvernov1.Policy{
 		Spec: kyvernov1.Spec{
-			Background: &background ,
+			Background: &background,
 			Rules: []kyvernov1.Rule{
 				{
 					Name: "restricted",
@@ -68,14 +98,12 @@ func escapeToHost(np *v1.NimbusPolicy) kyvernov1.Policy {
 										MatchLabels: np.Spec.Selector.MatchLabels,
 									},
 								},
-
 							},
-						
 						},
 					},
 					Validation: kyvernov1.Validation{
-						PodSecurity : &kyvernov1.PodSecurity{
-							Level: api.LevelRestricted,
+						PodSecurity: &kyvernov1.PodSecurity{
+							Level:   psa_level,
 							Version: "latest",
 						},
 					},
@@ -83,6 +111,12 @@ func escapeToHost(np *v1.NimbusPolicy) kyvernov1.Policy {
 			},
 		},
 	}
+
+	if len(labels) > 0 {
+		kp.Spec.Rules[0].MatchResources.Any[0].ResourceDescription.Selector.MatchLabels = labels
+	}
+
+	return kp
 }
 
 func addManagedByAnnotation(kp *kyvernov1.Policy) {
