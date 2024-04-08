@@ -182,9 +182,11 @@ func deleteDanglingKsps(ctx context.Context, np intentv1.NimbusPolicy, logger lo
 
 	var kspsOwnedByNp []kubearmorv1.KubeArmorPolicy
 	for _, ksp := range existingKsps.Items {
-		ownerRef := ksp.OwnerReferences[0]
-		if ownerRef.Name == np.Name && ownerRef.UID == np.UID {
-			kspsOwnedByNp = append(kspsOwnedByNp, ksp)
+		for _, ownerRef := range ksp.OwnerReferences {
+			if ownerRef.Name == np.Name && ownerRef.UID == np.UID {
+				kspsOwnedByNp = append(kspsOwnedByNp, ksp)
+				break
+			}
 		}
 	}
 	if len(kspsOwnedByNp) == 0 {
