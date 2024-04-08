@@ -31,7 +31,7 @@ jobs:
     if: github.repository == '5GSEC/nimbus'
     strategy:
       matrix:
-        adapters: [ "nimbus-kubearmor", "nimbus-netpol" ]
+        adapters: [ "nimbus-kubearmor", "nimbus-netpol", "nimbus-kyverno" ]
     name: Build and push ${{ matrix.adapters }} adapter's image
     uses: ./.github/workflows/release-image.yaml
     with:
