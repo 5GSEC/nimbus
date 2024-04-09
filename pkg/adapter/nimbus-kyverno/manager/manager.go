@@ -7,13 +7,6 @@ import (
 	"context"
 	"strings"
 
-	intentv1 "github.com/5GSEC/nimbus/api/v1"
-	"github.com/5GSEC/nimbus/pkg/adapter/common"
-	"github.com/5GSEC/nimbus/pkg/adapter/k8s"
-	processor "github.com/5GSEC/nimbus/pkg/adapter/nimbus-kyverno/processor"
-	watcher "github.com/5GSEC/nimbus/pkg/adapter/nimbus-kyverno/watcher"
-	adapterutil "github.com/5GSEC/nimbus/pkg/adapter/util"
-	globalwatcher "github.com/5GSEC/nimbus/pkg/adapter/watcher"
 	"github.com/go-logr/logr"
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -23,6 +16,14 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	intentv1 "github.com/5GSEC/nimbus/api/v1"
+	"github.com/5GSEC/nimbus/pkg/adapter/common"
+	"github.com/5GSEC/nimbus/pkg/adapter/k8s"
+	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kyverno/processor"
+	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kyverno/watcher"
+	adapterutil "github.com/5GSEC/nimbus/pkg/adapter/util"
+	globalwatcher "github.com/5GSEC/nimbus/pkg/adapter/watcher"
 )
 
 var (
@@ -50,12 +51,11 @@ func Run(ctx context.Context) {
 	deletedKcpCh := make(chan string)
 
 	go watcher.WatchKcps(ctx, updatedKcpCh, deletedKcpCh)
-	
+
 	updatedKpCh := make(chan common.Request)
 	deletedKpCh := make(chan common.Request)
 
 	go watcher.WatchKps(ctx, updatedKpCh, deletedKpCh)
-
 
 	for {
 		select {
@@ -71,12 +71,12 @@ func Run(ctx context.Context) {
 			return
 		case createdNp := <-npCh:
 			createOrUpdateKp(ctx, createdNp.Name, createdNp.Namespace)
-		case createdCnp := <-clusterNpChan: 
-			createOrUpdateKcp(ctx, createdCnp)	
+		case createdCnp := <-clusterNpChan:
+			createOrUpdateKcp(ctx, createdCnp)
 		case deletedNp := <-deletedNpCh:
 			deleteKp(ctx, deletedNp.Name, deletedNp.Namespace)
-		case deletedCnp := <-deletedClusterNpChan: 
-			 deleteKcp(ctx, deletedCnp)
+		case deletedCnp := <-deletedClusterNpChan:
+			deleteKcp(ctx, deletedCnp)
 		case updatedKp := <-updatedKpCh:
 			reconcileKp(ctx, updatedKp.Name, updatedKp.Namespace, true)
 		case updatedKcp := <-updatedKcpCh:
@@ -86,7 +86,7 @@ func Run(ctx context.Context) {
 		case deletedKp := <-deletedKpCh:
 			reconcileKp(ctx, deletedKp.Name, deletedKp.Namespace, true)
 		}
-		
+
 	}
 }
 
@@ -196,7 +196,6 @@ func createOrUpdateKcp(ctx context.Context, cnpName string) {
 		return
 	}
 
-
 	deleteDanglingkcps(ctx, cnp, logger)
 	kcps := processor.BuildKcpsFrom(logger, &cnp)
 
@@ -268,9 +267,11 @@ func deleteDanglingkps(ctx context.Context, np intentv1.NimbusPolicy, logger log
 
 	var kpsOwnedByNp []kyvernov1.Policy
 	for _, kp := range existingkps.Items {
-		ownerRef := kp.OwnerReferences[0]
-		if ownerRef.Name == np.Name && ownerRef.UID == np.UID {
-			kpsOwnedByNp = append(kpsOwnedByNp, kp)
+		for _, ownerRef := range kp.OwnerReferences {
+			if ownerRef.Name == np.Name && ownerRef.UID == np.UID {
+				kpsOwnedByNp = append(kpsOwnedByNp, kp)
+				break
+			}
 		}
 	}
 	if len(kpsOwnedByNp) == 0 {
@@ -319,7 +320,7 @@ func deleteKcp(ctx context.Context, cnpName string) {
 	// deleted.
 	for _, kcp := range kcps.Items {
 		logger.Info("KyvernoClusterPolicy already deleted due to ClusterNimbusPolicy deletion",
-			"KyvernoClusterPolicy.Name", kcp.Name, 
+			"KyvernoClusterPolicy.Name", kcp.Name,
 			"ClusterNimbusPolicy.Name", cnpName,
 		)
 	}
@@ -334,9 +335,11 @@ func deleteDanglingkcps(ctx context.Context, cnp intentv1.ClusterNimbusPolicy, l
 
 	var kcpsOwnedByCnp []kyvernov1.ClusterPolicy
 	for _, kcp := range existingkcps.Items {
-		ownerRef := kcp.OwnerReferences[0]
-		if ownerRef.Name == cnp.Name && ownerRef.UID == cnp.UID {
-			kcpsOwnedByCnp = append(kcpsOwnedByCnp, kcp)
+		for _, ownerRef := range kcp.OwnerReferences {
+			if ownerRef.Name == cnp.Name && ownerRef.UID == cnp.UID {
+				kcpsOwnedByCnp = append(kcpsOwnedByCnp, kcp)
+				break
+			}
 		}
 	}
 	if len(kcpsOwnedByCnp) == 0 {
