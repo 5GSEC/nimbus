@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "nimbus-kyverno.fullname" . }}
+  labels:
+    {{- include "nimbus-kyverno.labels" . | nindent 4 }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "nimbus-kyverno.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "nimbus-kyverno.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "nimbus-kyverno.serviceAccountName" . }}
+      containers:
+        - name: {{ .Values.fullnameOverride }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+      terminationGracePeriodSeconds: 10
