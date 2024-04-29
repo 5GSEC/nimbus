@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2023 Authors of Nimbus
 
-package v1
+package v1alpha
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -10,16 +10,10 @@ import (
 // NimbusPolicySpec defines the desired state of NimbusPolicy
 type NimbusPolicySpec struct {
 	// Selector specifies the target resources to which the policy applies
-	Selector NimbusSelector `json:"selector"`
+	Selector WorkloadSelector `json:"selector"`
 
 	// PolicyType specifies the type of policy, e.g., "Network", "System", "Cluster"
 	NimbusRules []NimbusRules `json:"rules"`
-}
-
-// NimbusSelector is used to select specific resources based on labels.
-type NimbusSelector struct {
-	// MatchLabels is a map that holds key-value pairs to match against labels of resources.
-	MatchLabels map[string]string `json:"matchLabels"`
 }
 
 // NimbusRules represents a single policy rule with an ID, type, description, and detailed rule configurations.
