@@ -1,0 +1,52 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: kyverno-adapter-policy-deletion
+spec:
+  description: >
+    This test validates if the adapters re-create their manually deleted generated policies.
+  steps:
+    - name: "Create a SecurityIntent"
+      try:
+        - apply:
+            file: ../../resources/namespaced/escape-to-host-si.yaml
+
+    - name: "Create a SecurityIntentBinding"
+      try:
+        - apply:
+            file: ../../resources/namespaced/escape-to-host-sib.yaml
+
+    - name: "Verify NimbusPolicy creation"
+      try:
+        - assert:
+            file: ../nimbus-policy-assert.yaml
+
+    - name: "Verify KyvernoPolicy creation"
+      try:
+        - assert:
+            file: ../kyverno-policy.yaml
+
+    - name: "Delete existing KyvernoPolicy"
+      try:
+        - delete:
+            ref:
+              apiVersion: kyverno.io/v1
+              kind: Policy
+              name: escape-to-host-binding-escapetohost
+            expect:
+              - match:
+                  apiVersion: kyverno.io/v1
+                  kind: Policy
+                  name: escape-to-host-binding-escapetohost
+                check:
+                  ($error != null): true
+
+    - name: "Verify KyvernoPolicy recreation"
+      try:
+        - assert:
+            file: ../kyverno-policy.yaml
+
+

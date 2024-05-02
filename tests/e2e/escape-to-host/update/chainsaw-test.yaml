@@ -1,0 +1,42 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: kyverno-adapter-policy-updation
+spec:
+  description: >
+    This test validates that direct updates to the generated adapter's policies are discarded, to maintain consistency and prevent unintended modifications.
+  steps:
+    - name: "Create a SecurityIntent"
+      try:
+        - apply:
+            file: ../../resources/namespaced/escape-to-host-si.yaml
+
+    - name: "Create a SecurityIntentBinding"
+      try:
+        - apply:
+            file: ../../resources/namespaced/escape-to-host-sib.yaml
+
+    - name: "Verify NimbusPolicy creation"
+      try:
+        - assert:
+            file: ../nimbus-policy-assert.yaml
+
+    - name: "Verify KyvernoPolicy creation"
+      try:
+        - assert:
+            file: ../kyverno-policy.yaml
+    
+
+    - name: "Update existing KyvernoPolicy"
+      try:
+        - apply:
+            file: ../updated-kyverno-policy.yaml
+
+    - name: "Verify discarding of the changes made in KyvernoPolicy"
+      try:
+        - assert:
+            file: ../kyverno-policy.yaml
+

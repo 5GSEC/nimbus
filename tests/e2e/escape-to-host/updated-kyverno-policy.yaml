@@ -1,0 +1,34 @@
+apiVersion: kyverno.io/v1
+kind: Policy
+metadata:
+  annotations:
+    app.kubernetes.io/managed-by: nimbus-kyverno
+    policies.kyverno.io/description: A attacker can breach container boundaries
+      and can gain access to the host machine
+  name: escape-to-host-binding-escapetohost
+spec:
+  admission: true
+  background: true
+  rules:
+  - exclude:
+      resources: {}
+    generate:
+      clone: {}
+      cloneList: {}
+    match:
+      any:
+      - resources:
+          kinds:
+          - v1/Pod
+          selector:
+            matchLabels:
+              env: prod
+      resources: {}
+    mutate: {}
+    name: restricted
+    skipBackgroundRequests: true
+    validate:
+      podSecurity:
+        level: baseline
+        version: latest
+  validationFailureAction: Enforce
