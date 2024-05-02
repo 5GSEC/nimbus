@@ -6,7 +6,7 @@ package processor
 import (
 	"strings"
 
-	v1 "github.com/5GSEC/nimbus/api/v1"
+	v1 "github.com/5GSEC/nimbus/api/v1alpha"
 	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kyverno/utils"
 	"github.com/go-logr/logr"
@@ -127,7 +127,7 @@ func clusterEscapeToHost(cnp *v1.ClusterNimbusPolicy, rule v1.Rule) kyvernov1.Cl
 	background := true
 	return kyvernov1.ClusterPolicy{
 		Spec: kyvernov1.Spec{
-			Background: &background ,
+			Background: &background,
 			Rules: []kyvernov1.Rule{
 				{
 					Name: "restricted",
@@ -149,4 +149,3 @@ func clusterEscapeToHost(cnp *v1.ClusterNimbusPolicy, rule v1.Rule) kyvernov1.Cl
 func addManagedByAnnotationForClusterScopedPolicy(kcp *kyvernov1.ClusterPolicy) {
 	kcp.Annotations["app.kubernetes.io/managed-by"] = "nimbus-kyverno"
 }
-

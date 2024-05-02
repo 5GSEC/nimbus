@@ -6,7 +6,7 @@ package processor
 import (
 	kubearmorv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorController/api/security.kubearmor.com/v1"
 
-	v1 "github.com/5GSEC/nimbus/api/v1"
+	v1 "github.com/5GSEC/nimbus/api/v1alpha"
 )
 
 // processRuleParams processes the given nimbus policy rules, generating corresponding KubeArmorPolicy rules.

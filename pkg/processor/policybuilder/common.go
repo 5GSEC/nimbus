@@ -14,8 +14,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	v1 "github.com/5GSEC/nimbus/api/v1alpha"
 )
 
 // ProcessCEL processes CEL expressions to generate matchLabels.
@@ -298,25 +296,4 @@ func excludeLabels(podList corev1.PodList, excludeMap map[string]string) map[str
 	}
 
 	return remainingLabels
-}
-
-// ProcessMatchLabels processes any/all fields to generate matchLabels.
-func ProcessMatchLabels(any, all []v1.ResourceFilter) (map[string]string, error) {
-	matchLabels := make(map[string]string)
-
-	// Process logic for Any field.
-	for _, filter := range any {
-		for key, value := range filter.Resources.MatchLabels {
-			matchLabels[key] = value
-		}
-	}
-
-	// Process logic for All field.
-	for _, filter := range all {
-		for key, value := range filter.Resources.MatchLabels {
-			matchLabels[key] = value
-		}
-	}
-
-	return matchLabels, nil
 }

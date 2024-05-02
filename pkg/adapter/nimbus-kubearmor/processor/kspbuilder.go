@@ -9,7 +9,7 @@ import (
 	"github.com/go-logr/logr"
 	kubearmorv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorController/api/security.kubearmor.com/v1"
 
-	v1 "github.com/5GSEC/nimbus/api/v1"
+	v1 "github.com/5GSEC/nimbus/api/v1alpha"
 	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 )
 
@@ -42,7 +42,7 @@ func BuildKspsFrom(logger logr.Logger, np *v1.NimbusPolicy) []kubearmorv1.KubeAr
 				processRuleParams(&ksp, nimbusRule.Rule)
 				addManagedByAnnotation(&ksp)
 				ksps = append(ksps, ksp)
-			}	
+			}
 		} else {
 			logger.Info("KubeArmor does not support this ID", "ID", id,
 				"NimbusPolicy", np.Name, "NimbusPolicy.Namespace", np.Namespace)
@@ -263,7 +263,6 @@ func disallowChRoot() kubearmorv1.KubeArmorPolicy {
 		},
 	}
 }
-
 
 func addManagedByAnnotation(ksp *kubearmorv1.KubeArmorPolicy) {
 	ksp.Annotations = make(map[string]string)

@@ -107,7 +107,6 @@ spec:
                   type: object
                 type: array
             required:
-            - nodeSelector
             - rules
             type: object
           status:
