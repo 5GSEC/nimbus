@@ -12,8 +12,8 @@ type NodeSelector struct {
 }
 
 type NamespaceSelector struct {
-	matchNames   []string `json:"matchNames,omitempty"`
-	excludeNames []string `json:"excludeNames,omitempty"`
+	MatchNames   []string `json:"matchNames,omitempty"`
+	ExcludeNames []string `json:"excludeNames,omitempty"`
 }
 
 type ClusterMatchWorkloads struct {

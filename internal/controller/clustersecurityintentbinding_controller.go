@@ -8,12 +8,14 @@ import (
 	"errors"
 
 	"github.com/go-logr/logr"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -21,7 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	v1 "github.com/5GSEC/nimbus/api/v1"
+	v1 "github.com/5GSEC/nimbus/api/v1alpha"
 	processorerrors "github.com/5GSEC/nimbus/pkg/processor/errors"
 	"github.com/5GSEC/nimbus/pkg/processor/policybuilder"
 )
@@ -75,6 +77,7 @@ func (r *ClusterSecurityIntentBindingReconciler) Reconcile(ctx context.Context, 
 }
 
 // SetupWithManager sets up the controller with the Manager.
+// WithEventFilter sets up the global predicates for a watch
 func (r *ClusterSecurityIntentBindingReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1.ClusterSecurityIntentBinding{}).
@@ -88,6 +91,15 @@ func (r *ClusterSecurityIntentBindingReconciler) SetupWithManager(mgr ctrl.Manag
 		).
 		Watches(&v1.SecurityIntent{},
 			handler.EnqueueRequestsFromMapFunc(r.findCsibsForSi),
+		).
+		Watches(&corev1.Namespace{},
+			handler.EnqueueRequestsFromMapFunc(r.findCsibsForNamespace),
+			builder.WithPredicates(predicate.Funcs{
+				UpdateFunc: func(e event.UpdateEvent) bool {
+					// Ignore updates
+					return false
+				},
+			}),
 		).
 		Complete(r)
 }
@@ -111,6 +123,9 @@ func (r *ClusterSecurityIntentBindingReconciler) deleteFn(deleteEvent event.Dele
 		return true
 	}
 	if _, ok := obj.(*v1.SecurityIntent); ok {
+		return true
+	}
+	if _, ok := obj.(*corev1.Namespace); ok {
 		return true
 	}
 	return ownerExists(r.Client, obj)
@@ -222,6 +237,73 @@ func (r *ClusterSecurityIntentBindingReconciler) findCsibsForSi(ctx context.Cont
 				}
 				break
 			}
+		}
+	}
+
+	return requests
+}
+
+func (r *ClusterSecurityIntentBindingReconciler) findCsibsForNamespace(ctx context.Context, nsObj client.Object) []reconcile.Request {
+	logger := log.FromContext(ctx)
+
+	csibs := &v1.ClusterSecurityIntentBindingList{}
+	if err := r.List(ctx, csibs); err != nil {
+		logger.Error(err, "failed to list ClusterSecurityIntentBindings")
+		return []reconcile.Request{}
+	}
+
+	requests := make([]reconcile.Request, len(csibs.Items))
+
+	for _, csib := range csibs.Items {
+
+		var toBeReconciled bool = false
+		/*
+		 * If matchnames, and excludenames is zero, then this csib
+		 * of interest since we have to modify the number of fanout.
+		 * In case of add, the fanout will increase, and in case of
+		 * delete the fanout will reduced.
+		 */
+		if len(csib.Spec.Selector.NsSelector.MatchNames) == 0 &&
+			len(csib.Spec.Selector.NsSelector.ExcludeNames) == 0 {
+			toBeReconciled = true
+		}
+
+		/*
+		 * If the ns being added/deleted appears in the matchNames, then
+		 * we do not do anything since the NimbusPolicy would have been
+		 * generated for ns in the matchNames, and there is no fanout to be done
+		 */
+		if len(csib.Spec.Selector.NsSelector.MatchNames) > 0 {
+			continue
+		}
+
+		/*
+		 * We need to reconcile if the namespace object does not appear
+		 * in the CSIB exclude list
+		 * For example, there was a excludeName consisting of ns_1, ns_2.
+		 * and now ns_2 does not appear in the excludeNames. So, as part of
+		 * reconciliation we now have to create NimbusPolicy for ns_2.
+		 */
+		if len(csib.Spec.Selector.NsSelector.ExcludeNames) > 0 {
+			var outOfSet bool = true
+			for _, ns := range csib.Spec.Selector.NsSelector.ExcludeNames {
+				if ns == nsObj.GetName() {
+					outOfSet = false
+					break
+				}
+			}
+			if outOfSet {
+				toBeReconciled = true
+			}
+		}
+		if toBeReconciled {
+
+			requests = append(requests, ctrl.Request{
+				NamespacedName: types.NamespacedName{
+					Namespace: csib.GetNamespace(),
+					Name:      csib.GetName(),
+				},
+			})
 		}
 	}
 

@@ -26,7 +26,7 @@ spec:
     - jsonPath: .status.numberOfAdapterPolicies
       name: Policies
       type: integer
-    name: v1
+    name: v1alpha
     schema:
       openAPIV3Schema:
         description: NimbusPolicy is the Schema for the nimbuspolicies API
@@ -89,11 +89,7 @@ spec:
                   matchLabels:
                     additionalProperties:
                       type: string
-                    description: MatchLabels is a map that holds key-value pairs to
-                      match against labels of resources.
                     type: object
-                required:
-                - matchLabels
                 type: object
             required:
             - rules

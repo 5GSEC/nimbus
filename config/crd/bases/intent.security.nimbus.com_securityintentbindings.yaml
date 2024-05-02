@@ -29,7 +29,7 @@ spec:
     - jsonPath: .status.nimbusPolicy
       name: NimbusPolicy
       type: string
-    name: v1
+    name: v1alpha
     schema:
       openAPIV3Schema:
         description: SecurityIntentBinding is the Schema for the securityintentbindings
@@ -55,6 +55,10 @@ spec:
           spec:
             description: SecurityIntentBindingSpec defines the desired state of SecurityIntentBinding
             properties:
+              cel:
+                items:
+                  type: string
+                type: array
               intents:
                 items:
                   description: MatchIntent struct defines the request for a specific
@@ -69,48 +73,13 @@ spec:
               selector:
                 description: Selector defines the selection criteria for resources
                 properties:
-                  all:
-                    items:
-                      description: ResourceFilter is used for filtering resources
-                      properties:
-                        resources:
-                          description: Resources defines the properties for selecting
-                            Kubernetes resources
-                          properties:
-                            kind:
-                              type: string
-                            matchLabels:
-                              additionalProperties:
-                                type: string
-                              type: object
-                            namespace:
-                              type: string
-                          type: object
-                      type: object
-                    type: array
-                  any:
-                    items:
-                      description: ResourceFilter is used for filtering resources
-                      properties:
-                        resources:
-                          description: Resources defines the properties for selecting
-                            Kubernetes resources
-                          properties:
-                            kind:
-                              type: string
-                            matchLabels:
-                              additionalProperties:
-                                type: string
-                              type: object
-                            namespace:
-                              type: string
-                          type: object
-                      type: object
-                    type: array
-                  cel:
-                    items:
-                      type: string
-                    type: array
+                  wlSelector:
+                    properties:
+                      matchLabels:
+                        additionalProperties:
+                          type: string
+                        type: object
+                    type: object
                 type: object
             required:
             - intents
