@@ -5,12 +5,13 @@ package processor
 
 import (
 	"strings"
+
+	v1 "github.com/5GSEC/nimbus/api/v1alpha"
+	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 	"github.com/go-logr/logr"
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
-	"k8s.io/pod-security-admission/api"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "github.com/5GSEC/nimbus/api/v1"
-	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
+	"k8s.io/pod-security-admission/api"
 )
 
 func BuildKpsFrom(logger logr.Logger, np *v1.NimbusPolicy) []kyvernov1.Policy {
@@ -53,7 +54,7 @@ func escapeToHost(np *v1.NimbusPolicy) kyvernov1.Policy {
 	background := true
 	return kyvernov1.Policy{
 		Spec: kyvernov1.Spec{
-			Background: &background ,
+			Background: &background,
 			Rules: []kyvernov1.Rule{
 				{
 					Name: "restricted",
@@ -68,14 +69,12 @@ func escapeToHost(np *v1.NimbusPolicy) kyvernov1.Policy {
 										MatchLabels: np.Spec.Selector.MatchLabels,
 									},
 								},
-
 							},
-						
 						},
 					},
 					Validation: kyvernov1.Validation{
-						PodSecurity : &kyvernov1.PodSecurity{
-							Level: api.LevelRestricted,
+						PodSecurity: &kyvernov1.PodSecurity{
+							Level:   api.LevelRestricted,
 							Version: "latest",
 						},
 					},

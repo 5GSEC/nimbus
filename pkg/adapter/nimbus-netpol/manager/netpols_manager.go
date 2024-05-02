@@ -18,7 +18,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	intentv1 "github.com/5GSEC/nimbus/api/v1"
+	intentv1 "github.com/5GSEC/nimbus/api/v1alpha"
 	"github.com/5GSEC/nimbus/pkg/adapter/common"
 	"github.com/5GSEC/nimbus/pkg/adapter/k8s"
 	adapterutil "github.com/5GSEC/nimbus/pkg/adapter/util"

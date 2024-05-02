@@ -12,7 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	v1 "github.com/5GSEC/nimbus/api/v1"
+	v1 "github.com/5GSEC/nimbus/api/v1alpha"
 	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 )
 

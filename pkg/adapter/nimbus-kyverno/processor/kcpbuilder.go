@@ -5,7 +5,8 @@ package processor
 
 import (
 	"strings"
-	v1 "github.com/5GSEC/nimbus/api/v1"
+
+	v1 "github.com/5GSEC/nimbus/api/v1alpha"
 	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 	"github.com/go-logr/logr"
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
@@ -20,7 +21,7 @@ func BuildKcpsFrom(logger logr.Logger, cnp *v1.ClusterNimbusPolicy) []kyvernov1.
 		id := nimbusRule.ID
 		if idpool.IsIdSupportedBy(id, "kyverno") {
 			kcp := buildKcpFor(id, cnp)
-			kcp.Name = cnp.Name + "-" + strings.ToLower(id)+ "-" +strings.ToLower(id)
+			kcp.Name = cnp.Name + "-" + strings.ToLower(id) + "-" + strings.ToLower(id)
 			kcp.Annotations = make(map[string]string)
 			kcp.Annotations["policies.kyverno.io/description"] = nimbusRule.Description
 			if nimbusRule.Rule.RuleAction == "Block" {
@@ -50,7 +51,7 @@ func buildKcpFor(id string, cnp *v1.ClusterNimbusPolicy) kyvernov1.ClusterPolicy
 
 func clusterEscapeToHost(cnp *v1.ClusterNimbusPolicy) kyvernov1.ClusterPolicy {
 
-	labelsPerNamespace := make(map[string]map[string]string) //todo: what if we want to apply policy to  multiple resources in different namespaces? 
+	labelsPerNamespace := make(map[string]map[string]string) //todo: what if we want to apply policy to  multiple resources in different namespaces?
 
 	// Function to add or update values for a key
 	addOrUpdate := func(key string, innerMap map[string]string) {
@@ -66,11 +67,10 @@ func clusterEscapeToHost(cnp *v1.ClusterNimbusPolicy) kyvernov1.ClusterPolicy {
 		}
 	}
 
-
-	for _,resource := range cnp.Spec.Selector.Resources {
+	for _, resource := range cnp.Spec.Selector.Resources {
 		namespace := resource.Namespace
 		addOrUpdate(namespace, resource.MatchLabels)
-	} 
+	}
 
 	var resourceFilters []kyvernov1.ResourceFilter
 	var resourceFilter kyvernov1.ResourceFilter
@@ -96,7 +96,7 @@ func clusterEscapeToHost(cnp *v1.ClusterNimbusPolicy) kyvernov1.ClusterPolicy {
 	background := true
 	return kyvernov1.ClusterPolicy{
 		Spec: kyvernov1.Spec{
-			Background: &background ,
+			Background: &background,
 			Rules: []kyvernov1.Rule{
 				{
 					Name: "restricted",
@@ -104,8 +104,8 @@ func clusterEscapeToHost(cnp *v1.ClusterNimbusPolicy) kyvernov1.ClusterPolicy {
 						Any: resourceFilters,
 					},
 					Validation: kyvernov1.Validation{
-						PodSecurity : &kyvernov1.PodSecurity{
-							Level: api.LevelRestricted,
+						PodSecurity: &kyvernov1.PodSecurity{
+							Level:   api.LevelRestricted,
 							Version: "latest",
 						},
 					},
@@ -118,4 +118,3 @@ func clusterEscapeToHost(cnp *v1.ClusterNimbusPolicy) kyvernov1.ClusterPolicy {
 func addManagedByAnnotationForClusterScopedPolicy(kcp *kyvernov1.ClusterPolicy) {
 	kcp.Annotations["app.kubernetes.io/managed-by"] = "nimbus-kyverno"
 }
-

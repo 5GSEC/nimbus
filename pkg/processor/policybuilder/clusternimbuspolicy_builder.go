@@ -40,15 +40,16 @@ func BuildClusterNimbusPolicy(ctx context.Context, logger logr.Logger, k8sClient
 		})
 	}
 
-	clusterBindingSelector := extractClusterBindingSelector(csib.Spec.Selector)
 	clusterNp := &v1.ClusterNimbusPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   csib.Name,
 			Labels: csib.Labels,
 		},
 		Spec: v1.ClusterNimbusPolicySpec{
-			Selector:    clusterBindingSelector,
-			NimbusRules: nimbusRules,
+			NodeSelector: csib.Spec.Selector.NodeSelector,
+			NsSelector:   csib.Spec.Selector.NsSelector,
+			ObjSelector:  csib.Spec.Selector.ObjSelector,
+			NimbusRules:  nimbusRules,
 		},
 	}
 
@@ -58,18 +59,4 @@ func BuildClusterNimbusPolicy(ctx context.Context, logger logr.Logger, k8sClient
 
 	logger.Info("ClusterNimbusPolicy built successfully", "ClusterNimbusPolicy.Name", clusterNp.Name)
 	return clusterNp, nil
-}
-
-func extractClusterBindingSelector(cwSelector v1.CwSelector) v1.CwSelector {
-	// Todo: Handle CEL expression
-	var clusterBindingSelector v1.CwSelector
-	for _, resource := range cwSelector.Resources {
-		var cwresource v1.CwResource
-		cwresource.Kind = resource.Kind
-		cwresource.Name = resource.Name
-		cwresource.Namespace = resource.Namespace
-		cwresource.MatchLabels = resource.MatchLabels
-		clusterBindingSelector.Resources = append(clusterBindingSelector.Resources, cwresource)
-	}
-	return clusterBindingSelector
 }

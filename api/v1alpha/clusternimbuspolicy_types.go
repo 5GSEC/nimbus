@@ -9,7 +9,7 @@ import (
 
 // ClusterNimbusPolicySpec defines the desired state of ClusterNimbusPolicy
 type ClusterNimbusPolicySpec struct {
-	NodeSelector NodeSelector      `json:"nodeSelector",omitempty`
+	NodeSelector NodeSelector      `json:"nodeSelector,omitempty"`
 	NsSelector   NamespaceSelector `json:"nsSelector,omitempty"`
 	ObjSelector  WorkloadSelector  `json:"objSelector,omitempty"`
 	NimbusRules  []NimbusRules     `json:"rules"`
