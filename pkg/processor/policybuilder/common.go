@@ -15,7 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	v1 "github.com/5GSEC/nimbus/api/v1"
+	v1 "github.com/5GSEC/nimbus/api/v1alpha"
 )
 
 // ProcessCEL processes CEL expressions to generate matchLabels.

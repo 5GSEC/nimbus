@@ -26,7 +26,7 @@ spec:
     - jsonPath: .status.numberOfAdapterPolicies
       name: Policies
       type: integer
-    name: v1
+    name: v1alpha
     schema:
       openAPIV3Schema:
         description: ClusterNimbusPolicy is the Schema for the clusternimbuspolicies
@@ -52,6 +52,31 @@ spec:
           spec:
             description: ClusterNimbusPolicySpec defines the desired state of ClusterNimbusPolicy
             properties:
+              nodeSelector:
+                properties:
+                  matchLabels:
+                    additionalProperties:
+                      type: string
+                    type: object
+                type: object
+              nsSelector:
+                properties:
+                  excludeNames:
+                    items:
+                      type: string
+                    type: array
+                  matchNames:
+                    items:
+                      type: string
+                    type: array
+                type: object
+              objSelector:
+                properties:
+                  matchLabels:
+                    additionalProperties:
+                      type: string
+                    type: object
+                type: object
               rules:
                 items:
                   description: NimbusRules represents a single policy rule with an
@@ -81,34 +106,9 @@ spec:
                   - rule
                   type: object
                 type: array
-              selector:
-                properties:
-                  cel:
-                    items:
-                      type: string
-                    type: array
-                  resources:
-                    items:
-                      properties:
-                        kind:
-                          type: string
-                        matchLabels:
-                          additionalProperties:
-                            type: string
-                          type: object
-                        name:
-                          type: string
-                        namespace:
-                          type: string
-                      required:
-                      - kind
-                      - name
-                      type: object
-                    type: array
-                type: object
             required:
+            - nodeSelector
             - rules
-            - selector
             type: object
           status:
             description: ClusterNimbusPolicyStatus defines the observed state of ClusterNimbusPolicy
