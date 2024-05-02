@@ -181,9 +181,11 @@ func deleteDanglingNetpols(ctx context.Context, np intentv1.NimbusPolicy, logger
 
 	var netpolsOwnedByNp []netv1.NetworkPolicy
 	for _, netpol := range existingNetpols.Items {
-		ownerRef := netpol.OwnerReferences[0]
-		if ownerRef.Name == np.Name && ownerRef.UID == np.UID {
-			netpolsOwnedByNp = append(netpolsOwnedByNp, netpol)
+		for _, ownerRef := range netpol.OwnerReferences {
+			if ownerRef.Name == np.Name && ownerRef.UID == np.UID {
+				netpolsOwnedByNp = append(netpolsOwnedByNp, netpol)
+				break
+			}
 		}
 	}
 
