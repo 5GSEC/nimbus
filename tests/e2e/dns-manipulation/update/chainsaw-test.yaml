@@ -1,0 +1,56 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: netpol-kubearmor-adapter-policy-updation
+spec:
+  description: >
+    This test validates that direct updates to the generated adapter's policies are discarded, to maintain consistency and prevent unintended modifications.
+  steps:
+    - name: "Create a SecurityIntent"
+      try:
+        - apply:
+            file: ../../resources/namespaced/dns-manipulation-si.yaml
+
+    - name: "Create a SecurityIntentBinding"
+      try:
+        - apply:
+            file: ../../resources/namespaced/dns-manipulation-sib.yaml
+
+    - name: "Verify NimbusPolicy creation"
+      try:
+        - assert:
+            file: ../nimbus-policy-assert.yaml
+
+    - name: "Verify NetworkPolicy creation"
+      try:
+        - assert:
+            file: ../netpol.yaml
+    
+    - name: "Verify KubearmorPolicy creation"
+      try:
+        - assert:
+            file: ../ksp.yaml
+
+    - name: "Update existing NetworkPolicy"
+      try:
+        - apply:
+            file: ../updated-netpol.yaml
+
+    - name: "Verify discarding of the changes made in NetworkPolicy"
+      try:
+        - assert:
+            file: ../netpol.yaml
+
+    
+    - name: "Update existing KubearmorPolicy"
+      try:
+        - apply:
+            file: ../updated-ksp.yaml
+
+    - name: "Verify discarding of the changes made in KubeArmorPolicy"
+      try:
+        - assert:
+            file: ../ksp.yaml

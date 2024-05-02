@@ -6,6 +6,8 @@ IMG ?= 5gsec/nimbus
 # Image Tag to use all building/pushing image targets
 TAG ?= v0.1
 
+TEST_DIR ?= tests/controllers
+
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
 GOBIN=$(shell go env GOPATH)/bin
@@ -62,13 +64,17 @@ fmt: ## Run go fmt against code.
 vet: ## Run go vet against code.
 	go vet ./...
 
-.PHONY: test
-test: chainsaw ## Run tests.
+.PHONY: integration-test
+integration-test: chainsaw ## Run integration tests.
 	@$(LOCALBIN)/chainsaw test --test-dir=tests/controllers/ --config tests/chainsaw-config.yaml
+
+.PHONY: e2e-test
+e2e-test: chainsaw ## Run e2e tests.
+	@$(LOCALBIN)/chainsaw test --test-dir=tests/e2e/ --config tests/chainsaw-config.yaml
 
 .PHONY: test-doc
 test-doc: chainsaw ## Build documentation of tests.
-	@$(LOCALBIN)/chainsaw build docs --test-dir=tests/controllers/
+	@$(LOCALBIN)/chainsaw build docs --test-dir=$(TEST_DIR)
 
 GOLANGCI_LINT = $(shell pwd)/bin/golangci-lint
 GOLANGCI_LINT_VERSION ?= v1.54.2
