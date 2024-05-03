@@ -7,7 +7,6 @@ spec:
     id: escapeToHost
     description: "A attacker can breach container boundaries and can gain access to the host machine"
     action: Block
-
 ---
 apiVersion: intent.security.nimbus.com/v1alpha
 kind: ClusterSecurityIntentBinding
@@ -18,5 +17,6 @@ spec:
     - name: escape-to-host
   selector:
     NsSelector:
-      matchNames:
       excludeNames:
+        - ns-2
+        - ns-3
