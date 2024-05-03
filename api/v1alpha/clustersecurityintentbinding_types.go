@@ -25,7 +25,7 @@ type ClusterMatchWorkloads struct {
 // ClusterSecurityIntentBindingSpec defines the desired state of ClusterSecurityIntentBinding
 type ClusterSecurityIntentBindingSpec struct {
 	Intents  []MatchIntent         `json:"intents"`
-	Selector ClusterMatchWorkloads `json:"selector"`
+	Selector ClusterMatchWorkloads `json:"selector,omitempty"`
 	CEL      []string              `json:"cel,omitempty"`
 }
 

@@ -101,7 +101,6 @@ spec:
                 type: object
             required:
             - intents
-            - selector
             type: object
           status:
             description: ClusterSecurityIntentBindingStatus defines the observed state
