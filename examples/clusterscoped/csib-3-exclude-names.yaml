@@ -17,5 +17,6 @@ spec:
     - name: escape-to-host
   selector:
     NsSelector:
-      matchNames:
       excludeNames:
+        - ns-2
+        - ns-3

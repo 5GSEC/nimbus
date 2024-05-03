@@ -18,4 +18,5 @@ spec:
   selector:
     NsSelector:
       matchNames:
-      excludeNames:
+        - ns-1
+        - ns-2

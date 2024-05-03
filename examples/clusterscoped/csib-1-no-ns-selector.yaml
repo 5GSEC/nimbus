@@ -15,7 +15,3 @@ metadata:
 spec:
   intents:
     - name: escape-to-host
-  selector:
-    NsSelector:
-      matchNames:
-      excludeNames:
