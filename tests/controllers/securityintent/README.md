@@ -3,29 +3,32 @@
 This test validates that the created SecurityIntent status subresource contains the ID and action  fields with the corresponding intent values.
 
 
-### Steps
+## Steps
 
-| # | Name | Try | Catch | Finally |
-|:-:|---|:-:|:-:|:-:|
-| 1 | [Create a SecurityIntent](#step-Create a SecurityIntent) | 1 | 0 | 0 |
-| 2 | [Verify status of created SecurityIntent](#step-Verify status of created SecurityIntent) | 1 | 0 | 0 |
+| # | Name | Bindings | Try | Catch | Finally |
+|:-:|---|:-:|:-:|:-:|:-:|
+| 1 | [Create a SecurityIntent](#step-Create a SecurityIntent) | 0 | 1 | 0 | 0 |
+| 2 | [Verify status of created SecurityIntent](#step-Verify status of created SecurityIntent) | 0 | 1 | 0 | 0 |
 
-## Step: `Create a SecurityIntent`
-
-*No description*
-
-### Try
-
-| # | Operation | Description |
-|:-:|---|---|
-| 1 | `apply` | *No description* |
-
-## Step: `Verify status of created SecurityIntent`
+### Step: `Create a SecurityIntent`
 
 *No description*
 
-### Try
+#### Try
 
-| # | Operation | Description |
-|:-:|---|---|
-| 1 | `assert` | *No description* |
+| # | Operation | Bindings | Outputs | Description |
+|:-:|---|:-:|:-:|---|
+| 1 | `apply` | 0 | 0 | *No description* |
+
+### Step: `Verify status of created SecurityIntent`
+
+*No description*
+
+#### Try
+
+| # | Operation | Bindings | Outputs | Description |
+|:-:|---|:-:|:-:|---|
+| 1 | `assert` | 0 | 0 | *No description* |
+
+---
+

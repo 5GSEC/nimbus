@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: intent.security.nimbus.com/v1
+kind: NimbusPolicy
+metadata:
+  name: escape-to-host-binding
+  ownerReferences:
+    - apiVersion: intent.security.nimbus.com/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: SecurityIntentBinding
+      name: escape-to-host-binding
+spec:
+  rules:
+  - description: A attacker can breach container boundaries and can gain access
+      to the host machine
+    id: escapeToHost
+    rule:
+      action: Block
+  selector:
+    matchLabels:
+      app: nginx

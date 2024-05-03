@@ -1,0 +1,52 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: kyverno-adapter-policy-creation
+spec:
+  description: >
+   This test validates that creating a `escapeToHost` SecurityIntent with SecurityIntentBinding generates the expected Kyverno Policy.
+  steps:
+    - name: "Create a SecurityIntent"
+      try:
+        - apply:
+            file: ../../resources/namespaced/escape-to-host-si.yaml
+
+    - name: "Create a SecurityIntentBinding"
+      try:
+        - apply:
+            file: ../../resources/namespaced/escape-to-host-sib.yaml
+
+    - name: "Verify NimbusPolicy creation"
+      try:
+        - assert:
+            file: ../nimbus-policy-assert.yaml
+
+    - name: "Verify KyvernoPolicy creation"
+      try:
+        - assert:
+            file: ../kyverno-policy.yaml
+    
+    - name: "Verify status of created SecurityIntentBinding"
+      description: >
+        Verify the created SecurityIntentBinding status subresource includes the number and names of bound intents, 
+        along with the generated NimbusPolicy name.
+      try:
+        - assert:
+            file: ../sib-status-assert.yaml
+
+    - name: "Verify status of created NimbusPolicy"
+      try:
+        - assert:
+            file: ../np-status-assert.yaml
+
+    - name: "Verify that the corresponding NimbusPolicy status has been updated with the generated Kyverno Policy"
+      try:
+      - script:
+          content: kubectl get np -n $NAMESPACE escape-to-host-binding -o=jsonpath='{.status.adapterPolicies}'
+          check: 
+            (contains($stdout, 'KyvernoPolicy/escape-to-host-binding-escapetohost')): true
+    
+    
