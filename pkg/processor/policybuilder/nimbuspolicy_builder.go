@@ -120,7 +120,8 @@ func BuildNimbusPolicyFromClusterBinding(ctx context.Context, logger logr.Logger
 		})
 	}
 
-	/* set the namespace to the parameter passed */
+	// set the namespace to the parameter passed
+	// A prefix is added to the name of the policy
 	nimbusPolicy := &v1.NimbusPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "nimbusGen-" + csib.Name,
