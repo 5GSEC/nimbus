@@ -264,7 +264,7 @@ type nsTrackingObj struct {
 
 func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Context, logger logr.Logger, req ctrl.Request) error {
 
-	// Reconcile the CSIB, NimbusPolicyList, and the current Namespaces
+	// Reconcile the Nimbus Policies with Security Intents, CSIB, NimbusPolicyList, Namespaces
 
 	// get the csib
 	var csib v1.ClusterSecurityIntentBinding
@@ -387,15 +387,47 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 			nobj.np.Status.LastUpdated = metav1.Now()
 			if err := r.Create(ctx, nobj.np); err != nil {
 				logger.Error(err, "failed to create NimbusPolicy", "NimbusPolicy.Name", nobj.np.Name)
+				// returning error here will restart the reconcile request with error
 				return err
 			}
 			logger.Info("NimbusPolicy created", "NimbusPolicy.Name", nobj.np.Name)
 
 		} else if nobj.update {
-			// update intents, parameters
+			// update intents, parameters. Build a new Nimbus Policy
+			// TODO: Might be more efficient to simply update the intents, params
+			newNimbusPolicy, err := policybuilder.BuildClusterNimbusPolicy(ctx, logger, r.Client, r.Scheme, csib)
+			if err != nil {
+				if errors.Is(err, processorerrors.ErrSecurityIntentsNotFound) {
+					// Since the SecurityIntent(s) referenced in ClusterSecurityIntentBinding spec do not
+					// exist, so delete ClusterNimbusPolicy if it exists.
+					if err := r.deleteCwnp(ctx, csib.GetName()); err != nil {
+						return err
+					}
+					return nil
+				}
+				logger.Error(err, "failed to build ClusterNimbusPolicy")
+				return err
+			}
+
+			newNimbusPolicy.ObjectMeta.ResourceVersion = nobj.np.ObjectMeta.ResourceVersion
+			newNimbusPolicy.Status.Status = StatusCreated
+			newNimbusPolicy.Status.LastUpdated = metav1.Now()
+			if err := r.Update(ctx, newNimbusPolicy); err != nil {
+				logger.Error(err, "failed to update NimbusPolicy", "NimbusPolicy.Name", newNimbusPolicy.Name)
+				return err
+			}
+			logger.Info("NimbusPolicy updated", "NimbusPolicy.Name", newNimbusPolicy.Name)
+
+			return nil
 
 		} else {
 			// delete the object
+			logger.Info("Deleting NimbusPolicy since no namespacs found", "NimbusPolicyName", nobj.np.Name)
+			if err = r.Delete(context.Background(), nobj.np); err != nil {
+				logger.Error(err, "failed to delete NimbusPolicy", "NimbusPolicyName", nobj.np.Name)
+				return err
+			}
+			logger.Info("NimbusPolicy deleted", "NimbusPolicyName", nobj.np.Name)
 		}
 	}
 
