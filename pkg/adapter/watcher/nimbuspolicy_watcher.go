@@ -40,14 +40,15 @@ func npInformer() cache.SharedIndexInformer {
 // WatchNimbusPolicies watches for create, update and delete events for
 // NimbusPolicies owned by SecurityIntentBinding and put their info on respective
 // channels.
-func WatchNimbusPolicies(ctx context.Context, npCh, deleteNpCh chan common.Request) {
+// ownerKind indicates which owners of the NimbusPolicy are fine
+func WatchNimbusPolicies(ctx context.Context, npCh, deleteNpCh chan common.Request, ownerKind ...string) {
 	nimbusPolicyInformer := npInformer()
 	logger := log.FromContext(ctx)
 
 	handlers := cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			u := obj.(*unstructured.Unstructured)
-			if adapterutil.IsOrphan(u.GetOwnerReferences(), "SecurityIntentBinding") {
+			if adapterutil.IsOrphan(u.GetOwnerReferences(), ownerKind...) {
 				logger.V(4).Info("Ignoring orphan NimbusPolicy", "NimbusPolicy.Name", u.GetName(), "NimbusPolicy.Namespace", u.GetNamespace(), "Operation", "Create")
 				return
 			}
