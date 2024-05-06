@@ -68,62 +68,33 @@ func clusterEscapeToHost(cnp *v1.ClusterNimbusPolicy, rule v1.Rule) kyvernov1.Cl
 		
 	}
 
-	var resourceFilters []kyvernov1.ResourceFilter
+	var matchFilters, excludeFilters []kyvernov1.ResourceFilter
+	var resourceFilter kyvernov1.ResourceFilter
 
-	for _,resource := range cnp.Spec.Selector.Resources {
-		kind := resource.Kind
-		name := resource.Name
-		switch kind {
-		case "Namespace":			
-			resourceFilterForNamespace := kyvernov1.ResourceFilter{
-				ResourceDescription: kyvernov1.ResourceDescription{
-					Kinds: []string{
-						utils.GetGVK("pod"),
-					},
-					Namespaces: []string{
-						name,
-					},
+	if len(cnp.Spec.NsSelector.MatchNames) > 0 {
+		resourceFilter = kyvernov1.ResourceFilter{
+			ResourceDescription: kyvernov1.ResourceDescription{
+				Kinds: []string{
+					"v1/Pod",
 				},
-			}
-
-			resourceFilters = append(resourceFilters, resourceFilterForNamespace)
-
-		default:
-			namespace := resource.Namespace
-			labels := resource.MatchLabels
-			var resourceFilter kyvernov1.ResourceFilter
-			if len(labels) != 0 {
-				resourceFilter = kyvernov1.ResourceFilter{
-					ResourceDescription: kyvernov1.ResourceDescription{
-						Kinds: []string{
-							"v1/Pod",
-						},
-						Namespaces: []string{
-							namespace,
-						},
-						Selector: &metav1.LabelSelector{
-							MatchLabels: labels,
-						},
-					},
-				}
-			} else {
-				resourceFilter = kyvernov1.ResourceFilter{
-					ResourceDescription: kyvernov1.ResourceDescription{
-						Kinds: []string{
-							"v1/Pod",
-						},
-						Namespaces: []string{
-							namespace,
-						},
-					},
-				}
-			}
-
-
-			resourceFilters = append(resourceFilters, resourceFilter)
-
+				Namespaces: cnp.Spec.NsSelector.MatchNames,
+				Selector: &metav1.LabelSelector{
+					MatchLabels: cnp.Spec.ObjSelector.MatchLabels,
+				},
+			},
 		}
-	} 
+		matchFilters = append(matchFilters, resourceFilter)
+	}
+
+	if len(cnp.Spec.NsSelector.ExcludeNames) > 0 {
+		resourceFilter = kyvernov1.ResourceFilter{
+			ResourceDescription: kyvernov1.ResourceDescription{
+				Namespaces: cnp.Spec.NsSelector.ExcludeNames,
+			},
+		}
+		excludeFilters = append(excludeFilters, resourceFilter)
+	}
+
 	background := true
 	return kyvernov1.ClusterPolicy{
 		Spec: kyvernov1.Spec{
@@ -132,7 +103,10 @@ func clusterEscapeToHost(cnp *v1.ClusterNimbusPolicy, rule v1.Rule) kyvernov1.Cl
 				{
 					Name: "restricted",
 					MatchResources: kyvernov1.MatchResources{
-						Any: resourceFilters,
+						Any: matchFilters,
+					},
+					ExcludeResources: kyvernov1.MatchResources{
+						Any: excludeFilters,
 					},
 					Validation: kyvernov1.Validation{
 						PodSecurity : &kyvernov1.PodSecurity{
