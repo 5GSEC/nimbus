@@ -51,46 +51,31 @@ func buildKcpFor(id string, cnp *v1.ClusterNimbusPolicy) kyvernov1.ClusterPolicy
 
 func clusterEscapeToHost(cnp *v1.ClusterNimbusPolicy) kyvernov1.ClusterPolicy {
 
-	labelsPerNamespace := make(map[string]map[string]string) //todo: what if we want to apply policy to  multiple resources in different namespaces?
-
-	// Function to add or update values for a key
-	addOrUpdate := func(key string, innerMap map[string]string) {
-		if val, ok := labelsPerNamespace[key]; ok {
-			// Key exists, update the inner map
-			for k, v := range innerMap {
-				val[k] = v
-			}
-			labelsPerNamespace[key] = val
-		} else {
-			// Key does not exist, add a new entry
-			labelsPerNamespace[key] = innerMap
-		}
-	}
-
-	for _, resource := range cnp.Spec.Selector.Resources {
-		namespace := resource.Namespace
-		addOrUpdate(namespace, resource.MatchLabels)
-	}
-
-	var resourceFilters []kyvernov1.ResourceFilter
+	var matchFilters, excludeFilters []kyvernov1.ResourceFilter
 	var resourceFilter kyvernov1.ResourceFilter
 
-	for namespace, labels := range labelsPerNamespace {
+	if len(cnp.Spec.NsSelector.MatchNames) > 0 {
 		resourceFilter = kyvernov1.ResourceFilter{
 			ResourceDescription: kyvernov1.ResourceDescription{
 				Kinds: []string{
 					"v1/Pod",
 				},
-				Namespaces: []string{
-					namespace,
-				},
+				Namespaces: cnp.Spec.NsSelector.MatchNames,
 				Selector: &metav1.LabelSelector{
-					MatchLabels: labels,
+					MatchLabels: cnp.Spec.ObjSelector.MatchLabels,
 				},
 			},
 		}
+		matchFilters = append(matchFilters, resourceFilter)
+	}
 
-		resourceFilters = append(resourceFilters, resourceFilter)
+	if len(cnp.Spec.NsSelector.ExcludeNames) > 0 {
+		resourceFilter = kyvernov1.ResourceFilter{
+			ResourceDescription: kyvernov1.ResourceDescription{
+				Namespaces: cnp.Spec.NsSelector.ExcludeNames,
+			},
+		}
+		excludeFilters = append(excludeFilters, resourceFilter)
 	}
 
 	background := true
@@ -101,7 +86,10 @@ func clusterEscapeToHost(cnp *v1.ClusterNimbusPolicy) kyvernov1.ClusterPolicy {
 				{
 					Name: "restricted",
 					MatchResources: kyvernov1.MatchResources{
-						Any: resourceFilters,
+						Any: matchFilters,
+					},
+					ExcludeResources: kyvernov1.MatchResources{
+						Any: excludeFilters,
 					},
 					Validation: kyvernov1.Validation{
 						PodSecurity: &kyvernov1.PodSecurity{
