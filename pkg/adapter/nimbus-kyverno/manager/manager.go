@@ -41,7 +41,7 @@ func Run(ctx context.Context) {
 
 	npCh := make(chan common.Request)
 	deletedNpCh := make(chan common.Request)
-	go globalwatcher.WatchNimbusPolicies(ctx, npCh, deletedNpCh)
+	go globalwatcher.WatchNimbusPolicies(ctx, npCh, deletedNpCh, "SecurityIntentBinding")
 
 	clusterNpChan := make(chan string)
 	deletedClusterNpChan := make(chan string)
