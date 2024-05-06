@@ -31,8 +31,7 @@ func kcpInformer() cache.SharedIndexInformer {
 	return informer
 }
 
-
-// WatchKsps watches update and delete event for KyvernoClusterPolicies owned by
+// WatchKcps watches update and delete event for KyvernoClusterPolicies owned by
 // NimbusPolicy or ClusterNimbusPolicy and put their info on respective channels.
 func WatchKcps(ctx context.Context, updatedKcpCh, deletedKcpCh chan string) {
 	logger := log.FromContext(ctx)
@@ -42,7 +41,7 @@ func WatchKcps(ctx context.Context, updatedKcpCh, deletedKcpCh chan string) {
 			oldU := oldObj.(*unstructured.Unstructured)
 			newU := newObj.(*unstructured.Unstructured)
 
-			if adapterutil.IsOrphan(newU.GetOwnerReferences(), "NimbusPolicy") {
+			if adapterutil.IsOrphan(newU.GetOwnerReferences(), "ClusterNimbusPolicy") {
 				logger.V(4).Info("Ignoring orphan KyvernoClusterPolicy", "KyvernoClusterPolicy.Name", oldU.GetName(), "Operation", "Update")
 				return
 			}
@@ -56,7 +55,7 @@ func WatchKcps(ctx context.Context, updatedKcpCh, deletedKcpCh chan string) {
 		},
 		DeleteFunc: func(obj interface{}) {
 			u := obj.(*unstructured.Unstructured)
-			if adapterutil.IsOrphan(u.GetOwnerReferences(), "NimbusPolicy") {
+			if adapterutil.IsOrphan(u.GetOwnerReferences(), "ClusterNimbusPolicy") {
 				logger.V(4).Info("Ignoring orphan KyvernoClusterPolicy", "KyvernoClusterPolicy.Name", u.GetName(), "Operation", "Delete")
 				return
 			}

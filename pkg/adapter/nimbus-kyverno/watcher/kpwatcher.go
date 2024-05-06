@@ -36,8 +36,7 @@ func kpInformer() cache.SharedIndexInformer {
 	return informer
 }
 
-
-// WatchKsps watches update and delete event for KyvernoPolicies owned by
+// WatchKps watches update and delete event for KyvernoPolicies owned by
 // NimbusPolicy or ClusterNimbusPolicy and put their info on respective channels.
 func WatchKps(ctx context.Context, updatedKpCh, deletedKpCh chan common.Request) {
 	logger := log.FromContext(ctx)
