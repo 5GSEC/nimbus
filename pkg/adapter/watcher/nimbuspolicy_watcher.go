@@ -63,7 +63,7 @@ func WatchNimbusPolicies(ctx context.Context, npCh, deleteNpCh chan common.Reque
 			oldU := oldObj.(*unstructured.Unstructured)
 			newU := newObj.(*unstructured.Unstructured)
 
-			if adapterutil.IsOrphan(newU.GetOwnerReferences(), "SecurityIntentBinding") {
+			if adapterutil.IsOrphan(newU.GetOwnerReferences(), ownerKind...) {
 				logger.V(4).Info("Ignoring orphan NimbusPolicy", "NimbusPolicy.Name", oldU.GetName(), "NimbusPolicy.Namespace", oldU.GetNamespace(), "Operation", "Update")
 				return
 			}
@@ -87,7 +87,7 @@ func WatchNimbusPolicies(ctx context.Context, npCh, deleteNpCh chan common.Reque
 		},
 		DeleteFunc: func(obj interface{}) {
 			u := obj.(*unstructured.Unstructured)
-			if adapterutil.IsOrphan(u.GetOwnerReferences(), "SecurityIntentBinding") {
+			if adapterutil.IsOrphan(u.GetOwnerReferences(), ownerKind...) {
 				logger.V(4).Info("Ignoring orphan NimbusPolicy", "NimbusPolicy.Name", u.GetName(), "NimbusPolicy.Namespace", u.GetNamespace(), "Operation", "Delete")
 				return
 			}
