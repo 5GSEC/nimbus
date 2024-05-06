@@ -70,9 +70,11 @@ func Run(ctx context.Context) {
 			reconcileKsp(ctx, updatedKsp.Name, updatedKsp.Namespace, false)
 		case deletedKsp := <-deletedKspCh:
 			reconcileKsp(ctx, deletedKsp.Name, deletedKsp.Namespace, true)
-		case _ = <-clusterNpChan: // Fixme: CreateKSP based on ClusterNP
+		case <-clusterNpChan: // Fixme: CreateKSP based on ClusterNP
+			// From ClusterNP, KubeArmor can create HostSecurityPolicies
+			// The NodeSelector in ClusterNP should be set for such cases
 			fmt.Println("No-op for ClusterNimbusPolicy")
-		case _ = <-deletedClusterNpChan: // Fixme: DeleteKSP based on ClusterNP
+		case <-deletedClusterNpChan: // Fixme: DeleteKSP based on ClusterNP
 			fmt.Println("No-op for ClusterNimbusPolicy")
 		}
 	}
