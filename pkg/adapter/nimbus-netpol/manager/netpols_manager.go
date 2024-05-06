@@ -5,7 +5,6 @@ package manager
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/go-logr/logr"
@@ -40,13 +39,12 @@ func init() {
 }
 
 func Run(ctx context.Context) {
+
+	// Watch NimbusPolicies only, and not ClusterNimbusPolicies as NetworkPolicy is
+	// namespaced scoped
 	npCh := make(chan common.Request)
 	deletedNpCh := make(chan common.Request)
 	go globalwatcher.WatchNimbusPolicies(ctx, npCh, deletedNpCh)
-
-	clusterNpChan := make(chan string)
-	deletedClusterNpChan := make(chan string)
-	go globalwatcher.WatchClusterNimbusPolicies(ctx, clusterNpChan, deletedClusterNpChan)
 
 	updatedNetpolCh := make(chan common.Request)
 	deletedNetpolCh := make(chan common.Request)
@@ -54,11 +52,9 @@ func Run(ctx context.Context) {
 
 	for {
 		select {
-		case _ = <-ctx.Done():
+		case <-ctx.Done():
 			close(npCh)
 			close(deletedNpCh)
-			close(clusterNpChan)
-			close(deletedClusterNpChan)
 			close(updatedNetpolCh)
 			close(deletedNetpolCh)
 			return
@@ -70,10 +66,6 @@ func Run(ctx context.Context) {
 			reconcileNetPol(ctx, updatedNetpol.Name, updatedNetpol.Namespace, false)
 		case deletedNetpol := <-deletedNetpolCh:
 			reconcileNetPol(ctx, deletedNetpol.Name, deletedNetpol.Namespace, true)
-		case _ = <-clusterNpChan: // Fixme: Create netpol based on ClusterNP
-			fmt.Println("No-op for ClusterNimbusPolicy")
-		case _ = <-deletedClusterNpChan: // Fixme: Delete netpol based on ClusterNP
-			fmt.Println("No-op for ClusterNimbusPolicy")
 		}
 	}
 }
