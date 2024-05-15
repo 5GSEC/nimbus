@@ -11,7 +11,7 @@ import (
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	intentv1 "github.com/5GSEC/nimbus/api/v1alpha"
+	intentv1 "github.com/5GSEC/nimbus/api/v1alpha1"
 )
 
 // ExtractNpName extracts the actual NimbusPolicy name from a formatted policy

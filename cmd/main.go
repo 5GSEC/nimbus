@@ -16,7 +16,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
-	v1 "github.com/5GSEC/nimbus/api/v1alpha"
+	v1 "github.com/5GSEC/nimbus/api/v1alpha1"
 	"github.com/5GSEC/nimbus/internal/controller"
 	// Importing third-party Kubernetes resource types
 	//+kubebuilder:scaffold:imports

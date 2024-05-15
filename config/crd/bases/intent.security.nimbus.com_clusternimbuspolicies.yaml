@@ -26,7 +26,7 @@ spec:
     - jsonPath: .status.numberOfAdapterPolicies
       name: Policies
       type: integer
-    name: v1alpha
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: ClusterNimbusPolicy is the Schema for the clusternimbuspolicies

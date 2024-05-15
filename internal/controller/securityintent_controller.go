@@ -14,7 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	v1 "github.com/5GSEC/nimbus/api/v1alpha"
+	v1 "github.com/5GSEC/nimbus/api/v1alpha1"
 )
 
 type SecurityIntentReconciler struct {

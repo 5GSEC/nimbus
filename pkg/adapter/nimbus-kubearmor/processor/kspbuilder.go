@@ -9,7 +9,7 @@ import (
 	"github.com/go-logr/logr"
 	kubearmorv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorController/api/security.kubearmor.com/v1"
 
-	v1 "github.com/5GSEC/nimbus/api/v1alpha"
+	v1 "github.com/5GSEC/nimbus/api/v1alpha1"
 	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 )
 

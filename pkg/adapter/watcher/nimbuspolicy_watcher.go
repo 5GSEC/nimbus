@@ -30,7 +30,7 @@ func init() {
 func npInformer() cache.SharedIndexInformer {
 	nimbusPolicyGvr := schema.GroupVersionResource{
 		Group:    "intent.security.nimbus.com",
-		Version:  "v1",
+		Version:  "v1alpha1",
 		Resource: "nimbuspolicies",
 	}
 	nimbusPolicyInformer := factory.ForResource(nimbusPolicyGvr).Informer()
