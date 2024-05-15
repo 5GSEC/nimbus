@@ -20,7 +20,7 @@ spec:
         - apply:
             file: ../../resources/namespaced/dns-manipulation-sib.yaml
 
-    - name: "Verity NimbusPolicy creation"
+    - name: "Verify NimbusPolicy creation"
       try:
         - assert:
             file: ../nimbus-policy-assert.yaml

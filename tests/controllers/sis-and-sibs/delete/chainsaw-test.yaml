@@ -31,12 +31,12 @@ spec:
       try:
         - delete:
             ref:
-              apiVersion: intent.security.nimbus.com/v1
+              apiVersion: intent.security.nimbus.com/v1alpha1
               kind: SecurityIntent
               name: dns-manipulation
             expect:
               - match:
-                  apiVersion: intent.security.nimbus.com/v1
+                  apiVersion: intent.security.nimbus.com/v1alpha1
                   kind: SecurityIntent
                   name: dns-manipulation
                 check:
@@ -45,7 +45,7 @@ spec:
     - name: "Verify the NimbusPolicy deletion"
       try:
         - script:
-            content: kubectl get np -n $NAMESPACE dns-manipulation-binding
+            content: kubectl get np dns-manipulation-binding
             check:
               ($error != null): true
 
