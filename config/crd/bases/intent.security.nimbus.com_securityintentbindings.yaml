@@ -73,7 +73,7 @@ spec:
               selector:
                 description: Selector defines the selection criteria for resources
                 properties:
-                  wlSelector:
+                  objSelector:
                     properties:
                       matchLabels:
                         additionalProperties:
