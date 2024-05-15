@@ -6,7 +6,7 @@ package processor
 import (
 	"strings"
 
-	v1 "github.com/5GSEC/nimbus/api/v1alpha"
+	v1 "github.com/5GSEC/nimbus/api/v1alpha1"
 	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kyverno/utils"
 	"github.com/go-logr/logr"

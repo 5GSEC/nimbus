@@ -11,7 +11,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	v1 "github.com/5GSEC/nimbus/api/v1alpha"
+	v1 "github.com/5GSEC/nimbus/api/v1alpha1"
 )
 
 // ExtractIntents extract the SecurityIntent from the given SecurityIntentBinding

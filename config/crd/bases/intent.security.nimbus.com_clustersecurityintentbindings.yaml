@@ -29,7 +29,7 @@ spec:
     - jsonPath: .status.clusterNimbusPolicy
       name: ClusterNimbusPolicy
       type: string
-    name: v1alpha
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: ClusterSecurityIntentBinding is the Schema for the clustersecurityintentbindings

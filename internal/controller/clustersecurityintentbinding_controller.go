@@ -23,7 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	v1 "github.com/5GSEC/nimbus/api/v1alpha"
+	v1 "github.com/5GSEC/nimbus/api/v1alpha1"
 	processorerrors "github.com/5GSEC/nimbus/pkg/processor/errors"
 	"github.com/5GSEC/nimbus/pkg/processor/policybuilder"
 )

@@ -19,7 +19,7 @@ import (
 func setupClusterNpInformer() cache.SharedIndexInformer {
 	clusterNpGvr := schema.GroupVersionResource{
 		Group:    "intent.security.nimbus.com",
-		Version:  "v1",
+		Version:  "v1alpha1",
 		Resource: "clusternimbuspolicies",
 	}
 	clusterNpInformer := factory.ForResource(clusterNpGvr).Informer()
