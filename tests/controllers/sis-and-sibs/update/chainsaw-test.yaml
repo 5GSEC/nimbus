@@ -21,7 +21,7 @@ spec:
         - apply:
             file: ../../resources/namespaced/multiple-sis.yaml
 
-    - name: "Verity NimbusPolicy creation"
+    - name: "Verify NimbusPolicy creation"
       try:
         - assert:
             file: nimbus-policy-for-multiple-sis.yaml
