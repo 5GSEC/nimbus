@@ -124,7 +124,7 @@ func BuildNimbusPolicyFromClusterBinding(ctx context.Context, logger logr.Logger
 	// A prefix is added to the name of the policy
 	nimbusPolicy := &v1.NimbusPolicy{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "nimbusGen-" + csib.Name,
+			Name:      "nimbus-ctlr-gen-" + csib.Name,
 			Namespace: ns,
 			Labels:    csib.Labels,
 		},
