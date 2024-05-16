@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2024 Authors of Nimbus
+
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: multiple-ns-add-csib
+spec:
+  description: >
+    This test validates that when a NimbusPolicy is directly deleted, nimbus automatically re-creates the
+    deleted NimbusPolicy or not.
+  steps:
+    - name: "Create prod, dev, staging Namespaces"
+      try:
+        - apply:
+            file: ns.yaml
+
+    - name: "Create a SecurityIntent"
+      try:
+        - apply:
+            file: ../../resources/namespaced/dns-manipulation-si.yaml
+
+    - name: "Create a ClusterSecurityIntentBinding"
+      try:
+        - apply:
+            file: dns-manipulation-csib.yaml
+
+    - name: "Verify ClusterNimbusPolicy creation"
+      try:
+        - assert:
+            file: cluster-nimbus-policy-assert.yaml
+
+    - name: "Verify NimbusPolicy creation in each namespace"
+      try:
+        - assert:
+            file: nimbus-policy-assert.yaml

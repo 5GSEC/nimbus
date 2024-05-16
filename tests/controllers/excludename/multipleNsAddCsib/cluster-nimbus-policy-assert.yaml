@@ -1,0 +1,18 @@
+apiVersion: intent.security.nimbus.com/v1alpha1
+kind: ClusterNimbusPolicy
+metadata:
+  name: dns-manipulation-binding
+  ownerReferences:
+    - apiVersion: intent.security.nimbus.com/v1alpha1
+      blockOwnerDeletion: true
+      controller: true
+      kind: ClusterSecurityIntentBinding
+      name: dns-manipulation-binding
+spec:
+  rules:
+  - description: An adversary can manipulate DNS requests to redirect network traffic
+      and potentially reveal end user activity.
+    id: dnsManipulation
+    rule:
+      action: Block
+

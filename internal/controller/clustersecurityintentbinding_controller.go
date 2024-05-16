@@ -274,6 +274,8 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 	}
 
 	// get the nimbus policies
+	// TODO: we might want to index the nimbus policies based on the owner since we are anyways filtering
+	// based on the owner later
 	var npList v1.NimbusPolicyList
 	err := r.List(ctx, &npList)
 	if err != nil && !apierrors.IsNotFound(err) {
@@ -291,6 +293,9 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 			}
 		}
 	}
+
+	// DEBUG: print the tracking list
+	logger.Info("Printing the TrackingList", "Length of initial list", len(npFilteredTrackingList))
 
 	// get the namespaces. This is used in case 2, 3
 	var nsList corev1.NamespaceList
@@ -313,6 +318,9 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 			}
 		}
 	}
+
+	// DEBUG: print the tracking list
+	logger.Info("Printing the Namespace List", "Length of namespace list", len(nsList.Items))
 
 	// All the cases are mutually exclusive
 	if len(csib.Spec.Selector.NsSelector.MatchNames) > 0 {
@@ -361,11 +369,12 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 	} else {
 		// Case 3: If no selector is specified, we need to create NPs in all the namespaces. All namespaces
 		//         are present in nsList
+		var seen bool
 		for _, ns_spec := range nsList.Items {
-			var seen bool = false
-			for _, np_actual := range npFilteredTrackingList {
+			seen = false
+			for np_idx, np_actual := range npFilteredTrackingList {
 				if ns_spec.Name == np_actual.np.Namespace {
-					np_actual.update = true
+					npFilteredTrackingList[np_idx].update = true
 					seen = true
 					break
 				}
@@ -373,12 +382,15 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 			if !seen {
 				// construct the nimbus policy object as it is not present in cluster
 				nimbusPolicy, err := policybuilder.BuildNimbusPolicyFromClusterBinding(ctx, logger, r.Client, r.Scheme, csib, ns_spec.Name)
-				if err != nil {
+				if err == nil {
 					npFilteredTrackingList = append(npFilteredTrackingList, npTrackingObj{create: true, np: nimbusPolicy})
 				}
 			}
 		}
 	}
+
+	// DEBUG: print the tracking list
+	logger.Info("Printing the TrackingList", "Length of updated list", len(npFilteredTrackingList))
 
 	// run through the tracking list, and create/update/delete the nimbus policies
 	for _, nobj := range npFilteredTrackingList {
@@ -422,7 +434,7 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 
 		} else {
 			// delete the object
-			logger.Info("Deleting NimbusPolicy since no namespacs found", "NimbusPolicyName", nobj.np.Name)
+			logger.Info("Deleting NimbusPolicy since no namespaces found", "NimbusPolicyName", nobj.np.Name)
 			if err = r.Delete(context.Background(), nobj.np); err != nil {
 				logger.Error(err, "failed to delete NimbusPolicy", "NimbusPolicyName", nobj.np.Name)
 				return err
