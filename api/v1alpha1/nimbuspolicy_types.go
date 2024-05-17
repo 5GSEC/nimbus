@@ -68,21 +68,24 @@ func init() {
 }
 
 // Check equality of the spec to decide if we need to update the object
-func (a NimbusPolicy) Equal(b NimbusPolicy) bool {
+func (a NimbusPolicy) Equal(b NimbusPolicy) (string, bool) {
 	if a.ObjectMeta.Name != b.ObjectMeta.Name {
-		return false
+		return "diff: name", false
 	}
 	if a.ObjectMeta.Namespace != b.ObjectMeta.Namespace {
-		return false
+		return "diff: Namespace", false
 	}
-	if reflect.DeepEqual(a.ObjectMeta.Labels, b.ObjectMeta.Labels) {
-		return false
+
+	if !reflect.DeepEqual(a.ObjectMeta.Labels, b.ObjectMeta.Labels) {
+		return "diff: Labels", false
 	}
-	if reflect.DeepEqual(a.ObjectMeta.OwnerReferences, b.ObjectMeta.OwnerReferences) {
-		return false
+
+	if !reflect.DeepEqual(a.ObjectMeta.OwnerReferences, b.ObjectMeta.OwnerReferences) {
+		return "diff: OwnerReferences", false
 	}
-	if reflect.DeepEqual(a.Spec, b.Spec) {
-		return false
+
+	if !reflect.DeepEqual(a.Spec, b.Spec) {
+		return "diff: Spec", false
 	}
-	return true
+	return "", true
 }

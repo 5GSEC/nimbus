@@ -421,6 +421,15 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 				return err
 			}
 
+			// Check equality
+			// Another option is to check which CSIB was used to generate this nimbus policy
+			if reason, equal := nobj.np.Equal(*newNimbusPolicy); equal {
+				logger.Info("NimbusPolicy not updated as objects are same", "NimbusPolicy.name", nobj.np.Name, "Namespace", nobj.np.Namespace)
+				continue
+			} else {
+				logger.Info("NimbusPolicy updated as objects are not same", "NimbusPolicy.name", nobj.np.Name, "Namespace", nobj.np.Namespace, "Reason", reason)
+			}
+
 			newNimbusPolicy.ObjectMeta.ResourceVersion = nobj.np.ObjectMeta.ResourceVersion
 			newNimbusPolicy.Status.Status = StatusCreated
 			newNimbusPolicy.Status.LastUpdated = metav1.Now()
