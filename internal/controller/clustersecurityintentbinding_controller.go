@@ -407,7 +407,7 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 		} else if nobj.update {
 			// update intents, parameters. Build a new Nimbus Policy
 			// TODO: Might be more efficient to simply update the intents, params
-			newNimbusPolicy, err := policybuilder.BuildClusterNimbusPolicy(ctx, logger, r.Client, r.Scheme, csib)
+			newNimbusPolicy, err := policybuilder.BuildNimbusPolicyFromClusterBinding(ctx, logger, r.Client, r.Scheme, csib, nobj.np.Namespace)
 			if err != nil {
 				if errors.Is(err, processorerrors.ErrSecurityIntentsNotFound) {
 					// Since the SecurityIntent(s) referenced in ClusterSecurityIntentBinding spec do not
