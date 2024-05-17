@@ -5,6 +5,7 @@ apiVersion: intent.security.nimbus.com/v1alpha1
 kind: NimbusPolicy
 metadata:
   name: nimbus-ctlr-gen-dns-manipulation-binding
+  namespace: prod
   ownerReferences:
     - apiVersion: intent.security.nimbus.com/v1alpha1
       blockOwnerDeletion: true
