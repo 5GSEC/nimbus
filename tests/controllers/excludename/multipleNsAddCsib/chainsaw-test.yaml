@@ -49,3 +49,80 @@ spec:
       try:
         - assert:
             file: nimbus-policy-assert-prod.yaml
+
+    - name: "Delete prod namespace"
+      try:
+        - delete:
+            ref:
+              apiVersion: v1
+              kind: namespace
+              name: prod
+            expect:
+              - match:
+                  # this check applies only if the match
+                  # statement below evaluates to `true`
+                  apiVersion: v1
+                  kind: namespace
+                  name: prod
+                check:
+                  # an error is expected, this will:
+                  # - succeed if the operation failed
+                  # - fail if the operation succeeded
+                  ($error != null): true
+
+    - name: "Verify the NimbusPolicy deletion"
+      try:
+        - script:
+            content: kubectl -n prod get np nimbus-ctrl-gen-dns-manipulation-binding
+            check:
+              ($error != null): true
+
+    - name: "Verify ClusterNimbusPolicy presence"
+      try:
+        - assert:
+            file: cluster-nimbus-policy-assert.yaml
+
+    - name: "Verify NimbusPolicy presence in default"
+      try:
+        - assert:
+            file: nimbus-policy-assert.yaml
+
+    - name: "Verify NimbusPolicy presence in dev namespace"
+      try:
+        - assert:
+            file: nimbus-policy-assert-dev.yaml
+
+    - name: "Verify NimbusPolicy presence in staging namespace"
+      try:
+        - assert:
+            file: nimbus-policy-assert-staging.yaml
+
+    - name: "Create prod Namespace again"
+      try:
+        - apply:
+            file: ns.yaml
+
+    - name: "Verify ClusterNimbusPolicy presence"
+      try:
+        - assert:
+            file: cluster-nimbus-policy-assert.yaml
+
+    - name: "Verify NimbusPolicy presence in default"
+      try:
+        - assert:
+            file: nimbus-policy-assert.yaml
+
+    - name: "Verify NimbusPolicy presence in dev namespace"
+      try:
+        - assert:
+            file: nimbus-policy-assert-dev.yaml
+
+    - name: "Verify NimbusPolicy presence in staging namespace"
+      try:
+        - assert:
+            file: nimbus-policy-assert-staging.yaml
+
+    - name: "Verify NimbusPolicy creation in prod namespace"
+      try:
+        - assert:
+            file: nimbus-policy-assert-prod.yaml
