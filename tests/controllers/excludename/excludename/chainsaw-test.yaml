@@ -1,0 +1,115 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2024 Authors of Nimbus
+
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: match-names-add-csib
+spec:
+  description: >
+    1. Add dev, staging, prod ns
+    2. Adds a csib for excludeNames with dev, staging
+    3. Update csib for excludeNames with dev, prod, regional
+    4. Add a ns with name management - this ns is not part of the excludeNames
+       Add a ns with name regional - this is part of the excludeNames
+  steps:
+    - name: "1. Create prod, dev, staging Namespaces"
+      try:
+        - apply:
+            file: ns.yaml
+
+    - name: "Create a SecurityIntent"
+      try:
+        - apply:
+            file: ../../resources/namespaced/escape-to-host-si.yaml
+
+    - name: "2. Create a ClusterSecurityIntentBinding"
+      try:
+        - apply:
+            file: escape-to-host-csib.yaml
+
+    - name: "Verify ClusterNimbusPolicy creation"
+      try:
+        - assert:
+            file: cluster-nimbus-policy-assert.yaml
+
+    - name: "Verify NimbusPolicy absence in dev namespace"
+      try:
+        - script:
+            content: kubectl -n dev get np nimbus-ctrl-gen-escape-to-host
+            check:
+              ($error != null): true
+
+    - name: "Verify NimbusPolicy absence in staging namespace"
+      try:
+        - script:
+            content: kubectl -n staging get np nimbus-ctrl-gen-escape-to-host
+            check:
+              ($error != null): true
+
+    - name: "Verify NimbusPolicy creation in prod"
+      try:
+        - assert:
+            file: nimbus-policy-assert-prod.yaml
+
+    - name: "3. Update the ClusterSecurityIntentBinding to have dev, prod, regional in excludeNames"
+      try:
+        - apply:
+            file: escape-to-host-dev-prod-regional-csib.yaml
+
+    - name: "Verify ClusterNimbusPolicy presence"
+      try:
+        - assert:
+            file: cluster-nimbus-policy-assert.yaml
+
+    - name: "Verify NimbusPolicy absence in dev namespace"
+      try:
+        - script:
+            content: kubectl -n dev get np nimbus-ctrl-gen-escape-to-host
+            check:
+              ($error != null): true
+
+    - name: "Verify NimbusPolicy absence in prod namespace"
+      try:
+        - script:
+            content: kubectl -n prod get np nimbus-ctrl-gen-escape-to-host
+            check:
+              ($error != null): true
+
+    - name: "4. Create the management, regional namespaces"
+      try:
+        - apply:
+            file: ns-regional-mgmt.yaml
+
+    - name: "Verify ClusterNimbusPolicy presence"
+      try:
+        - assert:
+            file: cluster-nimbus-policy-assert.yaml
+
+    - name: "Verify NimbusPolicy absence in dev namespace"
+      try:
+        - script:
+            content: kubectl -n dev get np nimbus-ctrl-gen-escape-to-host
+            check:
+              ($error != null): true
+
+    - name: "Verify NimbusPolicy absence in dev namespace"
+      try:
+        - script:
+            content: kubectl -n prod get np nimbus-ctrl-gen-escape-to-host
+            check:
+              ($error != null): true
+
+    - name: "Verify NimbusPolicy absence in prod namespace"
+      try:
+        - script:
+            content: kubectl -n prod get np nimbus-ctrl-gen-escape-to-host
+            check:
+              ($error != null): true
+
+    - name: "Verify NimbusPolicy absence in regional namespace"
+      try:
+        - script:
+            content: kubectl -n regional get np nimbus-ctrl-gen-escape-to-host
+            check:
+              ($error != null): true

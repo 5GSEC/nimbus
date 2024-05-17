@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: management
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: regional
