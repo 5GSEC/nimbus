@@ -4,6 +4,8 @@
 package v1alpha1
 
 import (
+	"reflect"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -63,4 +65,24 @@ type NimbusPolicyList struct {
 
 func init() {
 	SchemeBuilder.Register(&NimbusPolicy{}, &NimbusPolicyList{})
+}
+
+// Check equality of the spec to decide if we need to update the object
+func (a NimbusPolicy) Equal(b NimbusPolicy) bool {
+	if a.ObjectMeta.Name != b.ObjectMeta.Name {
+		return false
+	}
+	if a.ObjectMeta.Namespace != b.ObjectMeta.Namespace {
+		return false
+	}
+	if reflect.DeepEqual(a.ObjectMeta.Labels, b.ObjectMeta.Labels) {
+		return false
+	}
+	if reflect.DeepEqual(a.ObjectMeta.OwnerReferences, b.ObjectMeta.OwnerReferences) {
+		return false
+	}
+	if reflect.DeepEqual(a.Spec, b.Spec) {
+		return false
+	}
+	return true
 }
