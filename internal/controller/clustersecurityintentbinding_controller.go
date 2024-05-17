@@ -326,11 +326,12 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 	if len(csib.Spec.Selector.NsSelector.MatchNames) > 0 {
 		// Case 1: If the matchNames is set in the CSIB, we simply need to create the required NP in the
 		// specified namespaces. Also, need to delete any other NPs found.
+		var seen bool
 		for _, ns_spec := range csib.Spec.Selector.NsSelector.MatchNames {
-			var seen bool = false
-			for _, np_actual := range npFilteredTrackingList {
+			seen = false
+			for index, np_actual := range npFilteredTrackingList {
 				if ns_spec == np_actual.np.Namespace {
-					np_actual.update = true
+					npFilteredTrackingList[index].update = true
 					seen = true
 					break
 				}
@@ -338,7 +339,7 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 			if !seen {
 				// construct the nimbus policy object as it is not present in cluster
 				nimbusPolicy, err := policybuilder.BuildNimbusPolicyFromClusterBinding(ctx, logger, r.Client, r.Scheme, csib, ns_spec)
-				if err != nil {
+				if err == nil {
 					npFilteredTrackingList = append(npFilteredTrackingList, npTrackingObj{create: true, np: nimbusPolicy})
 				}
 
@@ -360,7 +361,7 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 			if !seen {
 				// construct the nimbus policy object as it is not present in cluster
 				nimbusPolicy, err := policybuilder.BuildNimbusPolicyFromClusterBinding(ctx, logger, r.Client, r.Scheme, csib, ns_spec.ns.Name)
-				if err != nil {
+				if err == nil {
 					npFilteredTrackingList = append(npFilteredTrackingList, npTrackingObj{create: true, np: nimbusPolicy})
 				}
 
