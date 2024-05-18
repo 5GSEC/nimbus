@@ -1,4 +1,4 @@
-apiVersion: intent.security.nimbus.com/v1alpha
+apiVersion: intent.security.nimbus.com/v1alpha1
 kind: SecurityIntent
 metadata:
   name: escape-to-host
@@ -9,7 +9,7 @@ spec:
     action: Block
 
 ---
-apiVersion: intent.security.nimbus.com/v1alpha
+apiVersion: intent.security.nimbus.com/v1alpha1
 kind: ClusterSecurityIntentBinding
 metadata:
   name: escape-to-host-binding

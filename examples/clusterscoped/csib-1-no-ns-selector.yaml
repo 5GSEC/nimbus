@@ -1,4 +1,4 @@
-apiVersion: intent.security.nimbus.com/v1alpha
+apiVersion: intent.security.nimbus.com/v1alpha1
 kind: SecurityIntent
 metadata:
   name: escape-to-host
@@ -8,7 +8,7 @@ spec:
     description: "A attacker can breach container boundaries and can gain access to the host machine"
     action: Block
 ---
-apiVersion: intent.security.nimbus.com/v1alpha
+apiVersion: intent.security.nimbus.com/v1alpha1
 kind: ClusterSecurityIntentBinding
 metadata:
   name: escape-to-host-binding
