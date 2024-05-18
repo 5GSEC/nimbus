@@ -58,14 +58,14 @@ func clusterEscapeToHost(cnp *v1.ClusterNimbusPolicy, rule v1.Rule) kyvernov1.Cl
 		switch rule.Params["psa_level"][0] {
 		case "restricted":
 			psa_level = api.LevelRestricted
-		
+
 		case "privileged":
 			psa_level = api.LevelPrivileged
-	
+
 		default:
 			psa_level = api.LevelBaseline
 		}
-		
+
 	}
 
 	var matchFilters, excludeFilters []kyvernov1.ResourceFilter
@@ -109,8 +109,8 @@ func clusterEscapeToHost(cnp *v1.ClusterNimbusPolicy, rule v1.Rule) kyvernov1.Cl
 						Any: excludeFilters,
 					},
 					Validation: kyvernov1.Validation{
-						PodSecurity : &kyvernov1.PodSecurity{
-							Level: psa_level,
+						PodSecurity: &kyvernov1.PodSecurity{
+							Level:   psa_level,
 							Version: "latest",
 						},
 					},
