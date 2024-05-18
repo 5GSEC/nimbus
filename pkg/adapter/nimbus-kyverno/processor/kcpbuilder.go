@@ -21,7 +21,7 @@ func BuildKcpsFrom(logger logr.Logger, cnp *v1.ClusterNimbusPolicy) []kyvernov1.
 		id := nimbusRule.ID
 		if idpool.IsIdSupportedBy(id, "kyverno") {
 			kcp := buildKcpFor(id, cnp)
-			kcp.Name = cnp.Name + "-" + strings.ToLower(id) + "-" + strings.ToLower(id)
+			kcp.Name = cnp.Name + "-" + strings.ToLower(id)
 			kcp.Annotations = make(map[string]string)
 			kcp.Annotations["policies.kyverno.io/description"] = nimbusRule.Description
 			if nimbusRule.Rule.RuleAction == "Block" {
@@ -43,13 +43,29 @@ func BuildKcpsFrom(logger logr.Logger, cnp *v1.ClusterNimbusPolicy) []kyvernov1.
 func buildKcpFor(id string, cnp *v1.ClusterNimbusPolicy) kyvernov1.ClusterPolicy {
 	switch id {
 	case idpool.EscapeToHost:
-		return clusterEscapeToHost(cnp)
+		return clusterEscapeToHost(cnp, cnp.Spec.NimbusRules[0].Rule)
 	default:
 		return kyvernov1.ClusterPolicy{}
 	}
 }
 
-func clusterEscapeToHost(cnp *v1.ClusterNimbusPolicy) kyvernov1.ClusterPolicy {
+func clusterEscapeToHost(cnp *v1.ClusterNimbusPolicy, rule v1.Rule) kyvernov1.ClusterPolicy {
+	var psa_level api.Level = api.LevelBaseline
+
+	if rule.Params["psa_level"] != nil {
+
+		switch rule.Params["psa_level"][0] {
+		case "restricted":
+			psa_level = api.LevelRestricted
+
+		case "privileged":
+			psa_level = api.LevelPrivileged
+
+		default:
+			psa_level = api.LevelBaseline
+		}
+
+	}
 
 	var matchFilters, excludeFilters []kyvernov1.ResourceFilter
 	var resourceFilter kyvernov1.ResourceFilter
@@ -93,7 +109,7 @@ func clusterEscapeToHost(cnp *v1.ClusterNimbusPolicy) kyvernov1.ClusterPolicy {
 					},
 					Validation: kyvernov1.Validation{
 						PodSecurity: &kyvernov1.PodSecurity{
-							Level:   api.LevelRestricted,
+							Level:   psa_level,
 							Version: "latest",
 						},
 					},
