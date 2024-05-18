@@ -51,7 +51,7 @@ func buildKpFor(id string, np *v1.NimbusPolicy) kyvernov1.Policy {
 }
 
 func escapeToHost(np *v1.NimbusPolicy, rule v1.Rule) kyvernov1.Policy {
-	background := true
+
 	var psa_level api.Level = api.LevelBaseline
 
 	if rule.Params["psa_level"] != nil {
@@ -59,28 +59,18 @@ func escapeToHost(np *v1.NimbusPolicy, rule v1.Rule) kyvernov1.Policy {
 		switch rule.Params["psa_level"][0] {
 		case "restricted":
 			psa_level = api.LevelRestricted
-		
+
 		case "privileged":
 			psa_level = api.LevelPrivileged
-	
+
 		default:
 			psa_level = api.LevelBaseline
 		}
-		
 	}
 
 	labels := np.Spec.Selector.MatchLabels
-	lis := rule.Params["exclude_resources"]
-	exclusionLables := make(map[string]string)
-	for _, item := range lis {
-		parts := strings.Split(item, ":")
-		if len(parts) == 2 {
-			key := parts[0]
-			value := parts[1]
-			exclusionLables[key] = value
-		}
-	}
 
+	background := true
 	kp := kyvernov1.Policy{
 		Spec: kyvernov1.Spec{
 			Background: &background,
