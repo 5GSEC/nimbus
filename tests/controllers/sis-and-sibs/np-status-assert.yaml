@@ -6,5 +6,5 @@ kind: NimbusPolicy
 metadata:
   name: dns-manipulation-binding
 status:
-  numberOfAdapterPolicies: 0
+  numberOfAdapterPolicies: 2
   status: Created
