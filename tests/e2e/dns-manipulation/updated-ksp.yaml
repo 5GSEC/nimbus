@@ -1,0 +1,22 @@
+apiVersion: security.kubearmor.com/v1
+kind: KubeArmorPolicy
+metadata:
+  annotations:
+    app.kubernetes.io/managed-by: nimbus-kubearmor
+  name: dns-manipulation-binding-dnsmanipulation
+spec:
+  action: Block
+  capabilities: {}
+  file:
+    matchPaths:
+    - path: /etc/resolv.conf
+      readOnly: true
+  message: An adversary can manipulate DNS requests to redirect network traffic
+    and potentially reveal end user activity.
+  network: {}
+  process: {}
+  selector:
+    matchLabels:
+      env: backend
+  syscalls: {}
+  

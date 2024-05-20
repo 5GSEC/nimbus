@@ -1,0 +1,65 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: netpol-kubearmor-adapter-policy-creation
+spec:
+  description: >
+   This test validates that creating a `dns-manipulation` SecurityIntent with SecurityIntentBinding generates the expected Network Policy and KubeArmor policy.
+  steps:
+    - name: "Create a SecurityIntent"
+      try:
+        - apply:
+            file: ../../resources/namespaced/dns-manipulation-si.yaml
+
+    - name: "Create a SecurityIntentBinding"
+      try:
+        - apply:
+            file: ../../resources/namespaced/dns-manipulation-sib.yaml
+
+    - name: "Verify NimbusPolicy creation"
+      try:
+        - assert:
+            file: ../nimbus-policy-assert.yaml
+
+    - name: "Verify NetworkPolicy creation"
+      try:
+        - assert:
+            file: ../netpol.yaml
+    
+    - name: "Verify KubeArmorPolicy creation"
+      try:
+        - assert:
+            file: ../ksp.yaml
+    
+    - name: "Verify status of created SecurityIntentBinding"
+      description: >
+        Verify the created SecurityIntentBinding status subresource includes the number and names of bound intents, 
+        along with the generated NimbusPolicy name.
+      try:
+        - assert:
+            file: ../sib-status-assert.yaml
+
+    - name: "Verify status of created NimbusPolicy"
+      try:
+        - assert:
+            file: ../np-status-assert.yaml
+
+    - name: "Verify that the corresponding NimbusPolicy status has been updated with the generated Network Policy"
+      try:
+      - script:
+          content: kubectl get np -n $NAMESPACE dns-manipulation-binding -o=jsonpath='{.status.adapterPolicies}'
+          check: 
+            (contains($stdout, 'NetworkPolicy/dns-manipulation-binding-dnsmanipulation')): true
+
+    - name: "Verify that the corresponding NimbusPolicy status has been updated with the generated KubeArmor Policy"
+      try:
+      - script:
+          content: kubectl get np -n $NAMESPACE dns-manipulation-binding -o=jsonpath='{.status.adapterPolicies}'
+          check: 
+            (contains($stdout, 'KubeArmorPolicy/dns-manipulation-binding-dnsmanipulation')): true
+
+    
+    

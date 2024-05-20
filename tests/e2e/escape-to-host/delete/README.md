@@ -1,6 +1,6 @@
-# Test: `securityintentbinding-creation`
+# Test: `kyverno-adapter-policy-deletion`
 
-This test validates the automated creation of a NimbusPolicy resource when a corresponding SecurityIntent  and SecurityIntentBinding are created.
+This test validates if the adapters re-create their manually deleted generated policies.
 
 
 ## Steps
@@ -9,9 +9,10 @@ This test validates the automated creation of a NimbusPolicy resource when a cor
 |:-:|---|:-:|:-:|:-:|:-:|
 | 1 | [Create a SecurityIntent](#step-Create a SecurityIntent) | 0 | 1 | 0 | 0 |
 | 2 | [Create a SecurityIntentBinding](#step-Create a SecurityIntentBinding) | 0 | 1 | 0 | 0 |
-| 3 | [Verity NimbusPolicy creation](#step-Verity NimbusPolicy creation) | 0 | 1 | 0 | 0 |
-| 4 | [Verify status of created SecurityIntentBinding](#step-Verify status of created SecurityIntentBinding) | 0 | 1 | 0 | 0 |
-| 5 | [Verify status of created NimbusPolicy](#step-Verify status of created NimbusPolicy) | 0 | 1 | 0 | 0 |
+| 3 | [Verify NimbusPolicy creation](#step-Verify NimbusPolicy creation) | 0 | 1 | 0 | 0 |
+| 4 | [Verify KyvernoPolicy creation](#step-Verify KyvernoPolicy creation) | 0 | 1 | 0 | 0 |
+| 5 | [Delete existing KyvernoPolicy](#step-Delete existing KyvernoPolicy) | 0 | 1 | 0 | 0 |
+| 6 | [Verify KyvernoPolicy recreation](#step-Verify KyvernoPolicy recreation) | 0 | 1 | 0 | 0 |
 
 ### Step: `Create a SecurityIntent`
 
@@ -33,7 +34,7 @@ This test validates the automated creation of a NimbusPolicy resource when a cor
 |:-:|---|:-:|:-:|---|
 | 1 | `apply` | 0 | 0 | *No description* |
 
-### Step: `Verity NimbusPolicy creation`
+### Step: `Verify NimbusPolicy creation`
 
 *No description*
 
@@ -43,10 +44,9 @@ This test validates the automated creation of a NimbusPolicy resource when a cor
 |:-:|---|:-:|:-:|---|
 | 1 | `assert` | 0 | 0 | *No description* |
 
-### Step: `Verify status of created SecurityIntentBinding`
+### Step: `Verify KyvernoPolicy creation`
 
-Verify the created SecurityIntentBinding status subresource includes the number and names of bound intents,  along with the generated NimbusPolicy name.
-
+*No description*
 
 #### Try
 
@@ -54,7 +54,17 @@ Verify the created SecurityIntentBinding status subresource includes the number 
 |:-:|---|:-:|:-:|---|
 | 1 | `assert` | 0 | 0 | *No description* |
 
-### Step: `Verify status of created NimbusPolicy`
+### Step: `Delete existing KyvernoPolicy`
+
+*No description*
+
+#### Try
+
+| # | Operation | Bindings | Outputs | Description |
+|:-:|---|:-:|:-:|---|
+| 1 | `delete` | 0 | 0 | *No description* |
+
+### Step: `Verify KyvernoPolicy recreation`
 
 *No description*
 

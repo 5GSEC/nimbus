@@ -51,7 +51,7 @@ func buildKpFor(id string, np *v1.NimbusPolicy) kyvernov1.Policy {
 }
 
 func escapeToHost(np *v1.NimbusPolicy, rule v1.Rule) kyvernov1.Policy {
-
+  
 	var psa_level api.Level = api.LevelBaseline
 
 	if rule.Params["psa_level"] != nil {

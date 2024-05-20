@@ -37,6 +37,8 @@ func GetGVK(kind string) string {
 		kind = "StatefulSet"
 	case "daemonset" :
 		kind = "DaemonSet"
+	default:
+		kind = Title(kind)
 	}
 
 	// Combine API version and kind to form the GroupVersionKind string
