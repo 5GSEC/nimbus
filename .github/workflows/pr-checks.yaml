@@ -98,6 +98,7 @@ jobs:
   chainsaw-integration-tests:
     name: Integration-Test
     runs-on: ubuntu-latest
+    needs: [build-nimbus-image, build-adapters-image]
     steps:
         - name: Checkout
           uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
