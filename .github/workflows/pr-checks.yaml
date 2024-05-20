@@ -127,7 +127,9 @@ jobs:
           run: |
             kubectl wait --for=condition=ready --timeout=5m -n nimbus pod -l app.kubernetes.io/name=nimbus
             kubectl get pods -A
-          
+            kubectl get crd nimbuspolicies.intent.security.nimbus.com -o yaml  | grep name:
+            kubectl get crd clusternimbuspolicies.intent.security.nimbus.com -o yaml  | grep name:
+
         - name: Run Tests
           run: make integration-test
 
