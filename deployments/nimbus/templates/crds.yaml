@@ -1,8 +1,9 @@
+---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: clusternimbuspolicies.intent.security.nimbus.com
 spec:
   group: intent.security.nimbus.com
@@ -11,129 +12,133 @@ spec:
     listKind: ClusterNimbusPolicyList
     plural: clusternimbuspolicies
     shortNames:
-      - cwnp
+    - cwnp
     singular: clusternimbuspolicy
   scope: Cluster
   versions:
-    - additionalPrinterColumns:
-        - jsonPath: .status.status
-          name: Status
-          type: string
-        - jsonPath: .metadata.creationTimestamp
-          name: Age
-          type: date
-        - jsonPath: .status.numberOfAdapterPolicies
-          name: Policies
-          type: integer
-      name: v1
-      schema:
-        openAPIV3Schema:
-          description: ClusterNimbusPolicy is the Schema for the clusternimbuspolicies
-            API
-          properties:
-            apiVersion:
-              description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-              type: string
-            kind:
-              description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-              type: string
-            metadata:
-              type: object
-            spec:
-              description: ClusterNimbusPolicySpec defines the desired state of ClusterNimbusPolicy
-              properties:
-                rules:
-                  items:
-                    description: NimbusRules represents a single policy rule with an
-                      ID, type, description, and detailed rule configurations.
-                    properties:
-                      description:
-                        type: string
-                      id:
-                        type: string
-                      rule:
-                        properties:
-                          action:
-                            type: string
-                          params:
-                            additionalProperties:
-                              items:
-                                type: string
-                              type: array
-                            type: object
-                        required:
-                          - action
-                        type: object
-                      type:
-                        type: string
-                    required:
-                      - id
-                      - rule
+  - additionalPrinterColumns:
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - jsonPath: .status.numberOfAdapterPolicies
+      name: Policies
+      type: integer
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: ClusterNimbusPolicy is the Schema for the clusternimbuspolicies
+          API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ClusterNimbusPolicySpec defines the desired state of ClusterNimbusPolicy
+            properties:
+              nodeSelector:
+                properties:
+                  matchLabels:
+                    additionalProperties:
+                      type: string
                     type: object
-                  type: array
-                selector:
+                type: object
+              nsSelector:
+                properties:
+                  excludeNames:
+                    items:
+                      type: string
+                    type: array
+                  matchNames:
+                    items:
+                      type: string
+                    type: array
+                type: object
+              objSelector:
+                properties:
+                  matchLabels:
+                    additionalProperties:
+                      type: string
+                    type: object
+                type: object
+              rules:
+                items:
+                  description: NimbusRules represents a single policy rule with an
+                    ID, type, description, and detailed rule configurations.
                   properties:
-                    cel:
-                      items:
-                        type: string
-                      type: array
-                    resources:
-                      items:
-                        properties:
-                          kind:
-                            type: string
-                          matchLabels:
-                            additionalProperties:
+                    description:
+                      type: string
+                    id:
+                      type: string
+                    rule:
+                      properties:
+                        action:
+                          type: string
+                        params:
+                          additionalProperties:
+                            items:
                               type: string
-                            type: object
-                          name:
-                            type: string
-                          namespace:
-                            type: string
-                        required:
-                          - kind
-                          - name
-                        type: object
-                      type: array
+                            type: array
+                          type: object
+                      required:
+                      - action
+                      type: object
+                    type:
+                      type: string
+                  required:
+                  - id
+                  - rule
                   type: object
-              required:
-                - rules
-                - selector
-              type: object
-            status:
-              description: ClusterNimbusPolicyStatus defines the observed state of ClusterNimbusPolicy
-              properties:
-                adapterPolicies:
-                  items:
-                    type: string
-                  type: array
-                lastUpdated:
-                  format: date-time
+                type: array
+            required:
+            - rules
+            type: object
+          status:
+            description: ClusterNimbusPolicyStatus defines the observed state of ClusterNimbusPolicy
+            properties:
+              adapterPolicies:
+                items:
                   type: string
-                numberOfAdapterPolicies:
-                  format: int32
-                  type: integer
-                status:
-                  type: string
-              required:
-                - numberOfAdapterPolicies
-                - status
-              type: object
-          type: object
-      served: true
-      storage: true
-      subresources:
-        status: {}
+                type: array
+              lastUpdated:
+                format: date-time
+                type: string
+              numberOfAdapterPolicies:
+                format: int32
+                type: integer
+              status:
+                type: string
+            required:
+            - numberOfAdapterPolicies
+            - status
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: clustersecurityintentbindings.intent.security.nimbus.com
 spec:
   group: intent.security.nimbus.com
@@ -142,119 +147,130 @@ spec:
     listKind: ClusterSecurityIntentBindingList
     plural: clustersecurityintentbindings
     shortNames:
-      - csib
+    - csib
     singular: clustersecurityintentbinding
   scope: Cluster
   versions:
-    - additionalPrinterColumns:
-        - jsonPath: .status.status
-          name: Status
-          type: string
-        - jsonPath: .metadata.creationTimestamp
-          name: Age
-          type: date
-        - jsonPath: .status.numberOfBoundIntents
-          name: Intents
-          type: integer
-        - jsonPath: .status.clusterNimbusPolicy
-          name: ClusterNimbusPolicy
-          type: string
-      name: v1
-      schema:
-        openAPIV3Schema:
-          description: ClusterSecurityIntentBinding is the Schema for the clustersecurityintentbindings
-            API
-          properties:
-            apiVersion:
-              description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-              type: string
-            kind:
-              description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-              type: string
-            metadata:
-              type: object
-            spec:
-              description: ClusterSecurityIntentBindingSpec defines the desired state
-                of ClusterSecurityIntentBinding
-              properties:
-                intents:
-                  items:
-                    description: MatchIntent struct defines the request for a specific
-                      SecurityIntent
-                    properties:
-                      name:
-                        type: string
-                    required:
-                      - name
-                    type: object
-                  type: array
-                selector:
+  - additionalPrinterColumns:
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - jsonPath: .status.numberOfBoundIntents
+      name: Intents
+      type: integer
+    - jsonPath: .status.clusterNimbusPolicy
+      name: ClusterNimbusPolicy
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: ClusterSecurityIntentBinding is the Schema for the clustersecurityintentbindings
+          API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ClusterSecurityIntentBindingSpec defines the desired state
+              of ClusterSecurityIntentBinding
+            properties:
+              cel:
+                items:
+                  type: string
+                type: array
+              intents:
+                items:
+                  description: MatchIntent struct defines the request for a specific
+                    SecurityIntent
                   properties:
-                    cel:
-                      items:
-                        type: string
-                      type: array
-                    resources:
-                      items:
-                        properties:
-                          kind:
-                            type: string
-                          matchLabels:
-                            additionalProperties:
-                              type: string
-                            type: object
-                          name:
-                            type: string
-                          namespace:
-                            type: string
-                        required:
-                          - kind
-                          - name
-                        type: object
-                      type: array
+                    name:
+                      type: string
+                  required:
+                  - name
                   type: object
-              required:
-                - intents
-                - selector
-              type: object
-            status:
-              description: ClusterSecurityIntentBindingStatus defines the observed state
-                of ClusterSecurityIntentBinding
-              properties:
-                boundIntents:
-                  items:
-                    type: string
-                  type: array
-                clusterNimbusPolicy:
+                type: array
+              selector:
+                properties:
+                  nodeSelector:
+                    properties:
+                      matchLabels:
+                        additionalProperties:
+                          type: string
+                        type: object
+                    type: object
+                  nsSelector:
+                    properties:
+                      excludeNames:
+                        items:
+                          type: string
+                        type: array
+                      matchNames:
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  objSelector:
+                    properties:
+                      matchLabels:
+                        additionalProperties:
+                          type: string
+                        type: object
+                    type: object
+                type: object
+            required:
+            - intents
+            type: object
+          status:
+            description: ClusterSecurityIntentBindingStatus defines the observed state
+              of ClusterSecurityIntentBinding
+            properties:
+              boundIntents:
+                items:
                   type: string
-                lastUpdated:
-                  format: date-time
-                  type: string
-                numberOfBoundIntents:
-                  format: int32
-                  type: integer
-                status:
-                  type: string
-              required:
-                - clusterNimbusPolicy
-                - numberOfBoundIntents
-                - status
-              type: object
-          type: object
-      served: true
-      storage: true
-      subresources:
-        status: {}
+                type: array
+              clusterNimbusPolicy:
+                type: string
+              lastUpdated:
+                format: date-time
+                type: string
+              numberOfBoundIntents:
+                format: int32
+                type: integer
+              status:
+                type: string
+            required:
+            - clusterNimbusPolicy
+            - numberOfBoundIntents
+            - status
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: nimbuspolicies.intent.security.nimbus.com
 spec:
   group: intent.security.nimbus.com
@@ -263,118 +279,119 @@ spec:
     listKind: NimbusPolicyList
     plural: nimbuspolicies
     shortNames:
-      - np
+    - np
     singular: nimbuspolicy
   scope: Namespaced
   versions:
-    - additionalPrinterColumns:
-        - jsonPath: .status.status
-          name: Status
-          type: string
-        - jsonPath: .metadata.creationTimestamp
-          name: Age
-          type: date
-        - jsonPath: .status.numberOfAdapterPolicies
-          name: Policies
-          type: integer
-      name: v1
-      schema:
-        openAPIV3Schema:
-          description: NimbusPolicy is the Schema for the nimbuspolicies API
-          properties:
-            apiVersion:
-              description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-              type: string
-            kind:
-              description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-              type: string
-            metadata:
-              type: object
-            spec:
-              description: NimbusPolicySpec defines the desired state of NimbusPolicy
-              properties:
-                rules:
-                  description: PolicyType specifies the type of policy, e.g., "Network",
-                    "System", "Cluster"
-                  items:
-                    description: NimbusRules represents a single policy rule with an
-                      ID, type, description, and detailed rule configurations.
-                    properties:
-                      description:
-                        type: string
-                      id:
-                        type: string
-                      rule:
-                        properties:
-                          action:
-                            type: string
-                          params:
-                            additionalProperties:
-                              items:
-                                type: string
-                              type: array
-                            type: object
-                        required:
-                          - action
-                        type: object
-                      type:
-                        type: string
-                    required:
-                      - id
-                      - rule
-                    type: object
-                  type: array
-                selector:
-                  description: Selector specifies the target resources to which the
-                    policy applies
+  - additionalPrinterColumns:
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - jsonPath: .status.numberOfAdapterPolicies
+      name: Policies
+      type: integer
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: NimbusPolicy is the Schema for the nimbuspolicies API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: NimbusPolicySpec defines the desired state of NimbusPolicy
+            properties:
+              rules:
+                description: PolicyType specifies the type of policy, e.g., "Network",
+                  "System", "Cluster"
+                items:
+                  description: NimbusRules represents a single policy rule with an
+                    ID, type, description, and detailed rule configurations.
                   properties:
-                    matchLabels:
-                      additionalProperties:
-                        type: string
-                      description: MatchLabels is a map that holds key-value pairs to
-                        match against labels of resources.
+                    description:
+                      type: string
+                    id:
+                      type: string
+                    rule:
+                      properties:
+                        action:
+                          type: string
+                        params:
+                          additionalProperties:
+                            items:
+                              type: string
+                            type: array
+                          type: object
+                      required:
+                      - action
                       type: object
+                    type:
+                      type: string
                   required:
-                    - matchLabels
+                  - id
+                  - rule
                   type: object
-              required:
-                - rules
-                - selector
-              type: object
-            status:
-              description: NimbusPolicyStatus defines the observed state of NimbusPolicy
-              properties:
-                adapterPolicies:
-                  items:
-                    type: string
-                  type: array
-                lastUpdated:
-                  format: date-time
+                type: array
+              selector:
+                description: Selector specifies the target resources to which the
+                  policy applies
+                properties:
+                  matchLabels:
+                    additionalProperties:
+                      type: string
+                    type: object
+                type: object
+            required:
+            - rules
+            - selector
+            type: object
+          status:
+            description: NimbusPolicyStatus defines the observed state of NimbusPolicy
+            properties:
+              adapterPolicies:
+                items:
                   type: string
-                numberOfAdapterPolicies:
-                  format: int32
-                  type: integer
-                status:
-                  type: string
-              required:
-                - numberOfAdapterPolicies
-                - status
-              type: object
-          type: object
-      served: true
-      storage: true
-      subresources:
-        status: {}
+                type: array
+              lastUpdated:
+                format: date-time
+                type: string
+              numberOfAdapterPolicies:
+                format: int32
+                type: integer
+              status:
+                type: string
+            required:
+            - numberOfAdapterPolicies
+            - status
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: securityintentbindings.intent.security.nimbus.com
 spec:
   group: intent.security.nimbus.com
@@ -383,139 +400,113 @@ spec:
     listKind: SecurityIntentBindingList
     plural: securityintentbindings
     shortNames:
-      - sib
+    - sib
     singular: securityintentbinding
   scope: Namespaced
   versions:
-    - additionalPrinterColumns:
-        - jsonPath: .status.status
-          name: Status
-          type: string
-        - jsonPath: .metadata.creationTimestamp
-          name: Age
-          type: date
-        - jsonPath: .status.numberOfBoundIntents
-          name: Intents
-          type: integer
-        - jsonPath: .status.nimbusPolicy
-          name: NimbusPolicy
-          type: string
-      name: v1
-      schema:
-        openAPIV3Schema:
-          description: SecurityIntentBinding is the Schema for the securityintentbindings
-            API
-          properties:
-            apiVersion:
-              description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-              type: string
-            kind:
-              description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-              type: string
-            metadata:
-              type: object
-            spec:
-              description: SecurityIntentBindingSpec defines the desired state of SecurityIntentBinding
-              properties:
-                intents:
-                  items:
-                    description: MatchIntent struct defines the request for a specific
-                      SecurityIntent
-                    properties:
-                      name:
-                        type: string
-                    required:
-                      - name
-                    type: object
-                  type: array
-                selector:
-                  description: Selector defines the selection criteria for resources
+  - additionalPrinterColumns:
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - jsonPath: .status.numberOfBoundIntents
+      name: Intents
+      type: integer
+    - jsonPath: .status.nimbusPolicy
+      name: NimbusPolicy
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: SecurityIntentBinding is the Schema for the securityintentbindings
+          API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: SecurityIntentBindingSpec defines the desired state of SecurityIntentBinding
+            properties:
+              cel:
+                items:
+                  type: string
+                type: array
+              intents:
+                items:
+                  description: MatchIntent struct defines the request for a specific
+                    SecurityIntent
                   properties:
-                    all:
-                      items:
-                        description: ResourceFilter is used for filtering resources
-                        properties:
-                          resources:
-                            description: Resources defines the properties for selecting
-                              Kubernetes resources
-                            properties:
-                              kind:
-                                type: string
-                              matchLabels:
-                                additionalProperties:
-                                  type: string
-                                type: object
-                              namespace:
-                                type: string
-                            type: object
-                        type: object
-                      type: array
-                    any:
-                      items:
-                        description: ResourceFilter is used for filtering resources
-                        properties:
-                          resources:
-                            description: Resources defines the properties for selecting
-                              Kubernetes resources
-                            properties:
-                              kind:
-                                type: string
-                              matchLabels:
-                                additionalProperties:
-                                  type: string
-                                type: object
-                              namespace:
-                                type: string
-                            type: object
-                        type: object
-                      type: array
-                    cel:
-                      items:
-                        type: string
-                      type: array
+                    name:
+                      type: string
+                  required:
+                  - name
                   type: object
-              required:
-                - intents
-                - selector
-              type: object
-            status:
-              description: SecurityIntentBindingStatus defines the observed state of
-                SecurityIntentBinding
-              properties:
-                boundIntents:
-                  items:
-                    type: string
-                  type: array
-                lastUpdated:
-                  format: date-time
+                type: array
+              selector:
+                description: Selector defines the selection criteria for resources
+                properties:
+                  objSelector:
+                    properties:
+                      matchLabels:
+                        additionalProperties:
+                          type: string
+                        type: object
+                    type: object
+                type: object
+            required:
+            - intents
+            - selector
+            type: object
+          status:
+            description: SecurityIntentBindingStatus defines the observed state of
+              SecurityIntentBinding
+            properties:
+              boundIntents:
+                items:
                   type: string
-                nimbusPolicy:
-                  type: string
-                numberOfBoundIntents:
-                  format: int32
-                  type: integer
-                status:
-                  type: string
-              required:
-                - nimbusPolicy
-                - numberOfBoundIntents
-                - status
-              type: object
-          type: object
-      served: true
-      storage: true
-      subresources:
-        status: {}
+                type: array
+              lastUpdated:
+                format: date-time
+                type: string
+              nimbusPolicy:
+                type: string
+              numberOfBoundIntents:
+                format: int32
+                type: integer
+              status:
+                type: string
+            required:
+            - nimbusPolicy
+            - numberOfBoundIntents
+            - status
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: securityintents.intent.security.nimbus.com
 spec:
   group: intent.security.nimbus.com
@@ -524,103 +515,110 @@ spec:
     listKind: SecurityIntentList
     plural: securityintents
     shortNames:
-      - si
+    - si
     singular: securityintent
   scope: Cluster
   versions:
-    - additionalPrinterColumns:
-        - jsonPath: .status.status
-          name: Status
-          type: string
-        - jsonPath: .metadata.creationTimestamp
-          name: Age
-          type: date
-        - jsonPath: .spec.intent.id
-          name: ID
-          priority: 1
-          type: string
-        - jsonPath: .spec.intent.action
-          name: Action
-          priority: 1
-          type: string
-      name: v1
-      schema:
-        openAPIV3Schema:
-          description: SecurityIntent is the Schema for the securityintents API
-          properties:
-            apiVersion:
-              description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-              type: string
-            kind:
-              description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-              type: string
-            metadata:
-              type: object
-            spec:
-              description: SecurityIntentSpec defines the desired state of SecurityIntent
-              properties:
-                intent:
-                  description: Intent defines the security policy details
-                  properties:
-                    action:
-                      description: Action defines how the security policy will be enforced.
-                      type: string
-                    description:
-                      description: Description is human-readable explanation of the
-                        intent's purpose.
-                      type: string
-                    id:
-                      description: ID is predefined in adapter ID pool. Used by security
-                        engines to generate corresponding security policies.
-                      pattern: ^[a-zA-Z0-9]*$
-                      type: string
-                    params:
-                      additionalProperties:
-                        items:
-                          type: string
-                        type: array
-                      description: Params are key-value pairs that allows fine-tuning
-                        of intents to specific requirements.
-                      type: object
-                    severity:
-                      default: Low
-                      description: Severity defines the potential impact of a security
-                        violation related to the intent. Defaults to Low.
-                      type: string
-                    tags:
-                      description: Tags are additional metadata for categorization and
-                        grouping of intents. Facilitates searching, filtering, and management
-                        of security policies.
+  - additionalPrinterColumns:
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - jsonPath: .spec.intent.id
+      name: ID
+      priority: 1
+      type: string
+    - jsonPath: .spec.intent.action
+      name: Action
+      priority: 1
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: SecurityIntent is the Schema for the securityintents API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: SecurityIntentSpec defines the desired state of SecurityIntent
+            properties:
+              intent:
+                description: Intent defines the security policy details
+                properties:
+                  action:
+                    description: Action defines how the security policy will be enforced.
+                    type: string
+                  description:
+                    description: Description is human-readable explanation of the
+                      intent's purpose.
+                    type: string
+                  id:
+                    description: |-
+                      ID is predefined in adapter ID pool.
+                      Used by security engines to generate corresponding security policies.
+                    pattern: ^[a-zA-Z0-9]*$
+                    type: string
+                  params:
+                    additionalProperties:
                       items:
                         type: string
                       type: array
-                  required:
-                    - action
-                    - id
-                  type: object
-              required:
-                - intent
-              type: object
-            status:
-              description: SecurityIntentStatus defines the observed state of SecurityIntent
-              properties:
-                action:
-                  type: string
-                id:
-                  type: string
-                status:
-                  type: string
-              required:
+                    description: Params are key-value pairs that allows fine-tuning
+                      of intents to specific requirements.
+                    type: object
+                  severity:
+                    default: Low
+                    description: |-
+                      Severity defines the potential impact of a security violation related to the intent.
+                      Defaults to Low.
+                    type: string
+                  tags:
+                    description: |-
+                      Tags are additional metadata for categorization and grouping of intents.
+                      Facilitates searching, filtering, and management of security policies.
+                    items:
+                      type: string
+                    type: array
+                required:
                 - action
                 - id
-                - status
-              type: object
-          type: object
-      served: true
-      storage: true
-      subresources:
-        status: {}
+                type: object
+            required:
+            - intent
+            type: object
+          status:
+            description: SecurityIntentStatus defines the observed state of SecurityIntent
+            properties:
+              action:
+                type: string
+              id:
+                type: string
+              status:
+                type: string
+            required:
+            - action
+            - id
+            - status
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
