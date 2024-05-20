@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+ name: nginx-coco
+ labels:
+    app: nginx-test
+spec:
+  runtimeClassName: kata-qemu-snp
+  containers:
+    - name: nginx-kata-snp
+      image: 1hcoj/nginx
+  imagePullSecrets:
+    - name: regcred
+
+

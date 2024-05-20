@@ -19,6 +19,7 @@ const (
 	EscapeToHost              = "escapeToHost"
 	DisallowChRoot            = "disallowChRoot"
 	DisallowCapabilities      = "disallowCapabilities"
+	CocoWorkload              = "cocoWorkload"
 )
 
 // KaIds are IDs supported by KubeArmor.
@@ -45,6 +46,10 @@ var KyvIds = []string{
 	EscapeToHost,
 }
 
+var CocoIds = []string{
+	CocoWorkload,
+}
+
 // IsIdSupportedBy determines whether a given ID is supported by a security engine.
 func IsIdSupportedBy(id, securityEngine string) bool {
 	switch strings.ToLower(securityEngine) {
@@ -54,6 +59,8 @@ func IsIdSupportedBy(id, securityEngine string) bool {
 		return in(id, NetPolIDs)
 	case "kyverno":
 		return in(id, KyvIds)
+	case "coco":
+		return in(id, CocoIds)
 	default:
 		return false
 	}
