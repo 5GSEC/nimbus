@@ -109,3 +109,37 @@ make run
 ### From Helm Chart
 
 Follow [this](../deployments/nimbus-netpol/Readme.md) guide to install `nimbus-netpol` adapter.
+
+## nimbus-kyverno
+
+> [!Note]
+> The `nimbus-kyverno` adapter leverages the [Kyverno](https://kyverno.io/) security engine for its functionality.
+> To use this adapter, you'll need Kyverno installed. Please
+> follow [this](https://kyverno.io/docs/installation/methods/) guide for
+> installation.
+> Creating a KyvernoPolicy resource without Kyverno will have no effect.
+
+### From source
+
+Clone the repository:
+
+```shell
+git clone https://github.com/5GSEC/nimbus.git
+```
+
+Go to nimbus-kyverno directory:
+
+```shell
+cd nimbus/pkg/adapter/nimbus-kyverno
+```
+
+Run `nimbus-kyverno` adapter:
+
+```shell
+make run
+```
+
+### From Helm Chart
+
+Follow [this](../deployments/nimbus-kyverno/Readme.md) guide to install `nimbus-kyverno` adapter.
+
