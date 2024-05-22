@@ -31,3 +31,6 @@ spec:
         matchLabels:
           app: mongo
           env: prod
+      
+      - kind: Namespace
+        name: default
