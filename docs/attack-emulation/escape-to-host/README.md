@@ -9,7 +9,7 @@ Commands
 
 
 ```bash
-kubectl create -f https://raw.githubusercontent.com/5GSEC/nimbus/main/attack-emulation/escape-to-host/pod.yaml
+kubectl create -f https://raw.githubusercontent.com/5GSEC/nimbus/main/docs/attack-emulation/escape-to-host/pod.yaml
 ```
 
 ```bash
