@@ -1,0 +1,28 @@
+apiVersion: intent.security.nimbus.com/v1
+kind: SecurityIntent
+metadata:
+  name: escape-to-host
+spec:
+  intent:
+    id: escapeToHost
+    description: "A attacker can breach container boundaries and can gain access to the host machine"
+    action: Block
+    params:
+      psa_level: ["restricted"]
+
+---
+
+apiVersion: intent.security.nimbus.com/v1
+kind: SecurityIntentBinding
+metadata:
+  name: escape-to-host-binding
+spec:
+  intents:
+    - name: escape-to-host
+  selector:
+    any:
+      - resources:
+          kind: Pod
+          namespace: default
+          matchLabels:
+            app: nginx  
