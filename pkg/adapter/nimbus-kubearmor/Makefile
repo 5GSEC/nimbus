@@ -4,7 +4,7 @@
 # Image URL to use all building/pushing image targets
 IMG ?= 5gsec/nimbus-kubearmor
 # Image Tag to use all building/pushing image targets
-TAG ?= v0.1
+TAG ?= latest
 
 CONTAINER_TOOL ?= docker
 BINARY ?= bin/nimbus-kubearmor
@@ -17,14 +17,13 @@ run: build
 
 .PHONY: docker-build
 docker-build:
-	$(CONTAINER_TOOL) build -t ${IMG}:${TAG} -t ${IMG}:latest --build-arg VERSION=${TAG} -f ./Dockerfile ../../../
+	$(CONTAINER_TOOL) build -t ${IMG}:${TAG} --build-arg VERSION=${TAG} -f ./Dockerfile ../../../
 
 .PHONY: docker-push
 docker-push:
 	$(CONTAINER_TOOL) push ${IMG}:${TAG}
-	$(CONTAINER_TOOL) push ${IMG}:latest
 
-PLATFORMS ?= linux/arm64,linux/amd64,linux/s390x,linux/ppc64le
+PLATFORMS ?= linux/arm64,linux/amd64
 .PHONY: docker-buildx
 docker-buildx:
 	# copy existing Dockerfile and insert --platform=${BUILDPLATFORM} into Dockerfile.cross, and preserve the original Dockerfile
