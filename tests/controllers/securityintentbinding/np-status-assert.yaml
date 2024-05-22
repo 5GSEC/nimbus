@@ -12,5 +12,5 @@ metadata:
       kind: SecurityIntentBinding
       name: dns-manipulation-binding
 status:
-  numberOfAdapterPolicies: 2
+  numberOfAdapterPolicies: 0
   status: Created
