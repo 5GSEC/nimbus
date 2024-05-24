@@ -4,33 +4,20 @@
 package watcher
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/cache"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	adapterutil "github.com/5GSEC/nimbus/pkg/adapter/util"
 )
 
-func setupClusterNpInformer() cache.SharedIndexInformer {
-	clusterNpGvr := schema.GroupVersionResource{
-		Group:    "intent.security.nimbus.com",
-		Version:  "v1alpha1",
-		Resource: "clusternimbuspolicies",
-	}
-	clusterNpInformer := factory.ForResource(clusterNpGvr).Informer()
-	return clusterNpInformer
-}
-
 // WatchClusterNimbusPolicies watches for create, update and delete events for
 // ClusterNimbusPolicies owned by ClusterSecurityIntentBinding and put their info
 // on respective channels.
 func WatchClusterNimbusPolicies(ctx context.Context, clusterNpChan chan string, deletedClusterNpChan chan *unstructured.Unstructured) {
-	clusterNpInformer := setupClusterNpInformer()
+	clusterNimbusPolicyInformer := clusterNpInformer()
 	logger := log.FromContext(ctx)
 
 	handlers := cache.ResourceEventHandlerFuncs{
@@ -52,16 +39,10 @@ func WatchClusterNimbusPolicies(ctx context.Context, clusterNpChan chan string, 
 				return
 			}
 
-			oldSpec, errOld := oldU.Object["spec"].(map[string]interface{})
-			newSpec, errNew := newU.Object["spec"].(map[string]interface{})
-
-			if errOld && errNew {
-				oldSpecBytes, _ := json.Marshal(oldSpec)
-				newSpecBytes, _ := json.Marshal(newSpec)
-				if bytes.Equal(oldSpecBytes, newSpecBytes) {
-					return
-				}
+			if oldU.GetGeneration() == newU.GetGeneration() {
+				return
 			}
+
 			logger.Info("ClusterNimbusPolicy modified", "ClusterNimbusPolicy.Name", newU.GetName())
 			clusterNpChan <- newU.GetName()
 		},
@@ -75,11 +56,11 @@ func WatchClusterNimbusPolicies(ctx context.Context, clusterNpChan chan string, 
 			deletedClusterNpChan <- u
 		},
 	}
-	_, err := clusterNpInformer.AddEventHandler(handlers)
+	_, err := clusterNimbusPolicyInformer.AddEventHandler(handlers)
 	if err != nil {
 		logger.Error(err, "failed to add event handlers")
 		return
 	}
 	logger.Info("ClusterNimbusPolicy watcher started")
-	clusterNpInformer.Run(ctx.Done())
+	clusterNimbusPolicyInformer.Run(ctx.Done())
 }
