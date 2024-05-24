@@ -295,9 +295,6 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 		}
 	}
 
-	// DEBUG: print the tracking list
-	logger.Info("Printing the TrackingList", "Length of initial list", len(npFilteredTrackingList))
-
 	// get the namespaces. This is used in case 2, 3
 	var nsList corev1.NamespaceList
 	var nsFilteredList []nsTrackingObj
@@ -390,9 +387,6 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 			}
 		}
 	}
-
-	// DEBUG: print the tracking list
-	logger.Info("Printing the TrackingList", "Length of updated list", len(npFilteredTrackingList))
 
 	// run through the tracking list, and create/update/delete the nimbus policies
 	for _, nobj := range npFilteredTrackingList {

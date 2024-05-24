@@ -12,7 +12,6 @@ metadata:
       controller: true
       kind: ClusterSecurityIntentBinding
       name: escape-to-host
-      # Since UID is not predictable so don't add it.
 spec:
   rules:
     - description: A attacker can breach container boundaries and can gain access to 

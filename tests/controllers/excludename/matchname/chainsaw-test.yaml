@@ -57,15 +57,10 @@ spec:
               name: staging
             expect:
               - match:
-                  # this check applies only if the match
-                  # statement below evaluates to `true`
                   apiVersion: v1
                   kind: namespace
                   name: staging
                 check:
-                  # an error is expected, this will:
-                  # - succeed if the operation failed
-                  # - fail if the operation succeeded
                   ($error != null): true
 
     - name: "Verify the NimbusPolicy deletion in staging"
