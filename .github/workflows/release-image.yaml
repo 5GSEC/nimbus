@@ -11,6 +11,10 @@ on:
         description: 'current working directory'
         required: true
         type: string
+      NAME:
+        description: 'app name'
+        required: true
+        type: string
 
 jobs:
   release-image:
@@ -18,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -40,6 +44,17 @@ jobs:
           else
             echo "tag=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
           fi
+
+      - name: Build image
+        run: make docker-build
+        working-directory: ${{ inputs.WORKING_DIRECTORY }}
+
+      - name: Scan image
+        uses: anchore/scan-action@v3
+        with:
+          image: '5gsec/${{ inputs.NAME }}:v0.1'
+          severity-cutoff: critical
+          output-format: sarif
 
       - name: Build and push image
         working-directory: ${{ inputs.WORKING_DIRECTORY }}

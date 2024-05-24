@@ -1,28 +1,49 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2023 Authors of Nimbus
 
-name: Release Charts
+name: Stable release
 
 on:
-  push:
-    branches:
-      - main
-      - "v*"
-    paths:
-      - "deployments/**"
   create:
-    branches:
+    tags:
       - "v*"
 
+permissions: read-all
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  release:
+  release-nimbus-image:
+    if: github.repository == '5GSEC/nimbus'
+    name: Build and push nimbus image
+    uses: ./.github/workflows/release-image.yaml
+    with:
+      WORKING_DIRECTORY: .
+      NAME: nimbus
+    secrets: inherit
+
+  release-adapters-image:
+    if: github.repository == '5GSEC/nimbus'
+    strategy:
+      matrix:
+        adapters: [ "nimbus-kubearmor", "nimbus-netpol", "nimbus-kyverno" ]
+    name: Build and push ${{ matrix.adapters }} adapter's image
+    uses: ./.github/workflows/release-image.yaml
+    with:
+      WORKING_DIRECTORY: ./pkg/adapter/${{ matrix.adapters }}
+      NAME: ${{ matrix.adapters }}
+    secrets: inherit
+
+  release_helm_charts:
     if: github.repository == '5GSEC/nimbus'
     permissions:
       contents: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Helm
         uses: azure/setup-helm@v3
