@@ -2,15 +2,10 @@
 # Copyright 2023 Authors of Nimbus
 
 name: Latest release
-
 on:
   push:
     branches:
       - main
-      - "v*"
-  create:
-    branches:
-      - "v*"
 
 permissions: read-all
 
@@ -19,16 +14,41 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  files-changed:
+    name: Detect what files changed
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      nimbus: ${{ steps.filter.outputs.nimbus}}
+      adapters: ${{ steps.filter.outputs.adapters }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3.0.2
+        id: filter
+        with:
+          filters: |
+            nimbus:
+              - 'cmd/**'
+              - 'internal/**'
+              - 'pkg/processor/**'
+              - 'Dockerfile'
+              - 'Makefile'
+            adapters:
+              - 'pkg/adapter/**'
+
   release-nimbus-image:
-    if: github.repository == '5GSEC/nimbus'
+    needs: files-changed
+    if: ${{ github.repository == '5GSEC/nimbus' && needs.files-changed.outputs.nimbus == 'true' }}
     name: Build and push nimbus image
     uses: ./.github/workflows/release-image.yaml
     with:
       WORKING_DIRECTORY: .
+      NAME: nimbus
     secrets: inherit
 
   release-adapters-image:
-    if: github.repository == '5GSEC/nimbus'
+    needs: files-changed
+    if: ${{ github.repository == '5GSEC/nimbus' && needs.files-changed.outputs.adapters == 'true' }}
     strategy:
       matrix:
         adapters: [ "nimbus-kubearmor", "nimbus-netpol", "nimbus-kyverno" ]
@@ -36,4 +56,5 @@ jobs:
     uses: ./.github/workflows/release-image.yaml
     with:
       WORKING_DIRECTORY: ./pkg/adapter/${{ matrix.adapters }}
+      NAME: ${{ matrix.adapters }}
     secrets: inherit
