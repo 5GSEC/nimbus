@@ -1,0 +1,63 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+name: Stable release
+
+on:
+  create:
+    tags:
+      - "v*"
+
+permissions: read-all
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release-nimbus-image:
+    if: github.repository == '5GSEC/nimbus'
+    name: Build and push nimbus image
+    uses: ./.github/workflows/release-image.yaml
+    with:
+      WORKING_DIRECTORY: .
+      NAME: nimbus
+    secrets: inherit
+
+  release-adapters-image:
+    if: github.repository == '5GSEC/nimbus'
+    strategy:
+      matrix:
+        adapters: [ "nimbus-kubearmor", "nimbus-netpol", "nimbus-kyverno" ]
+    name: Build and push ${{ matrix.adapters }} adapter's image
+    uses: ./.github/workflows/release-image.yaml
+    with:
+      WORKING_DIRECTORY: ./pkg/adapter/${{ matrix.adapters }}
+      NAME: ${{ matrix.adapters }}
+    secrets: inherit
+
+  release_helm_charts:
+    if: github.repository == '5GSEC/nimbus'
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Publish Helm chart
+        uses: stefanprodan/helm-gh-pages@master
+        with:
+          # Access token which can push to a different repo in the same org
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
+          charts_dir: deployments/
+          # repo where charts would be published
+          owner: 5GSEC
+          repository: charts
+          branch: gh-pages
+          charts_url: https://5gsec.github.io/charts/
+          commit_username: "github-actions[bot]"
+          commit_email: "github-actions[bot]@users.noreply.github.com"
