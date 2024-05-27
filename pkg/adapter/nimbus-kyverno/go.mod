@@ -1,6 +1,8 @@
 module github.com/5GSEC/nimbus/pkg/adapter/nimbus-kyverno
 
-go 1.22
+go 1.22.0
+
+toolchain go1.22.1
 
 require github.com/kyverno/kyverno v1.11.4
 
