@@ -16,7 +16,7 @@ spec:
   intents:
     - name: escape-to-host
   selector:
-    NsSelector:
+    nsSelector:
       matchNames:
         ns-1
       excludeNames:
