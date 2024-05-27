@@ -49,7 +49,7 @@ func buildKcpFor(id string, cnp *v1alpha1.ClusterNimbusPolicy) kyvernov1.Cluster
 	}
 }
 
-func clusterEscapeToHost(cnp *v1alpha1.ClusterNimbusPolicy, rule v1.Rule) kyvernov1.ClusterPolicy {
+func clusterEscapeToHost(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1.Rule) kyvernov1.ClusterPolicy {
 	var psa_level api.Level = api.LevelBaseline
 
 	if rule.Params["psa_level"] != nil {

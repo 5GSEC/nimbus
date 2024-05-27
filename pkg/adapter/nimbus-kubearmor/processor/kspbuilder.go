@@ -13,7 +13,7 @@ import (
 	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 )
 
-func BuildKspsFrom(logger logr.Logger, np *v1alpha1.NimbusPolicy) []kubearmorv1alpha1.KubeArmorPolicy {
+func BuildKspsFrom(logger logr.Logger, np *v1alpha1.NimbusPolicy) []kubearmorv1.KubeArmorPolicy {
 	// Build KSPs based on given IDs
 	var ksps []kubearmorv1.KubeArmorPolicy
 	var ksp kubearmorv1.KubeArmorPolicy
