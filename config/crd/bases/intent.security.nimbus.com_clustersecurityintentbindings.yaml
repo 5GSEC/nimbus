@@ -91,7 +91,7 @@ spec:
                           type: string
                         type: array
                     type: object
-                  objSelector:
+                  workloadSelector:
                     properties:
                       matchLabels:
                         additionalProperties:

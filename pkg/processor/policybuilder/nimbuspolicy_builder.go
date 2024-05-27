@@ -42,7 +42,7 @@ func BuildNimbusPolicy(ctx context.Context, logger logr.Logger, k8sClient client
 		})
 	}
 
-	matchLabels, err := extractSelector(ctx, k8sClient, sib.Namespace, sib.Spec.Selector.ObjSelector, sib.Spec.CEL)
+	matchLabels, err := extractSelector(ctx, k8sClient, sib.Namespace, sib.Spec.Selector.WorkloadSelector, sib.Spec.CEL)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func BuildNimbusPolicy(ctx context.Context, logger logr.Logger, k8sClient client
 			Labels:    sib.Labels,
 		},
 		Spec: v1.NimbusPolicySpec{
-			Selector: v1.WorkloadSelector{
+			Selector: v1.LabelSelector{
 				MatchLabels: matchLabels,
 			},
 			NimbusRules: nimbusRules,
@@ -73,7 +73,7 @@ func BuildNimbusPolicy(ctx context.Context, logger logr.Logger, k8sClient client
 }
 
 // extractSelector extracts match labels from a Selector.
-func extractSelector(ctx context.Context, k8sClient client.Client, namespace string, selector v1.WorkloadSelector, cel []string) (map[string]string, error) {
+func extractSelector(ctx context.Context, k8sClient client.Client, namespace string, selector v1.LabelSelector, cel []string) (map[string]string, error) {
 	matchLabels := make(map[string]string) // Initialize map for match labels.
 
 	// Process CEL expressions.
@@ -129,8 +129,8 @@ func BuildNimbusPolicyFromClusterBinding(ctx context.Context, logger logr.Logger
 			Labels:    csib.Labels,
 		},
 		Spec: v1.NimbusPolicySpec{
-			Selector: v1.WorkloadSelector{
-				MatchLabels: csib.Spec.Selector.ObjSelector.MatchLabels,
+			Selector: v1.LabelSelector{
+				MatchLabels: csib.Spec.Selector.WorkloadSelector.MatchLabels,
 			},
 			NimbusRules: nimbusRules,
 		},

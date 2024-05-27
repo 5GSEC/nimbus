@@ -70,13 +70,6 @@ spec:
                       type: string
                     type: array
                 type: object
-              objSelector:
-                properties:
-                  matchLabels:
-                    additionalProperties:
-                      type: string
-                    type: object
-                type: object
               rules:
                 items:
                   description: NimbusRules represents a single policy rule with an
@@ -106,6 +99,13 @@ spec:
                   - rule
                   type: object
                 type: array
+              workloadSelector:
+                properties:
+                  matchLabels:
+                    additionalProperties:
+                      type: string
+                    type: object
+                type: object
             required:
             - rules
             type: object

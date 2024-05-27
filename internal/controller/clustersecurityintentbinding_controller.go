@@ -23,7 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	v1 "github.com/5GSEC/nimbus/api/v1alpha1"
+	v1alpha1 "github.com/5GSEC/nimbus/api/v1alpha1"
 	processorerrors "github.com/5GSEC/nimbus/pkg/processor/errors"
 	"github.com/5GSEC/nimbus/pkg/processor/policybuilder"
 )
@@ -45,7 +45,7 @@ type ClusterSecurityIntentBindingReconciler struct {
 func (r *ClusterSecurityIntentBindingReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
-	csib := &v1.ClusterSecurityIntentBinding{}
+	csib := &v1alpha1.ClusterSecurityIntentBinding{}
 	err := r.Get(ctx, req.NamespacedName, csib)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -86,9 +86,9 @@ func (r *ClusterSecurityIntentBindingReconciler) Reconcile(ctx context.Context, 
 // WithEventFilter sets up the global predicates for a watch
 func (r *ClusterSecurityIntentBindingReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1.ClusterSecurityIntentBinding{}).
-		Owns(&v1.ClusterNimbusPolicy{}).
-		Owns(&v1.NimbusPolicy{}).
+		For(&v1alpha1.ClusterSecurityIntentBinding{}).
+		Owns(&v1alpha1.ClusterNimbusPolicy{}).
+		Owns(&v1alpha1.NimbusPolicy{}).
 		WithEventFilter(
 			predicate.Funcs{
 				CreateFunc: r.createFn,
@@ -96,7 +96,7 @@ func (r *ClusterSecurityIntentBindingReconciler) SetupWithManager(mgr ctrl.Manag
 				DeleteFunc: r.deleteFn,
 			},
 		).
-		Watches(&v1.SecurityIntent{},
+		Watches(&v1alpha1.SecurityIntent{},
 			handler.EnqueueRequestsFromMapFunc(r.findCsibsForSi),
 		).
 		Watches(&corev1.Namespace{},
@@ -115,7 +115,7 @@ func (r *ClusterSecurityIntentBindingReconciler) SetupWithManager(mgr ctrl.Manag
 }
 
 func (r *ClusterSecurityIntentBindingReconciler) createFn(createEvent event.CreateEvent) bool {
-	if _, ok := createEvent.Object.(*v1.ClusterNimbusPolicy); ok {
+	if _, ok := createEvent.Object.(*v1alpha1.ClusterNimbusPolicy); ok {
 		return false
 	}
 	return true
@@ -129,10 +129,10 @@ func (r *ClusterSecurityIntentBindingReconciler) updateFn(updateEvent event.Upda
 
 func (r *ClusterSecurityIntentBindingReconciler) deleteFn(deleteEvent event.DeleteEvent) bool {
 	obj := deleteEvent.Object
-	if _, ok := obj.(*v1.ClusterSecurityIntentBinding); ok {
+	if _, ok := obj.(*v1alpha1.ClusterSecurityIntentBinding); ok {
 		return true
 	}
-	if _, ok := obj.(*v1.SecurityIntent); ok {
+	if _, ok := obj.(*v1alpha1.SecurityIntent); ok {
 		return true
 	}
 	if _, ok := obj.(*corev1.Namespace); ok {
@@ -144,13 +144,13 @@ func (r *ClusterSecurityIntentBindingReconciler) deleteFn(deleteEvent event.Dele
 func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateCwnp(ctx context.Context, logger logr.Logger, req ctrl.Request) error {
 	// Always fetch the latest CRs so that we have the latest state of the CRs on the
 	// cluster.
-	var csib v1.ClusterSecurityIntentBinding
+	var csib v1alpha1.ClusterSecurityIntentBinding
 	if err := r.Get(ctx, req.NamespacedName, &csib); err != nil {
 		logger.Error(err, "failed to fetch ClusterSecurityIntentBinding", "ClusterSecurityIntentBinding.Name", req.Name)
 		return err
 	}
 
-	var cwnp v1.ClusterNimbusPolicy
+	var cwnp v1alpha1.ClusterNimbusPolicy
 	err := r.Get(ctx, req.NamespacedName, &cwnp)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -162,7 +162,7 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateCwnp(ctx context.
 	return r.updateCwnp(ctx, logger, csib)
 }
 
-func (r *ClusterSecurityIntentBindingReconciler) createCwnp(ctx context.Context, logger logr.Logger, csib v1.ClusterSecurityIntentBinding) error {
+func (r *ClusterSecurityIntentBindingReconciler) createCwnp(ctx context.Context, logger logr.Logger, csib v1alpha1.ClusterSecurityIntentBinding) error {
 	clusterNp, err := policybuilder.BuildClusterNimbusPolicy(ctx, logger, r.Client, r.Scheme, csib)
 	if err != nil {
 		if errors.Is(err, processorerrors.ErrSecurityIntentsNotFound) {
@@ -190,8 +190,8 @@ func (r *ClusterSecurityIntentBindingReconciler) createCwnp(ctx context.Context,
 	)
 }
 
-func (r *ClusterSecurityIntentBindingReconciler) updateCwnp(ctx context.Context, logger logr.Logger, csib v1.ClusterSecurityIntentBinding) error {
-	var existingCwnp v1.ClusterNimbusPolicy
+func (r *ClusterSecurityIntentBindingReconciler) updateCwnp(ctx context.Context, logger logr.Logger, csib v1alpha1.ClusterSecurityIntentBinding) error {
+	var existingCwnp v1alpha1.ClusterNimbusPolicy
 	if err := r.Get(ctx, types.NamespacedName{Name: csib.Name}, &existingCwnp); err != nil {
 		logger.Error(err, "failed to fetch ClusterNimbusPolicy", "ClusterNimbusPolicy.Name", csib.Name)
 		return err
@@ -228,7 +228,7 @@ func (r *ClusterSecurityIntentBindingReconciler) updateCwnp(ctx context.Context,
 func (r *ClusterSecurityIntentBindingReconciler) findCsibsForSi(ctx context.Context, si client.Object) []reconcile.Request {
 	logger := log.FromContext(ctx)
 
-	csibs := &v1.ClusterSecurityIntentBindingList{}
+	csibs := &v1alpha1.ClusterSecurityIntentBindingList{}
 	if err := r.List(ctx, csibs); err != nil {
 		logger.Error(err, "failed to list ClusterSecurityIntentBindings")
 		return []reconcile.Request{}
@@ -256,7 +256,7 @@ func (r *ClusterSecurityIntentBindingReconciler) findCsibsForSi(ctx context.Cont
 type npTrackingObj struct {
 	create bool
 	update bool
-	np     *v1.NimbusPolicy
+	np     *v1alpha1.NimbusPolicy
 }
 
 type nsTrackingObj struct {
@@ -268,7 +268,7 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 	// Reconcile the Nimbus Policies with Security Intents, CSIB, NimbusPolicyList, Namespaces
 
 	// get the csib
-	var csib v1.ClusterSecurityIntentBinding
+	var csib v1alpha1.ClusterSecurityIntentBinding
 	if err := r.Get(ctx, req.NamespacedName, &csib); err != nil {
 		logger.Error(err, "failed to fetch ClusterSecurityIntentBinding", "ClusterSecurityIntentBinding.Name", req.Name)
 		return err
@@ -277,7 +277,7 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 	// get the nimbus policies
 	// TODO: we might want to index the nimbus policies based on the owner since we are anyways filtering
 	// based on the owner later
-	var npList v1.NimbusPolicyList
+	var npList v1alpha1.NimbusPolicyList
 	err := r.List(ctx, &npList)
 	if err != nil && !apierrors.IsNotFound(err) {
 		logger.Error(err, "failed to fetch list of NimbusPolicy", "ClusterNimbusPolicy.Name", req.Name)
@@ -454,7 +454,7 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 func (r *ClusterSecurityIntentBindingReconciler) findCsibsForNamespace(ctx context.Context, nsObj client.Object) []reconcile.Request {
 	logger := log.FromContext(ctx)
 
-	csibs := &v1.ClusterSecurityIntentBindingList{}
+	csibs := &v1alpha1.ClusterSecurityIntentBindingList{}
 	if err := r.List(ctx, csibs); err != nil {
 		logger.Error(err, "failed to list ClusterSecurityIntentBindings")
 		return []reconcile.Request{}
@@ -520,7 +520,7 @@ func (r *ClusterSecurityIntentBindingReconciler) findCsibsForNamespace(ctx conte
 
 func (r *ClusterSecurityIntentBindingReconciler) updateCsibStatus(ctx context.Context, logger logr.Logger, req ctrl.Request) error {
 	if retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		latestCsib := &v1.ClusterSecurityIntentBinding{}
+		latestCsib := &v1alpha1.ClusterSecurityIntentBinding{}
 		if err := r.Get(ctx, req.NamespacedName, latestCsib); err != nil && !apierrors.IsNotFound(err) {
 			logger.Error(err, "failed to fetch ClusterSecurityIntentBinding", "clusterSecurityIntentBindingName", req.Name)
 			return err
@@ -542,7 +542,7 @@ func (r *ClusterSecurityIntentBindingReconciler) updateCsibStatus(ctx context.Co
 }
 
 func (r *ClusterSecurityIntentBindingReconciler) updateCwnpStatus(ctx context.Context, logger logr.Logger, req ctrl.Request) error {
-	cwnp := &v1.ClusterNimbusPolicy{}
+	cwnp := &v1alpha1.ClusterNimbusPolicy{}
 
 	// To handle potential latency or outdated cache issues with the Kubernetes API
 	// server, we implement an exponential backoff strategy when fetching the
@@ -586,7 +586,7 @@ func (r *ClusterSecurityIntentBindingReconciler) updateCwnpStatus(ctx context.Co
 func (r *ClusterSecurityIntentBindingReconciler) deleteCwnp(ctx context.Context, name string) error {
 	logger := log.FromContext(ctx)
 
-	var cwnp v1.ClusterNimbusPolicy
+	var cwnp v1alpha1.ClusterNimbusPolicy
 	err := r.Get(ctx, types.NamespacedName{Name: name}, &cwnp)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -606,13 +606,13 @@ func (r *ClusterSecurityIntentBindingReconciler) deleteCwnp(ctx context.Context,
 }
 
 func (r *ClusterSecurityIntentBindingReconciler) updateCSibStatusWithBoundSisAndCwnpInfo(ctx context.Context, logger logr.Logger, req ctrl.Request) error {
-	latestCsib := &v1.ClusterSecurityIntentBinding{}
+	latestCsib := &v1alpha1.ClusterSecurityIntentBinding{}
 	if err := r.Get(ctx, req.NamespacedName, latestCsib); err != nil && !apierrors.IsNotFound(err) {
 		logger.Error(err, "failed to fetch ClusterSecurityIntentBinding", "ClusterSecurityIntentBinding.Name", req.Name)
 		return err
 	}
 
-	latestCwnp := &v1.ClusterNimbusPolicy{}
+	latestCwnp := &v1alpha1.ClusterNimbusPolicy{}
 	if retryErr := retry.OnError(retry.DefaultRetry, apierrors.IsNotFound, func() error {
 		if err := r.Get(ctx, req.NamespacedName, latestCwnp); err != nil {
 			return err

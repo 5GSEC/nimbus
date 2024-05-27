@@ -6,11 +6,11 @@ package processor
 import (
 	kubearmorv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorController/api/security.kubearmor.com/v1"
 
-	v1 "github.com/5GSEC/nimbus/api/v1alpha1"
+	v1alpha1 "github.com/5GSEC/nimbus/api/v1alpha1"
 )
 
 // processRuleParams processes the given nimbus policy rules, generating corresponding KubeArmorPolicy rules.
-func processRuleParams(ksp *kubearmorv1.KubeArmorPolicy, rule v1.Rule) {
+func processRuleParams(ksp *kubearmorv1.KubeArmorPolicy, rule v1alpha1.Rule) {
 	// Process
 	// Why only process rules? Nimbus Policy has only process rules that's why we're processing only those rules.
 	//for _, matchPath := range rule.MatchPaths {

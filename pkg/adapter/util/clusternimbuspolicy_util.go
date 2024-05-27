@@ -11,7 +11,7 @@ import (
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	intentv1 "github.com/5GSEC/nimbus/api/v1alpha1"
+	v1alpha1 "github.com/5GSEC/nimbus/api/v1alpha1"
 )
 
 // ExtractNpName extracts the actual NimbusPolicy name from a formatted policy
@@ -34,7 +34,7 @@ func UpdateCnpStatus(ctx context.Context, k8sClient client.Client, currPolicyFul
 	// exponential backoff strategy. This provides resilience against potential
 	// issues while preventing indefinite retries in case of persistent conflicts.
 	if retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		latestCnp := &intentv1.ClusterNimbusPolicy{}
+		latestCnp := &v1alpha1.ClusterNimbusPolicy{}
 		if err := k8sClient.Get(ctx, types.NamespacedName{Name: cnpName}, latestCnp); err != nil {
 			return nil
 		}
@@ -51,7 +51,7 @@ func UpdateCnpStatus(ctx context.Context, k8sClient client.Client, currPolicyFul
 	return nil
 }
 
-func updateCountAndClusterPoliciesName(latestCnp *intentv1.ClusterNimbusPolicy, currPolicyFullName string, decrement bool) {
+func updateCountAndClusterPoliciesName(latestCnp *v1alpha1.ClusterNimbusPolicy, currPolicyFullName string, decrement bool) {
 	if !contains(latestCnp.Status.Policies, currPolicyFullName) {
 		latestCnp.Status.NumberOfAdapterPolicies++
 		latestCnp.Status.Policies = append(latestCnp.Status.Policies, currPolicyFullName)

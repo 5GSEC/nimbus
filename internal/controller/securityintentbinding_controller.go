@@ -22,7 +22,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	v1 "github.com/5GSEC/nimbus/api/v1alpha1"
+	v1alpha1 "github.com/5GSEC/nimbus/api/v1alpha1"
 	processorerrors "github.com/5GSEC/nimbus/pkg/processor/errors"
 	"github.com/5GSEC/nimbus/pkg/processor/policybuilder"
 )
@@ -43,7 +43,7 @@ type SecurityIntentBindingReconciler struct {
 func (r *SecurityIntentBindingReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
-	sib := &v1.SecurityIntentBinding{}
+	sib := &v1alpha1.SecurityIntentBinding{}
 	err := r.Get(ctx, req.NamespacedName, sib)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -78,8 +78,8 @@ func (r *SecurityIntentBindingReconciler) Reconcile(ctx context.Context, req ctr
 // SetupWithManager sets up the controller with the Manager.
 func (r *SecurityIntentBindingReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1.SecurityIntentBinding{}).
-		Owns(&v1.NimbusPolicy{}).
+		For(&v1alpha1.SecurityIntentBinding{}).
+		Owns(&v1alpha1.NimbusPolicy{}).
 		WithEventFilter(
 			predicate.Funcs{
 				CreateFunc: r.createFn,
@@ -87,14 +87,14 @@ func (r *SecurityIntentBindingReconciler) SetupWithManager(mgr ctrl.Manager) err
 				DeleteFunc: r.deleteFn,
 			},
 		).
-		Watches(&v1.SecurityIntent{},
+		Watches(&v1alpha1.SecurityIntent{},
 			handler.EnqueueRequestsFromMapFunc(r.findSibsForSi),
 		).
 		Complete(r)
 }
 
 func (r *SecurityIntentBindingReconciler) createFn(createEvent event.CreateEvent) bool {
-	if _, ok := createEvent.Object.(*v1.NimbusPolicy); ok {
+	if _, ok := createEvent.Object.(*v1alpha1.NimbusPolicy); ok {
 		return false
 	}
 	return true
@@ -108,10 +108,10 @@ func (r *SecurityIntentBindingReconciler) updateFn(updateEvent event.UpdateEvent
 
 func (r *SecurityIntentBindingReconciler) deleteFn(deleteEvent event.DeleteEvent) bool {
 	obj := deleteEvent.Object
-	if _, ok := obj.(*v1.SecurityIntentBinding); ok {
+	if _, ok := obj.(*v1alpha1.SecurityIntentBinding); ok {
 		return true
 	}
-	if _, ok := obj.(*v1.SecurityIntent); ok {
+	if _, ok := obj.(*v1alpha1.SecurityIntent); ok {
 		return true
 	}
 	return ownerExists(r.Client, obj)
@@ -121,13 +121,13 @@ func (r *SecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Context, 
 	// Always fetch the CRs so that we have the latest state of the CRs on the
 	// cluster.
 
-	var sib v1.SecurityIntentBinding
+	var sib v1alpha1.SecurityIntentBinding
 	if err := r.Get(ctx, req.NamespacedName, &sib); err != nil {
 		logger.Error(err, "failed to fetch SecurityIntentBinding", "SecurityIntentBinding.Name", req.Name, "SecurityIntentBinding.Namespace", req.Namespace)
 		return err
 	}
 
-	var np v1.NimbusPolicy
+	var np v1alpha1.NimbusPolicy
 	err := r.Get(ctx, req.NamespacedName, &np)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -139,7 +139,7 @@ func (r *SecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Context, 
 	return r.updateNp(ctx, logger, sib)
 }
 
-func (r *SecurityIntentBindingReconciler) createNp(ctx context.Context, logger logr.Logger, sib v1.SecurityIntentBinding) error {
+func (r *SecurityIntentBindingReconciler) createNp(ctx context.Context, logger logr.Logger, sib v1alpha1.SecurityIntentBinding) error {
 	nimbusPolicy, err := policybuilder.BuildNimbusPolicy(ctx, logger, r.Client, r.Scheme, sib)
 	// TODO: Improve error handling for CEL
 	if err != nil {
@@ -178,8 +178,8 @@ func (r *SecurityIntentBindingReconciler) createNp(ctx context.Context, logger l
 	)
 }
 
-func (r *SecurityIntentBindingReconciler) updateNp(ctx context.Context, logger logr.Logger, sib v1.SecurityIntentBinding) error {
-	var existingNp v1.NimbusPolicy
+func (r *SecurityIntentBindingReconciler) updateNp(ctx context.Context, logger logr.Logger, sib v1alpha1.SecurityIntentBinding) error {
+	var existingNp v1alpha1.NimbusPolicy
 	if err := r.Get(ctx, types.NamespacedName{Name: sib.Name, Namespace: sib.Namespace}, &existingNp); err != nil {
 		logger.Error(err, "failed to fetch NimbusPolicy", "NimbusPolicy.Name", sib.Name, "NimbusPolicy.Namespace", sib.Namespace)
 		return err
@@ -227,7 +227,7 @@ func (r *SecurityIntentBindingReconciler) updateNp(ctx context.Context, logger l
 func (r *SecurityIntentBindingReconciler) findSibsForSi(ctx context.Context, si client.Object) []reconcile.Request {
 	logger := log.FromContext(ctx)
 
-	sibs := &v1.SecurityIntentBindingList{}
+	sibs := &v1alpha1.SecurityIntentBindingList{}
 	if err := r.List(ctx, sibs); err != nil {
 		logger.Error(err, "failed to list SecurityIntentBindings")
 		return []reconcile.Request{}
@@ -255,7 +255,7 @@ func (r *SecurityIntentBindingReconciler) findSibsForSi(ctx context.Context, si 
 func (r *SecurityIntentBindingReconciler) deleteNp(ctx context.Context, name, namespace string) error {
 	logger := log.FromContext(ctx)
 
-	var np v1.NimbusPolicy
+	var np v1alpha1.NimbusPolicy
 	err := r.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &np)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -275,7 +275,7 @@ func (r *SecurityIntentBindingReconciler) deleteNp(ctx context.Context, name, na
 }
 
 func (r *SecurityIntentBindingReconciler) updateNpStatus(ctx context.Context, logger logr.Logger, req ctrl.Request) error {
-	np := &v1.NimbusPolicy{}
+	np := &v1alpha1.NimbusPolicy{}
 
 	// To handle potential latency or outdated cache issues with the Kubernetes API
 	// server, we implement an exponential backoff strategy when fetching the
@@ -318,7 +318,7 @@ func (r *SecurityIntentBindingReconciler) updateNpStatus(ctx context.Context, lo
 
 func (r *SecurityIntentBindingReconciler) updateSibStatus(ctx context.Context, logger logr.Logger, req ctrl.Request) error {
 	if retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		latestSib := &v1.SecurityIntentBinding{}
+		latestSib := &v1alpha1.SecurityIntentBinding{}
 		if err := r.Get(ctx, req.NamespacedName, latestSib); err != nil {
 			logger.Error(err, "failed to fetch SecurityIntentBinding", "securityIntentBindingName", req.Name, "securityIntentBindingNamespace", req.Namespace)
 			return err
@@ -340,13 +340,13 @@ func (r *SecurityIntentBindingReconciler) updateSibStatus(ctx context.Context, l
 }
 
 func (r *SecurityIntentBindingReconciler) updateSibStatusWithBoundSisAndNpInfo(ctx context.Context, logger logr.Logger, req ctrl.Request) error {
-	latestSib := &v1.SecurityIntentBinding{}
+	latestSib := &v1alpha1.SecurityIntentBinding{}
 	if err := r.Get(ctx, req.NamespacedName, latestSib); err != nil {
 		logger.Error(err, "failed to fetch SecurityIntentBinding", "SecurityIntentBinding.Name", req.Name, "SecurityIntentBinding.Namespace", req.Namespace)
 		return err
 	}
 
-	latestNp := &v1.NimbusPolicy{}
+	latestNp := &v1alpha1.NimbusPolicy{}
 	if retryErr := retry.OnError(retry.DefaultRetry, apierrors.IsNotFound, func() error {
 		if err := r.Get(ctx, req.NamespacedName, latestNp); err != nil {
 			return err

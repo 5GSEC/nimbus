@@ -9,7 +9,7 @@ spec:
   intents:
     - name: dns-manipulation
   selector:
-    objSelector:
+    WorkloadSelector:
       matchLabels:
         app: nginx
         env: prod

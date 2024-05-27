@@ -12,11 +12,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	v1 "github.com/5GSEC/nimbus/api/v1alpha1"
+	v1alpha1 "github.com/5GSEC/nimbus/api/v1alpha1"
 	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 )
 
-func BuildNetPolsFrom(logger logr.Logger, np v1.NimbusPolicy) []netv1.NetworkPolicy {
+func BuildNetPolsFrom(logger logr.Logger, np v1alpha1.NimbusPolicy) []netv1.NetworkPolicy {
 	// Build netpols based on given IDs
 	var netpols []netv1.NetworkPolicy
 	for _, nimbusRule := range np.Spec.NimbusRules {

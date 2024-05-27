@@ -12,7 +12,7 @@ import (
 // NimbusPolicySpec defines the desired state of NimbusPolicy
 type NimbusPolicySpec struct {
 	// Selector specifies the target resources to which the policy applies
-	Selector WorkloadSelector `json:"selector"`
+	Selector LabelSelector `json:"selector"`
 
 	// PolicyType specifies the type of policy, e.g., "Network", "System", "Cluster"
 	NimbusRules []NimbusRules `json:"rules"`

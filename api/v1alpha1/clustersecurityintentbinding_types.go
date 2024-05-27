@@ -7,19 +7,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type NodeSelector struct {
-	MatchLabels map[string]string `json:"matchLabels,omitempty"`
-}
-
 type NamespaceSelector struct {
 	MatchNames   []string `json:"matchNames,omitempty"`
 	ExcludeNames []string `json:"excludeNames,omitempty"`
 }
 
 type ClusterMatchWorkloads struct {
-	NodeSelector NodeSelector      `json:"nodeSelector,omitempty"`
-	NsSelector   NamespaceSelector `json:"nsSelector,omitempty"`
-	ObjSelector  WorkloadSelector  `json:"objSelector,omitempty"`
+	NodeSelector     LabelSelector     `json:"nodeSelector,omitempty"`
+	NsSelector       NamespaceSelector `json:"nsSelector,omitempty"`
+	WorkloadSelector LabelSelector     `json:"workloadSelector,omitempty"`
 }
 
 // ClusterSecurityIntentBindingSpec defines the desired state of ClusterSecurityIntentBinding

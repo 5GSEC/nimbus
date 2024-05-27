@@ -11,7 +11,6 @@ metadata:
       controller: true
       kind: SecurityIntentBinding
       name: dns-manipulation-binding
-      # Since UID is not predictable so don't add it.
 spec:
   rules:
     - description: An adversary can manipulate DNS requests to redirect network traffic

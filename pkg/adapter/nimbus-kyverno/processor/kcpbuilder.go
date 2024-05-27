@@ -6,7 +6,7 @@ package processor
 import (
 	"strings"
 
-	v1 "github.com/5GSEC/nimbus/api/v1alpha1"
+	v1alpha1 "github.com/5GSEC/nimbus/api/v1alpha1"
 	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 	"github.com/go-logr/logr"
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
@@ -14,7 +14,7 @@ import (
 	"k8s.io/pod-security-admission/api"
 )
 
-func BuildKcpsFrom(logger logr.Logger, cnp *v1.ClusterNimbusPolicy) []kyvernov1.ClusterPolicy {
+func BuildKcpsFrom(logger logr.Logger, cnp *v1alpha1.ClusterNimbusPolicy) []kyvernov1.ClusterPolicy {
 	// Build KCPs based on given IDs
 	var kcps []kyvernov1.ClusterPolicy
 	for _, nimbusRule := range cnp.Spec.NimbusRules {
@@ -40,7 +40,7 @@ func BuildKcpsFrom(logger logr.Logger, cnp *v1.ClusterNimbusPolicy) []kyvernov1.
 }
 
 // buildKpFor builds a KyvernoPolicy based on intent ID supported by Kyverno Policy Engine.
-func buildKcpFor(id string, cnp *v1.ClusterNimbusPolicy) kyvernov1.ClusterPolicy {
+func buildKcpFor(id string, cnp *v1alpha1.ClusterNimbusPolicy) kyvernov1.ClusterPolicy {
 	switch id {
 	case idpool.EscapeToHost:
 		return clusterEscapeToHost(cnp, cnp.Spec.NimbusRules[0].Rule)
@@ -49,7 +49,7 @@ func buildKcpFor(id string, cnp *v1.ClusterNimbusPolicy) kyvernov1.ClusterPolicy
 	}
 }
 
-func clusterEscapeToHost(cnp *v1.ClusterNimbusPolicy, rule v1.Rule) kyvernov1.ClusterPolicy {
+func clusterEscapeToHost(cnp *v1alpha1.ClusterNimbusPolicy, rule v1.Rule) kyvernov1.ClusterPolicy {
 	var psa_level api.Level = api.LevelBaseline
 
 	if rule.Params["psa_level"] != nil {
@@ -78,7 +78,7 @@ func clusterEscapeToHost(cnp *v1.ClusterNimbusPolicy, rule v1.Rule) kyvernov1.Cl
 				},
 				Namespaces: cnp.Spec.NsSelector.MatchNames,
 				Selector: &metav1.LabelSelector{
-					MatchLabels: cnp.Spec.ObjSelector.MatchLabels,
+					MatchLabels: cnp.Spec.WorkloadSelector.MatchLabels,
 				},
 			},
 		}

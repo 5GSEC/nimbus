@@ -9,11 +9,11 @@ import (
 	"github.com/go-logr/logr"
 	kubearmorv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorController/api/security.kubearmor.com/v1"
 
-	v1 "github.com/5GSEC/nimbus/api/v1alpha1"
+	v1alpha1 "github.com/5GSEC/nimbus/api/v1alpha1"
 	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 )
 
-func BuildKspsFrom(logger logr.Logger, np *v1.NimbusPolicy) []kubearmorv1.KubeArmorPolicy {
+func BuildKspsFrom(logger logr.Logger, np *v1alpha1.NimbusPolicy) []kubearmorv1alpha1.KubeArmorPolicy {
 	// Build KSPs based on given IDs
 	var ksps []kubearmorv1.KubeArmorPolicy
 	var ksp kubearmorv1.KubeArmorPolicy

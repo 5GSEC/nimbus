@@ -14,7 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	v1 "github.com/5GSEC/nimbus/api/v1alpha1"
+	v1alpha1 "github.com/5GSEC/nimbus/api/v1alpha1"
 )
 
 type SecurityIntentReconciler struct {
@@ -30,7 +30,7 @@ type SecurityIntentReconciler struct {
 func (r *SecurityIntentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
-	si := &v1.SecurityIntent{}
+	si := &v1alpha1.SecurityIntent{}
 	err := r.Get(ctx, types.NamespacedName{Name: req.Name}, si)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -58,7 +58,7 @@ func (r *SecurityIntentReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 // SetupWithManager sets up the reconciler with the provided manager.
 func (r *SecurityIntentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1.SecurityIntent{}).
+		For(&v1alpha1.SecurityIntent{}).
 		WithEventFilter(
 			predicate.GenerationChangedPredicate{},
 		).
@@ -66,11 +66,11 @@ func (r *SecurityIntentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func (r *SecurityIntentReconciler) updateStatus(ctx context.Context, name string) error {
-	latestSi := &v1.SecurityIntent{}
+	latestSi := &v1alpha1.SecurityIntent{}
 	if getErr := r.Get(ctx, types.NamespacedName{Name: name}, latestSi); getErr != nil {
 		return getErr
 	}
-	latestSi.Status = v1.SecurityIntentStatus{
+	latestSi.Status = v1alpha1.SecurityIntentStatus{
 		ID:     latestSi.Spec.Intent.ID,
 		Action: latestSi.Spec.Intent.Action,
 		Status: StatusCreated,

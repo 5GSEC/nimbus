@@ -6,7 +6,7 @@ package processor
 import (
 	"strings"
 
-	v1 "github.com/5GSEC/nimbus/api/v1alpha1"
+	v1alpha1 "github.com/5GSEC/nimbus/api/v1alpha1"
 	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 	"github.com/go-logr/logr"
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
@@ -14,7 +14,7 @@ import (
 	"k8s.io/pod-security-admission/api"
 )
 
-func BuildKpsFrom(logger logr.Logger, np *v1.NimbusPolicy) []kyvernov1.Policy {
+func BuildKpsFrom(logger logr.Logger, np *v1alpha1.NimbusPolicy) []kyvernov1.Policy {
 	// Build KPs based on given IDs
 	var kps []kyvernov1.Policy
 	for _, nimbusRule := range np.Spec.NimbusRules {
@@ -41,7 +41,7 @@ func BuildKpsFrom(logger logr.Logger, np *v1.NimbusPolicy) []kyvernov1.Policy {
 }
 
 // buildKpFor builds a KyvernoPolicy based on intent ID supported by Kyverno Policy Engine.
-func buildKpFor(id string, np *v1.NimbusPolicy) kyvernov1.Policy {
+func buildKpFor(id string, np *v1alpha1.NimbusPolicy) kyvernov1.Policy {
 	switch id {
 	case idpool.EscapeToHost:
 		return escapeToHost(np, np.Spec.NimbusRules[0].Rule)
@@ -50,7 +50,7 @@ func buildKpFor(id string, np *v1.NimbusPolicy) kyvernov1.Policy {
 	}
 }
 
-func escapeToHost(np *v1.NimbusPolicy, rule v1.Rule) kyvernov1.Policy {
+func escapeToHost(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov1.Policy {
 
 	var psa_level api.Level = api.LevelBaseline
 
