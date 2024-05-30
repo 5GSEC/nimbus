@@ -337,7 +337,7 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 		return err
 	}
 
-	// filter out nimbus policies which are owned by other CSIB/SIB
+	// Populate the NP tracking list. Filter out nimbus policies which are owned by other CSIB/SIB
 	var npFilteredTrackingList []npTrackingObj
 	for _, np := range npList.Items {
 		for _, ref := range np.ObjectMeta.OwnerReferences {
@@ -392,49 +392,27 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 	// DEBUG: print the tracking list
 	logger.Info("Printing the Namespace List", "Length of namespace list", len(nsList.Items))
 
-	// All the cases are mutually exclusive
-	if len(csib.Spec.Selector.NsSelector.MatchNames) > 0 {
-		// Case 1: If the matchNames is set in the CSIB, we simply need to create the required NP in the
-		// specified namespaces. Also, need to delete any other NPs found.
-		var seen bool
-		for _, ns_spec := range nsFilteredList {
-			seen = false
-			for index, np_actual := range npFilteredTrackingList {
-				if ns_spec.ns.Name == np_actual.np.Namespace {
-					npFilteredTrackingList[index].update = true
-					seen = true
-					break
-				}
+	// The nsFilteredList is the spec. We need to ensure that there are NP
+	// for the specified namespaces. 3 cases here
+	//   - If a namespace is in spec, and in the NP list, then mark NP for update.
+	//   - If the namespace is in spec, and not there in the NP list, then
+	//     build an NP for this namespace, and mark it for create.
+	//   - If there are NPs in namespaces which are not in the spec list, delete
+	//     those NPs
+	for _, ns_spec := range nsFilteredList {
+		var seen bool = false
+		for index, np_actual := range npFilteredTrackingList {
+			if ns_spec.ns.Name == np_actual.np.Namespace {
+				npFilteredTrackingList[index].update = true
+				seen = true
+				break
 			}
-			if !seen {
-				// construct the nimbus policy object as it is not present in cluster
-				nimbusPolicy, err := policybuilder.BuildNimbusPolicyFromClusterBinding(ctx, logger, r.Client, r.Scheme, csib, ns_spec.ns.Name)
-				if err == nil {
-					npFilteredTrackingList = append(npFilteredTrackingList, npTrackingObj{create: true, np: nimbusPolicy})
-				}
-
-			}
-
 		}
-	} else if len(csib.Spec.Selector.NsSelector.ExcludeNames) > 0 {
-		// Case 2: If excludeNames is set, we need to create NP in all namespaces except the exclude list.
-		//         This is available in the nsFilterredList
-		for _, ns_spec := range nsFilteredList {
-			var seen bool = false
-			for _, np_actual := range npFilteredTrackingList {
-				if ns_spec.ns.Name == np_actual.np.Namespace {
-					np_actual.update = true
-					seen = true
-					break
-				}
-			}
-			if !seen {
-				// construct the nimbus policy object as it is not present in cluster
-				nimbusPolicy, err := policybuilder.BuildNimbusPolicyFromClusterBinding(ctx, logger, r.Client, r.Scheme, csib, ns_spec.ns.Name)
-				if err == nil {
-					npFilteredTrackingList = append(npFilteredTrackingList, npTrackingObj{create: true, np: nimbusPolicy})
-				}
-
+		if !seen {
+			// construct the nimbus policy object as it is not present in cluster
+			nimbusPolicy, err := policybuilder.BuildNimbusPolicyFromClusterBinding(ctx, logger, r.Client, r.Scheme, csib, ns_spec.ns.Name)
+			if err == nil {
+				npFilteredTrackingList = append(npFilteredTrackingList, npTrackingObj{create: true, np: nimbusPolicy})
 			}
 		}
 	}

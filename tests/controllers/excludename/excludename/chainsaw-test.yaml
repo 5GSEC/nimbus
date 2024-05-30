@@ -4,7 +4,7 @@
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: Test
 metadata:
-  name: match-names-add-csib
+  name: exclude-names-add-csib
 spec:
   description: >
     1. Add dev, staging, prod ns
