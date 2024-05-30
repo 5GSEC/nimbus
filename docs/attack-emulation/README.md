@@ -37,10 +37,16 @@ Before installing Caldera, ensure you have the following prerequisites:
    ```bash
    sudo apt-get install python3-pip
    ```
+6 **npm and node**: Install Node and Node Package Manager
+
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
+nvm install node
+```
 
 ## Installation Steps
 
-Follow these steps to install and set up Caldera:
+Follow these steps to install and set up Caldera, you can skip step:4 and step:5 :
 
 1. **Clone the Caldera Repository**:
    ```bash
