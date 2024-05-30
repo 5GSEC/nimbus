@@ -19,7 +19,8 @@ import (
 // https://kubernetes.io/docs/concepts/overview/working-with-objects/common-labels/
 
 const (
-	StatusCreated = "Created"
+	StatusCreated        = "Created"
+	StatusValidationFail = "ValidationFail"
 )
 
 func doNotRequeue() (ctrl.Result, error) {

@@ -10,6 +10,6 @@ spec:
     - name: escape-to-host
   selector:
     nsSelector:
-      excludeNamesNames:
+      excludeNames:
         - dev
         - staging

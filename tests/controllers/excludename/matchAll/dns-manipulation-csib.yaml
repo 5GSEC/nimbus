@@ -8,3 +8,7 @@ metadata:
 spec:
   intents:
     - name: dns-manipulation
+  selector:
+    nsSelector:
+      matchNames:
+        - "*"

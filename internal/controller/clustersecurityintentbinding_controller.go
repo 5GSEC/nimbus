@@ -6,6 +6,7 @@ package controller
 import (
 	"context"
 	"errors"
+	"slices"
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
@@ -62,7 +63,20 @@ func (r *ClusterSecurityIntentBindingReconciler) Reconcile(ctx context.Context, 
 		logger.Info("ClusterSecurityIntentBinding configured", "ClusterSecurityIntentBinding.Name", req.Name)
 	}
 
-	if err = r.updateCsibStatus(ctx, logger, req); err != nil {
+	// Check if the object was previouly marked as invalid
+	if csib.Status.Status == StatusValidationFail {
+		logger.Info("ClusterSecurityIntentBinding found, not valid", "ClusterSecurityIntentBinding.Name", req.Name)
+		return doNotRequeue()
+	}
+
+	if csib.Status.Status == "" && !r.isValidCsib(ctx, logger, req) {
+		if err = r.updateCsibStatus(ctx, logger, req, StatusValidationFail); err != nil {
+			return requeueWithError(err)
+		}
+		return doNotRequeue()
+	}
+
+	if err = r.updateCsibStatus(ctx, logger, req, StatusCreated); err != nil {
 		return requeueWithError(err)
 	}
 
@@ -263,6 +277,45 @@ type nsTrackingObj struct {
 	ns *corev1.Namespace
 }
 
+// we should not create object in these ns
+var nsBlackList = []string{"kube-system"}
+
+const wildcard = "*"
+
+func (r *ClusterSecurityIntentBindingReconciler) isValidCsib(ctx context.Context, logger logr.Logger, req ctrl.Request) bool {
+
+	// get the csib
+	var csib v1alpha1.ClusterSecurityIntentBinding
+	if err := r.Get(ctx, req.NamespacedName, &csib); err != nil {
+		logger.Error(err, "failed to fetch ClusterSecurityIntentBinding", "ClusterSecurityIntentBinding.Name", req.Name)
+		return false
+	}
+
+	// validate the CSIB.
+	excludeLen := len(csib.Spec.Selector.NsSelector.ExcludeNames)
+	matchLen := len(csib.Spec.Selector.NsSelector.MatchNames)
+	if matchLen > 0 && excludeLen > 0 {
+		err := errors.New("invalid clustersecurityintentbinding")
+		logger.Error(err, "Both MatchNames and ExcludeNames should not be set", "ClusterSecurityIntentBinding.Name", req.Name)
+		return false
+	}
+	if matchLen == 0 && excludeLen == 0 {
+		err := errors.New("invalid clustersecurityintentbinding")
+		logger.Error(err, "Atleast one of MatchNames or ExcludeNames should be set", "ClusterSecurityIntentBinding.Name", req.Name)
+		return false
+	}
+	// In MatchNames, if a  "*" is present, it should be the only entry
+	for i, ns := range csib.Spec.Selector.NsSelector.MatchNames {
+		if ns == wildcard && i > 0 {
+			err := errors.New("invalid clustersecurityintentbinding")
+			logger.Error(err, "If * is present, it should be only entry", "ClusterSecurityIntentBinding.Name", req.Name)
+			return false
+		}
+	}
+
+	return true
+}
+
 func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Context, logger logr.Logger, req ctrl.Request) error {
 
 	// Reconcile the Nimbus Policies with Security Intents, CSIB, NimbusPolicyList, Namespaces
@@ -295,7 +348,6 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 		}
 	}
 
-	// get the namespaces. This is used in case 2, 3
 	var nsList corev1.NamespaceList
 	var nsFilteredList []nsTrackingObj
 	err = r.List(ctx, &nsList)
@@ -304,14 +356,34 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 		return err
 	}
 	if len(csib.Spec.Selector.NsSelector.ExcludeNames) > 0 {
+		// get the namespaces after excluding the specified ns, and the blacklist.
 		for _, nso := range nsList.Items {
 			var exclude bool = false
-			for _, exclude_Ns := range csib.Spec.Selector.NsSelector.ExcludeNames {
-				if nso.Name == exclude_Ns {
-					exclude = true
-				}
+			if slices.Contains(csib.Spec.Selector.NsSelector.ExcludeNames, nso.Name) {
+				exclude = true
+			}
+			if slices.Contains(nsBlackList, nso.Name) {
+				exclude = true
 			}
 			if !exclude {
+				nsFilteredList = append(nsFilteredList, nsTrackingObj{ns: &nso})
+			}
+		}
+	} else if ml := len(csib.Spec.Selector.NsSelector.MatchNames); ml > 0 {
+		var allNs bool = false
+		if ml == 1 && csib.Spec.Selector.NsSelector.MatchNames[0] == wildcard {
+			allNs = true
+		}
+		for _, nso := range nsList.Items {
+			var include bool = false
+			if allNs || slices.Contains(csib.Spec.Selector.NsSelector.MatchNames, nso.Name) {
+				include = true
+			}
+			// next run through the blacklist
+			if slices.Contains(nsBlackList, nso.Name) {
+				include = false
+			}
+			if include {
 				nsFilteredList = append(nsFilteredList, nsTrackingObj{ns: &nso})
 			}
 		}
@@ -325,10 +397,10 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 		// Case 1: If the matchNames is set in the CSIB, we simply need to create the required NP in the
 		// specified namespaces. Also, need to delete any other NPs found.
 		var seen bool
-		for _, ns_spec := range csib.Spec.Selector.NsSelector.MatchNames {
+		for _, ns_spec := range nsFilteredList {
 			seen = false
 			for index, np_actual := range npFilteredTrackingList {
-				if ns_spec == np_actual.np.Namespace {
+				if ns_spec.ns.Name == np_actual.np.Namespace {
 					npFilteredTrackingList[index].update = true
 					seen = true
 					break
@@ -336,7 +408,7 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 			}
 			if !seen {
 				// construct the nimbus policy object as it is not present in cluster
-				nimbusPolicy, err := policybuilder.BuildNimbusPolicyFromClusterBinding(ctx, logger, r.Client, r.Scheme, csib, ns_spec)
+				nimbusPolicy, err := policybuilder.BuildNimbusPolicyFromClusterBinding(ctx, logger, r.Client, r.Scheme, csib, ns_spec.ns.Name)
 				if err == nil {
 					npFilteredTrackingList = append(npFilteredTrackingList, npTrackingObj{create: true, np: nimbusPolicy})
 				}
@@ -363,27 +435,6 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 					npFilteredTrackingList = append(npFilteredTrackingList, npTrackingObj{create: true, np: nimbusPolicy})
 				}
 
-			}
-		}
-	} else {
-		// Case 3: If no selector is specified, we need to create NPs in all the namespaces. All namespaces
-		//         are present in nsList
-		var seen bool
-		for _, ns_spec := range nsList.Items {
-			seen = false
-			for np_idx, np_actual := range npFilteredTrackingList {
-				if ns_spec.Name == np_actual.np.Namespace {
-					npFilteredTrackingList[np_idx].update = true
-					seen = true
-					break
-				}
-			}
-			if !seen {
-				// construct the nimbus policy object as it is not present in cluster
-				nimbusPolicy, err := policybuilder.BuildNimbusPolicyFromClusterBinding(ctx, logger, r.Client, r.Scheme, csib, ns_spec.Name)
-				if err == nil {
-					npFilteredTrackingList = append(npFilteredTrackingList, npTrackingObj{create: true, np: nimbusPolicy})
-				}
 			}
 		}
 	}
@@ -465,42 +516,39 @@ func (r *ClusterSecurityIntentBindingReconciler) findCsibsForNamespace(ctx conte
 	for _, csib := range csibs.Items {
 
 		var toBeReconciled bool = false
-		/*
-		 * If matchnames, and excludenames is zero, then this csib
-		 * of interest since we have to modify the number of fanout.
-		 * In case of add, the fanout will increase, and in case of
-		 * delete the fanout will reduced.
-		 */
-		if len(csib.Spec.Selector.NsSelector.MatchNames) == 0 &&
-			len(csib.Spec.Selector.NsSelector.ExcludeNames) == 0 {
-			toBeReconciled = true
+
+		if csib.Status.Status == StatusValidationFail {
+			continue
 		}
 
 		/*
-		 * If the ns being added/deleted appears in the matchNames, then
-		 * we do not do anything since the NimbusPolicy would have been
-		 * generated for ns in the matchNames, and there is no fanout to be done
+		 * If the csib has a wildcard, then it is of interest since
+		 * we have to modify the number of fanout of the csib.
+		 * In case of add, the fanout will increase, and in case of
+		 * delete the fanout will reduce.
 		 */
-		if len(csib.Spec.Selector.NsSelector.MatchNames) > 0 {
-			continue
+		if len(csib.Spec.Selector.NsSelector.MatchNames) == 1 &&
+			csib.Spec.Selector.NsSelector.MatchNames[0] == wildcard {
+			toBeReconciled = true
+		} else if len(csib.Spec.Selector.NsSelector.MatchNames) > 0 {
+			/*
+			 * If the ns being added/deleted appears in the csib matchNames, then
+			 * the csib is of interest
+			 */
+			if slices.Contains(csib.Spec.Selector.NsSelector.MatchNames, nsObj.GetName()) {
+				toBeReconciled = true
+			}
 		}
 
 		/*
 		 * We need to reconcile if the namespace object does not appear
 		 * in the CSIB exclude list
 		 * For example, there was a excludeName consisting of ns_1, ns_2.
-		 * and now ns_2 does not appear in the excludeNames. So, as part of
-		 * reconciliation we now have to create NimbusPolicy for ns_2.
+		 * and now ns_3 is added in the cluster. So, as part of
+		 * reconciliation we now have to create NimbusPolicy for ns_3.
 		 */
 		if len(csib.Spec.Selector.NsSelector.ExcludeNames) > 0 {
-			var outOfSet bool = true
-			for _, ns := range csib.Spec.Selector.NsSelector.ExcludeNames {
-				if ns == nsObj.GetName() {
-					outOfSet = false
-					break
-				}
-			}
-			if outOfSet {
+			if !slices.Contains(csib.Spec.Selector.NsSelector.ExcludeNames, nsObj.GetName()) {
 				toBeReconciled = true
 			}
 		}
@@ -518,7 +566,7 @@ func (r *ClusterSecurityIntentBindingReconciler) findCsibsForNamespace(ctx conte
 	return requests
 }
 
-func (r *ClusterSecurityIntentBindingReconciler) updateCsibStatus(ctx context.Context, logger logr.Logger, req ctrl.Request) error {
+func (r *ClusterSecurityIntentBindingReconciler) updateCsibStatus(ctx context.Context, logger logr.Logger, req ctrl.Request, status string) error {
 	if retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		latestCsib := &v1alpha1.ClusterSecurityIntentBinding{}
 		if err := r.Get(ctx, req.NamespacedName, latestCsib); err != nil && !apierrors.IsNotFound(err) {
@@ -526,7 +574,7 @@ func (r *ClusterSecurityIntentBindingReconciler) updateCsibStatus(ctx context.Co
 			return err
 		}
 
-		latestCsib.Status.Status = StatusCreated
+		latestCsib.Status.Status = status
 		latestCsib.Status.LastUpdated = metav1.Now()
 		if err := r.Status().Update(ctx, latestCsib); err != nil {
 			return err
