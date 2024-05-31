@@ -9,7 +9,7 @@ This test validates that when a NimbusPolicy is directly deleted, nimbus automat
 |:-:|---|:-:|:-:|:-:|:-:|
 | 1 | [Create a SecurityIntent](#step-Create a SecurityIntent) | 0 | 1 | 0 | 0 |
 | 2 | [Create a SecurityIntentBinding](#step-Create a SecurityIntentBinding) | 0 | 1 | 0 | 0 |
-| 3 | [Verity NimbusPolicy creation](#step-Verity NimbusPolicy creation) | 0 | 1 | 0 | 0 |
+| 3 | [Verify NimbusPolicy creation](#step-Verify NimbusPolicy creation) | 0 | 1 | 0 | 0 |
 | 4 | [Delete existing NimbusPolicy](#step-Delete existing NimbusPolicy) | 0 | 1 | 0 | 0 |
 | 5 | [Verify NimbusPolicy recreation](#step-Verify NimbusPolicy recreation) | 0 | 1 | 0 | 0 |
 
@@ -33,7 +33,7 @@ This test validates that when a NimbusPolicy is directly deleted, nimbus automat
 |:-:|---|:-:|:-:|---|
 | 1 | `apply` | 0 | 0 | *No description* |
 
-### Step: `Verity NimbusPolicy creation`
+### Step: `Verify NimbusPolicy creation`
 
 *No description*
 

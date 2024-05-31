@@ -9,7 +9,7 @@ This test verifies that modifying a SecurityIntent triggers the desired updates 
 |:-:|---|:-:|:-:|:-:|:-:|
 | 1 | [Create a SecurityIntentBinding for multiple SecurityIntents](#step-Create a SecurityIntentBinding for multiple SecurityIntents) | 0 | 1 | 0 | 0 |
 | 2 | [Create multiple SecurityIntents](#step-Create multiple SecurityIntents) | 0 | 1 | 0 | 0 |
-| 3 | [Verity NimbusPolicy creation](#step-Verity NimbusPolicy creation) | 0 | 1 | 0 | 0 |
+| 3 | [Verify NimbusPolicy creation](#step-Verify NimbusPolicy creation) | 0 | 1 | 0 | 0 |
 | 4 | [Update one SecurityIntent](#step-Update one SecurityIntent) | 0 | 1 | 0 | 0 |
 | 5 | [Verify NimbusPolicy update](#step-Verify NimbusPolicy update) | 0 | 1 | 0 | 0 |
 | 6 | [Update SecurityIntentBinding to remove one SecurityIntent](#step-Update SecurityIntentBinding to remove one SecurityIntent) | 0 | 1 | 0 | 0 |
@@ -36,7 +36,7 @@ This test verifies that modifying a SecurityIntent triggers the desired updates 
 |:-:|---|:-:|:-:|---|
 | 1 | `apply` | 0 | 0 | *No description* |
 
-### Step: `Verity NimbusPolicy creation`
+### Step: `Verify NimbusPolicy creation`
 
 *No description*
 

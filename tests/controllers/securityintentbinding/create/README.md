@@ -9,7 +9,7 @@ This test validates the automated creation of a NimbusPolicy resource when a cor
 |:-:|---|:-:|:-:|:-:|:-:|
 | 1 | [Create a SecurityIntent](#step-Create a SecurityIntent) | 0 | 1 | 0 | 0 |
 | 2 | [Create a SecurityIntentBinding](#step-Create a SecurityIntentBinding) | 0 | 1 | 0 | 0 |
-| 3 | [Verity NimbusPolicy creation](#step-Verity NimbusPolicy creation) | 0 | 1 | 0 | 0 |
+| 3 | [Verify NimbusPolicy creation](#step-Verify NimbusPolicy creation) | 0 | 1 | 0 | 0 |
 | 4 | [Verify status of created SecurityIntentBinding](#step-Verify status of created SecurityIntentBinding) | 0 | 1 | 0 | 0 |
 | 5 | [Verify status of created NimbusPolicy](#step-Verify status of created NimbusPolicy) | 0 | 1 | 0 | 0 |
 
@@ -33,7 +33,7 @@ This test validates the automated creation of a NimbusPolicy resource when a cor
 |:-:|---|:-:|:-:|---|
 | 1 | `apply` | 0 | 0 | *No description* |
 
-### Step: `Verity NimbusPolicy creation`
+### Step: `Verify NimbusPolicy creation`
 
 *No description*
 
