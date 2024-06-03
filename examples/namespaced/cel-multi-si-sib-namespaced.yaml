@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2023 Authors of Nimbus
 
-apiVersion: intent.security.nimbus.com/v1
+apiVersion: intent.security.nimbus.com/v1alpha1
 kind: SecurityIntent
 metadata:
   name: pkg-mgr-exec-multiple-nsscoped
@@ -10,7 +10,7 @@ spec:
     id: swDeploymentTools
     action: Block
 ---
-apiVersion: intent.security.nimbus.com/v1
+apiVersion: intent.security.nimbus.com/v1alpha1
 kind: SecurityIntent
 metadata:
   name: unauthorized-sa-token-access-multiple-nsscoped
@@ -19,7 +19,7 @@ spec:
     id: unAuthorizedSaTokenAccess
     action: Block
 ---
-apiVersion: intent.security.nimbus.com/v1
+apiVersion: intent.security.nimbus.com/v1alpha1
 kind: SecurityIntent
 metadata:
   name: dns-manipulation-multiple-nsscoped
@@ -28,7 +28,7 @@ spec:
     id: dnsManipulation
     action: Block
 ---
-apiVersion: intent.security.nimbus.com/v1
+apiVersion: intent.security.nimbus.com/v1alpha1
 kind: SecurityIntentBinding
 metadata:
   name: multiple-sis-nsscoped-binding
@@ -38,27 +38,28 @@ spec:
     - name: unauthorized-sa-token-access-multiple-nsscoped
     - name: dns-manipulation-multiple-nsscoped
   selector:
-    cel:
-      - labels["app"] == "nginx"
+    workloadSelector:
+  cel:
+    - labels["app"] == "nginx"
 
-      #- labels["app"] == "nginx"
-      #- "'labels[\"app\"] == \"nginx\"'"
-      #- labels["app"] in ["nginx", "nginx-2"]
-      #- labels["app"].contains("nginx")
-      #- labels["app"].startsWith("nginx")
-      #- labels["app"].endsWith("nginx")
-      #- labels["app"].matches(".*nginx.*")
+    #- labels["app"] == "nginx"
+    #- "'labels[\"app\"] == \"nginx\"'"
+    #- labels["app"] in ["nginx", "nginx-2"]
+    #- labels["app"].contains("nginx")
+    #- labels["app"].startsWith("nginx")
+    #- labels["app"].endsWith("nginx")
+    #- labels["app"].matches(".*nginx.*")
 
-      # Because certain characters or phrases are used as reserved words or have special meaning in YAML, 
-      # you can't use the negation operator '!' of the Common Expression Language (CEL) directly
-      # Represent negation statements as strings
+    # Because certain characters or phrases are used as reserved words or have special meaning in YAML, 
+    # you can't use the negation operator '!' of the Common Expression Language (CEL) directly
+    # Represent negation statements as strings
 
-      #- "'labels[\"app\"] != \"nginx\"'"
-      #- "'!(labels[\"app\"] in [\"nginx\", \"httpd\"])'"
-      #- "'!(labels[\"app\"] in [\"nginx\", \"nginx-2\"])'"
-      #- "'!labels[\"app\"].contains(\"nginx\")'"
-      #- "'!labels[\"app\"].startsWith(\"nginx\")'"
-      #- "'!labels[\"app\"].endsWith(\"nginx\")'"
-      #- "'!labels["app"].matches(".*nginx.*")'"
+    #- "'labels[\"app\"] != \"nginx\"'"
+    #- "'!(labels[\"app\"] in [\"nginx\", \"httpd\"])'"
+    #- "'!(labels[\"app\"] in [\"nginx\", \"nginx-2\"])'"
+    #- "'!labels[\"app\"].contains(\"nginx\")'"
+    #- "'!labels[\"app\"].startsWith(\"nginx\")'"
+    #- "'!labels[\"app\"].endsWith(\"nginx\")'"
+    #- "'!labels["app"].matches(".*nginx.*")'"
 
 

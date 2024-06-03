@@ -461,7 +461,7 @@ spec:
               selector:
                 description: Selector defines the selection criteria for resources
                 properties:
-                  WorkloadSelector:
+                  workloadSelector:
                     properties:
                       matchLabels:
                         additionalProperties:

@@ -21,7 +21,7 @@ type MatchIntent struct {
 
 // Selector defines the selection criteria for resources
 type MatchWorkloads struct {
-	WorkloadSelector LabelSelector `json:"WorkloadSelector,omitempty"`
+	WorkloadSelector LabelSelector `json:"workloadSelector,omitempty"`
 }
 
 type LabelSelector struct {

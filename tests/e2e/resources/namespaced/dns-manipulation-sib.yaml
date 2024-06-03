@@ -9,6 +9,6 @@ spec:
   intents:
     - name: dns-manipulation
   selector:
-    WorkloadSelector:
+    workloadSelector:
       matchLabels:
         app: nginx

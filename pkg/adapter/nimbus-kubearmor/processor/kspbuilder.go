@@ -28,7 +28,6 @@ func BuildKspsFrom(logger logr.Logger, np *v1alpha1.NimbusPolicy) []kubearmorv1.
 					ksp.Spec.Message = nimbusRule.Description
 					ksp.Spec.Selector.MatchLabels = np.Spec.Selector.MatchLabels
 					ksp.Spec.Action = kubearmorv1.ActionType(nimbusRule.Rule.RuleAction)
-					processRuleParams(&ksp, nimbusRule.Rule)
 					addManagedByAnnotation(&ksp)
 					ksps = append(ksps, ksp)
 				}
@@ -39,7 +38,6 @@ func BuildKspsFrom(logger logr.Logger, np *v1alpha1.NimbusPolicy) []kubearmorv1.
 				ksp.Spec.Message = nimbusRule.Description
 				ksp.Spec.Selector.MatchLabels = np.Spec.Selector.MatchLabels
 				ksp.Spec.Action = kubearmorv1.ActionType(nimbusRule.Rule.RuleAction)
-				processRuleParams(&ksp, nimbusRule.Rule)
 				addManagedByAnnotation(&ksp)
 				ksps = append(ksps, ksp)
 			}
