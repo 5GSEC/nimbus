@@ -19,11 +19,12 @@ const (
 	EscapeToHost              = "escapeToHost"
 	DisallowChRoot            = "disallowChRoot"
 	DisallowCapabilities      = "disallowCapabilities"
+	ExploitPFA                = "PreventExecutionFromTempOrLogsFolders"
 )
 
 // KaIds are IDs supported by KubeArmor.
 var KaIds = []string{
-	SwDeploymentTools, UnAuthorizedSaTokenAccess, DNSManipulation, EscapeToHost,
+	SwDeploymentTools, UnAuthorizedSaTokenAccess, DNSManipulation, EscapeToHost, ExploitPFA,
 }
 
 // list of policies which satisfies the given ID by Kubearmor
