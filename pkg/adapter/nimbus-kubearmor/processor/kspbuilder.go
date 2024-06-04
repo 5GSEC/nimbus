@@ -64,6 +64,8 @@ func buildKspFor(id string) kubearmorv1.KubeArmorPolicy {
 		return disallowChRoot()
 	case idpool.DisallowCapabilities:
 		return disallowCapabilities()
+	case idpool.ExploitPFA:
+		return disallowBinaries()
 	default:
 		return kubearmorv1.KubeArmorPolicy{}
 	}
@@ -256,6 +258,47 @@ func disallowChRoot() kubearmorv1.KubeArmorPolicy {
 						Path: "/sbin/chroot",
 					},
 				},
+			},
+		},
+	}
+}
+
+
+func disallowBinaries() kubearmorv1.KubeArmorPolicy { // ref: https://www.tenable.com/audits/items/search?q=noexec&sort=&page=1
+	return kubearmorv1.KubeArmorPolicy{
+		Spec: kubearmorv1.KubeArmorPolicySpec{
+			File: kubearmorv1.FileType{
+				MatchDirectories: []kubearmorv1.FileDirectoryType{
+					{
+						Directory: "/var/tmp/",
+						Recursive: true,
+					},
+					{
+						Directory: "/tmp/",
+						Recursive: true,
+					},
+					{
+						Directory: "/var/log/",
+						Recursive: true,
+					},
+					{
+						Directory: "/app/logs/",
+						Recursive: true,
+					},
+					{
+						Directory: "/logs/",
+						Recursive: true,
+					},
+					{
+						Directory: "/etc/",
+						Recursive: true,
+					},
+					{
+						Directory: "/usr/lib/",
+						Recursive: true,
+					},
+				},
+				Action: kubearmorv1.ActionType("Block"),
 			},
 		},
 	}
