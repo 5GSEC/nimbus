@@ -160,7 +160,7 @@ jobs:
           run: |
             kubectl wait --for=condition=ready --timeout=5m -n nimbus pod -l app.kubernetes.io/name=nimbus
             kubectl get pods -A
-          
+
         - name: Run Tests
           run: make integration-test
 

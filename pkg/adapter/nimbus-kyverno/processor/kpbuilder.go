@@ -6,7 +6,7 @@ package processor
 import (
 	"strings"
 
-	v1 "github.com/5GSEC/nimbus/api/v1"
+	v1alpha1 "github.com/5GSEC/nimbus/api/v1alpha1"
 	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 	"github.com/go-logr/logr"
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
@@ -14,7 +14,7 @@ import (
 	"k8s.io/pod-security-admission/api"
 )
 
-func BuildKpsFrom(logger logr.Logger, np *v1.NimbusPolicy) []kyvernov1.Policy {
+func BuildKpsFrom(logger logr.Logger, np *v1alpha1.NimbusPolicy) []kyvernov1.Policy {
 	// Build KPs based on given IDs
 	var kps []kyvernov1.Policy
 	for _, nimbusRule := range np.Spec.NimbusRules {
@@ -41,7 +41,7 @@ func BuildKpsFrom(logger logr.Logger, np *v1.NimbusPolicy) []kyvernov1.Policy {
 }
 
 // buildKpFor builds a KyvernoPolicy based on intent ID supported by Kyverno Policy Engine.
-func buildKpFor(id string, np *v1.NimbusPolicy) kyvernov1.Policy {
+func buildKpFor(id string, np *v1alpha1.NimbusPolicy) kyvernov1.Policy {
 	switch id {
 	case idpool.EscapeToHost:
 		return escapeToHost(np, np.Spec.NimbusRules[0].Rule)
@@ -50,8 +50,8 @@ func buildKpFor(id string, np *v1.NimbusPolicy) kyvernov1.Policy {
 	}
 }
 
-func escapeToHost(np *v1.NimbusPolicy, rule v1.Rule) kyvernov1.Policy {
-	background := true
+func escapeToHost(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov1.Policy {
+
 	var psa_level api.Level = api.LevelBaseline
 
 	if rule.Params["psa_level"] != nil {
@@ -59,28 +59,18 @@ func escapeToHost(np *v1.NimbusPolicy, rule v1.Rule) kyvernov1.Policy {
 		switch rule.Params["psa_level"][0] {
 		case "restricted":
 			psa_level = api.LevelRestricted
-		
+
 		case "privileged":
 			psa_level = api.LevelPrivileged
-	
+
 		default:
 			psa_level = api.LevelBaseline
 		}
-		
 	}
 
 	labels := np.Spec.Selector.MatchLabels
-	lis := rule.Params["exclude_resources"]
-	exclusionLables := make(map[string]string)
-	for _, item := range lis {
-		parts := strings.Split(item, ":")
-		if len(parts) == 2 {
-			key := parts[0]
-			value := parts[1]
-			exclusionLables[key] = value
-		}
-	}
 
+	background := true
 	kp := kyvernov1.Policy{
 		Spec: kyvernov1.Spec{
 			Background: &background,

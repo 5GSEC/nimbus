@@ -5,7 +5,7 @@ metadata:
     app.kubernetes.io/managed-by: nimbus-kubearmor
   name: dns-manipulation-binding-dnsmanipulation
   ownerReferences:
-  - apiVersion: intent.security.nimbus.com/v1
+  - apiVersion: intent.security.nimbus.com/v1alpha1
     blockOwnerDeletion: true
     controller: true
     kind: NimbusPolicy

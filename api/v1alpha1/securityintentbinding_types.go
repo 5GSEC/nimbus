@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2023 Authors of Nimbus
 
-package v1
+package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -9,8 +9,9 @@ import (
 
 // SecurityIntentBindingSpec defines the desired state of SecurityIntentBinding
 type SecurityIntentBindingSpec struct {
-	Intents  []MatchIntent `json:"intents"`
-	Selector Selector      `json:"selector"`
+	Intents  []MatchIntent  `json:"intents"`
+	Selector MatchWorkloads `json:"selector"`
+	CEL      []string       `json:"cel,omitempty"`
 }
 
 // MatchIntent struct defines the request for a specific SecurityIntent
@@ -19,21 +20,11 @@ type MatchIntent struct {
 }
 
 // Selector defines the selection criteria for resources
-type Selector struct {
-	Any []ResourceFilter `json:"any,omitempty"`
-	All []ResourceFilter `json:"all,omitempty"`
-	CEL []string         `json:"cel,omitempty"`
+type MatchWorkloads struct {
+	WorkloadSelector LabelSelector `json:"workloadSelector,omitempty"`
 }
 
-// ResourceFilter is used for filtering resources
-type ResourceFilter struct {
-	Resources Resources `json:"resources,omitempty"`
-}
-
-// Resources defines the properties for selecting Kubernetes resources
-type Resources struct {
-	Kind        string            `json:"kind,omitempty"`
-	Namespace   string            `json:"namespace,omitempty"`
+type LabelSelector struct {
 	MatchLabels map[string]string `json:"matchLabels,omitempty"`
 }
 

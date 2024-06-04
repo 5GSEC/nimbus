@@ -5,6 +5,14 @@ metadata:
   name: nimbus-operator
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - intent.security.nimbus.com
   resources:
   - clusternimbuspolicies

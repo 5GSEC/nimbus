@@ -5,7 +5,6 @@ package manager
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/go-logr/logr"
@@ -18,7 +17,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	intentv1 "github.com/5GSEC/nimbus/api/v1"
+	v1alpha1 "github.com/5GSEC/nimbus/api/v1alpha1"
 	"github.com/5GSEC/nimbus/pkg/adapter/common"
 	"github.com/5GSEC/nimbus/pkg/adapter/k8s"
 	adapterutil "github.com/5GSEC/nimbus/pkg/adapter/util"
@@ -34,19 +33,18 @@ var (
 )
 
 func init() {
-	utilruntime.Must(intentv1.AddToScheme(scheme))
+	utilruntime.Must(v1alpha1.AddToScheme(scheme))
 	utilruntime.Must(netv1.AddToScheme(scheme))
 	k8sClient = k8s.NewOrDie(scheme)
 }
 
 func Run(ctx context.Context) {
+
+	// Watch NimbusPolicies only, and not ClusterNimbusPolicies as NetworkPolicy is
+	// namespaced scoped
 	npCh := make(chan common.Request)
 	deletedNpCh := make(chan common.Request)
-	go globalwatcher.WatchNimbusPolicies(ctx, npCh, deletedNpCh)
-
-	clusterNpChan := make(chan string)
-	deletedClusterNpChan := make(chan string)
-	go globalwatcher.WatchClusterNimbusPolicies(ctx, clusterNpChan, deletedClusterNpChan)
+	go globalwatcher.WatchNimbusPolicies(ctx, npCh, deletedNpCh, "SecurityIntentBinding", "ClusterSecurityIntentBinding")
 
 	updatedNetpolCh := make(chan common.Request)
 	deletedNetpolCh := make(chan common.Request)
@@ -54,11 +52,9 @@ func Run(ctx context.Context) {
 
 	for {
 		select {
-		case _ = <-ctx.Done():
+		case <-ctx.Done():
 			close(npCh)
 			close(deletedNpCh)
-			close(clusterNpChan)
-			close(deletedClusterNpChan)
 			close(updatedNetpolCh)
 			close(deletedNetpolCh)
 			return
@@ -70,10 +66,6 @@ func Run(ctx context.Context) {
 			reconcileNetPol(ctx, updatedNetpol.Name, updatedNetpol.Namespace, false)
 		case deletedNetpol := <-deletedNetpolCh:
 			reconcileNetPol(ctx, deletedNetpol.Name, deletedNetpol.Namespace, true)
-		case _ = <-clusterNpChan: // Fixme: Create netpol based on ClusterNP
-			fmt.Println("No-op for ClusterNimbusPolicy")
-		case _ = <-deletedClusterNpChan: // Fixme: Delete netpol based on ClusterNP
-			fmt.Println("No-op for ClusterNimbusPolicy")
 		}
 	}
 }
@@ -81,7 +73,7 @@ func Run(ctx context.Context) {
 func reconcileNetPol(ctx context.Context, netpolName, namespace string, deleted bool) {
 	logger := log.FromContext(ctx)
 	npName := adapterutil.ExtractNpName(netpolName)
-	var np intentv1.NimbusPolicy
+	var np v1alpha1.NimbusPolicy
 	err := k8sClient.Get(ctx, types.NamespacedName{Name: npName, Namespace: namespace}, &np)
 	if err != nil {
 		if !errors.IsNotFound(err) {
@@ -99,7 +91,7 @@ func reconcileNetPol(ctx context.Context, netpolName, namespace string, deleted 
 
 func createOrUpdateNetworkPolicy(ctx context.Context, npName, npNamespace string) {
 	logger := log.FromContext(ctx)
-	var np intentv1.NimbusPolicy
+	var np v1alpha1.NimbusPolicy
 	if err := k8sClient.Get(ctx, types.NamespacedName{Name: npName, Namespace: npNamespace}, &np); err != nil {
 		logger.Error(err, "failed to get NimbusPolicy", "NimbusPolicy.Name", npName[0], "NimbusPolicy.Namespace", npName[1])
 		return
@@ -172,7 +164,7 @@ func deleteNetworkPolicy(ctx context.Context, npName, npNamespace string) {
 	}
 }
 
-func deleteDanglingNetpols(ctx context.Context, np intentv1.NimbusPolicy, logger logr.Logger) {
+func deleteDanglingNetpols(ctx context.Context, np v1alpha1.NimbusPolicy, logger logr.Logger) {
 	var existingNetpols netv1.NetworkPolicyList
 	if err := k8sClient.List(ctx, &existingNetpols, client.InNamespace(np.Namespace)); err != nil {
 		logger.Error(err, "failed to list NetworkPolicies for cleanup")

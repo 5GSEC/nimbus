@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2024 Authors of Nimbus
+
+apiVersion: intent.security.nimbus.com/v1alpha1
+kind: ClusterNimbusPolicy
+metadata:
+  name: escape-to-host
+  ownerReferences:
+    - apiVersion: intent.security.nimbus.com/v1alpha1
+      blockOwnerDeletion: true
+      controller: true
+      kind: ClusterSecurityIntentBinding
+      name: escape-to-host
+spec:
+  rules:
+  - description: A attacker can breach container boundaries and can gain access to the
+      host machine
+    id: escapeToHost
+    rule:
+      action: Block
+

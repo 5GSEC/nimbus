@@ -1,25 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2023 Authors of Nimbus
 
-package v1
+package v1alpha1
 
 import (
+	"reflect"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // NimbusPolicySpec defines the desired state of NimbusPolicy
 type NimbusPolicySpec struct {
 	// Selector specifies the target resources to which the policy applies
-	Selector NimbusSelector `json:"selector"`
+	Selector LabelSelector `json:"selector"`
 
 	// PolicyType specifies the type of policy, e.g., "Network", "System", "Cluster"
 	NimbusRules []NimbusRules `json:"rules"`
-}
-
-// NimbusSelector is used to select specific resources based on labels.
-type NimbusSelector struct {
-	// MatchLabels is a map that holds key-value pairs to match against labels of resources.
-	MatchLabels map[string]string `json:"matchLabels"`
 }
 
 // NimbusRules represents a single policy rule with an ID, type, description, and detailed rule configurations.
@@ -69,4 +65,27 @@ type NimbusPolicyList struct {
 
 func init() {
 	SchemeBuilder.Register(&NimbusPolicy{}, &NimbusPolicyList{})
+}
+
+// Check equality of the spec to decide if we need to update the object
+func (a NimbusPolicy) Equal(b NimbusPolicy) (string, bool) {
+	if a.ObjectMeta.Name != b.ObjectMeta.Name {
+		return "diff: name", false
+	}
+	if a.ObjectMeta.Namespace != b.ObjectMeta.Namespace {
+		return "diff: Namespace", false
+	}
+
+	if !reflect.DeepEqual(a.ObjectMeta.Labels, b.ObjectMeta.Labels) {
+		return "diff: Labels", false
+	}
+
+	if !reflect.DeepEqual(a.ObjectMeta.OwnerReferences, b.ObjectMeta.OwnerReferences) {
+		return "diff: OwnerReferences", false
+	}
+
+	if !reflect.DeepEqual(a.Spec, b.Spec) {
+		return "diff: Spec", false
+	}
+	return "", true
 }

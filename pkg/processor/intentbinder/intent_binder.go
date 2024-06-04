@@ -11,25 +11,25 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	v1 "github.com/5GSEC/nimbus/api/v1"
+	v1alpha1 "github.com/5GSEC/nimbus/api/v1alpha1"
 )
 
 // ExtractIntents extract the SecurityIntent from the given SecurityIntentBinding
 // or ClusterSecurityIntentBinding objects.
-func ExtractIntents(ctx context.Context, c client.Client, object client.Object) []v1.SecurityIntent {
+func ExtractIntents(ctx context.Context, c client.Client, object client.Object) []v1alpha1.SecurityIntent {
 	logger := log.FromContext(ctx)
-	var intents []v1.SecurityIntent
-	var givenIntents []v1.MatchIntent
+	var intents []v1alpha1.SecurityIntent
+	var givenIntents []v1alpha1.MatchIntent
 
 	switch obj := object.(type) {
-	case *v1.SecurityIntentBinding:
+	case *v1alpha1.SecurityIntentBinding:
 		givenIntents = obj.Spec.Intents
-	case *v1.ClusterSecurityIntentBinding:
+	case *v1alpha1.ClusterSecurityIntentBinding:
 		givenIntents = obj.Spec.Intents
 	}
 
 	for _, intent := range givenIntents {
-		var si v1.SecurityIntent
+		var si v1alpha1.SecurityIntent
 		if err := c.Get(ctx, types.NamespacedName{Name: intent.Name}, &si); err != nil && apierrors.IsNotFound(err) {
 			logger.V(2).Info("failed to fetch SecurityIntent", "SecurityIntent.Name", intent.Name)
 			continue

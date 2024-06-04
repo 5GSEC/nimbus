@@ -42,6 +42,14 @@ metadata:
   name: {{ include "nimbus.fullname" . }}
 rules:
   - apiGroups:
+    - ""
+    resources:
+    - namespaces
+    verbs:
+    - get
+    - list
+    - watch
+  - apiGroups:
       - intent.security.nimbus.com
     resources:
       - clusternimbuspolicies

@@ -18,7 +18,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	intentv1 "github.com/5GSEC/nimbus/api/v1"
+	v1alpha1 "github.com/5GSEC/nimbus/api/v1alpha1"
 	"github.com/5GSEC/nimbus/pkg/adapter/common"
 	"github.com/5GSEC/nimbus/pkg/adapter/k8s"
 	adapterutil "github.com/5GSEC/nimbus/pkg/adapter/util"
@@ -34,7 +34,7 @@ var (
 )
 
 func init() {
-	utilruntime.Must(intentv1.AddToScheme(scheme))
+	utilruntime.Must(v1alpha1.AddToScheme(scheme))
 	utilruntime.Must(kubearmorv1.AddToScheme(scheme))
 	k8sClient = k8s.NewOrDie(scheme)
 }
@@ -42,7 +42,7 @@ func init() {
 func Run(ctx context.Context) {
 	npCh := make(chan common.Request)
 	deletedNpCh := make(chan common.Request)
-	go globalwatcher.WatchNimbusPolicies(ctx, npCh, deletedNpCh)
+	go globalwatcher.WatchNimbusPolicies(ctx, npCh, deletedNpCh, "SecurityIntentBinding", "ClusterSecurityIntentBinding")
 
 	clusterNpChan := make(chan string)
 	deletedClusterNpChan := make(chan string)
@@ -70,9 +70,11 @@ func Run(ctx context.Context) {
 			reconcileKsp(ctx, updatedKsp.Name, updatedKsp.Namespace, false)
 		case deletedKsp := <-deletedKspCh:
 			reconcileKsp(ctx, deletedKsp.Name, deletedKsp.Namespace, true)
-		case _ = <-clusterNpChan: // Fixme: CreateKSP based on ClusterNP
+		case <-clusterNpChan: // Fixme: CreateKSP based on ClusterNP
+			// From ClusterNP, KubeArmor can create HostSecurityPolicies
+			// The NodeSelector in ClusterNP should be set for such cases
 			fmt.Println("No-op for ClusterNimbusPolicy")
-		case _ = <-deletedClusterNpChan: // Fixme: DeleteKSP based on ClusterNP
+		case <-deletedClusterNpChan: // Fixme: DeleteKSP based on ClusterNP
 			fmt.Println("No-op for ClusterNimbusPolicy")
 		}
 	}
@@ -81,7 +83,7 @@ func Run(ctx context.Context) {
 func reconcileKsp(ctx context.Context, kspName, namespace string, deleted bool) {
 	logger := log.FromContext(ctx)
 	npName := adapterutil.ExtractNpName(kspName)
-	var np intentv1.NimbusPolicy
+	var np v1alpha1.NimbusPolicy
 	err := k8sClient.Get(ctx, types.NamespacedName{Name: npName, Namespace: namespace}, &np)
 	if err != nil {
 		if !errors.IsNotFound(err) {
@@ -99,7 +101,7 @@ func reconcileKsp(ctx context.Context, kspName, namespace string, deleted bool) 
 
 func createOrUpdateKsp(ctx context.Context, npName, npNamespace string) {
 	logger := log.FromContext(ctx)
-	var np intentv1.NimbusPolicy
+	var np v1alpha1.NimbusPolicy
 	if err := k8sClient.Get(ctx, types.NamespacedName{Name: npName, Namespace: npNamespace}, &np); err != nil {
 		logger.Error(err, "failed to get NimbusPolicy", "NimbusPolicy.Name", npName, "NimbusPolicy.Namespace", npNamespace)
 		return
@@ -173,7 +175,7 @@ func deleteKsp(ctx context.Context, npName, npNamespace string) {
 	}
 }
 
-func deleteDanglingKsps(ctx context.Context, np intentv1.NimbusPolicy, logger logr.Logger) {
+func deleteDanglingKsps(ctx context.Context, np v1alpha1.NimbusPolicy, logger logr.Logger) {
 	var existingKsps kubearmorv1.KubeArmorPolicyList
 	if err := k8sClient.List(ctx, &existingKsps, client.InNamespace(np.Namespace)); err != nil {
 		logger.Error(err, "failed to list KubeArmorPolicies for cleanup")

@@ -9,11 +9,11 @@ import (
 	"github.com/go-logr/logr"
 	kubearmorv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorController/api/security.kubearmor.com/v1"
 
-	v1 "github.com/5GSEC/nimbus/api/v1"
+	v1alpha1 "github.com/5GSEC/nimbus/api/v1alpha1"
 	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 )
 
-func BuildKspsFrom(logger logr.Logger, np *v1.NimbusPolicy) []kubearmorv1.KubeArmorPolicy {
+func BuildKspsFrom(logger logr.Logger, np *v1alpha1.NimbusPolicy) []kubearmorv1.KubeArmorPolicy {
 	// Build KSPs based on given IDs
 	var ksps []kubearmorv1.KubeArmorPolicy
 	var ksp kubearmorv1.KubeArmorPolicy
@@ -28,7 +28,6 @@ func BuildKspsFrom(logger logr.Logger, np *v1.NimbusPolicy) []kubearmorv1.KubeAr
 					ksp.Spec.Message = nimbusRule.Description
 					ksp.Spec.Selector.MatchLabels = np.Spec.Selector.MatchLabels
 					ksp.Spec.Action = kubearmorv1.ActionType(nimbusRule.Rule.RuleAction)
-					processRuleParams(&ksp, nimbusRule.Rule)
 					addManagedByAnnotation(&ksp)
 					ksps = append(ksps, ksp)
 				}
@@ -39,10 +38,9 @@ func BuildKspsFrom(logger logr.Logger, np *v1.NimbusPolicy) []kubearmorv1.KubeAr
 				ksp.Spec.Message = nimbusRule.Description
 				ksp.Spec.Selector.MatchLabels = np.Spec.Selector.MatchLabels
 				ksp.Spec.Action = kubearmorv1.ActionType(nimbusRule.Rule.RuleAction)
-				processRuleParams(&ksp, nimbusRule.Rule)
 				addManagedByAnnotation(&ksp)
 				ksps = append(ksps, ksp)
-			}	
+			}
 		} else {
 			logger.Info("KubeArmor does not support this ID", "ID", id,
 				"NimbusPolicy", np.Name, "NimbusPolicy.Namespace", np.Namespace)

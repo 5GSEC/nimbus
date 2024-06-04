@@ -6,16 +6,15 @@ package processor
 import (
 	"strings"
 
-	v1 "github.com/5GSEC/nimbus/api/v1"
+	v1alpha1 "github.com/5GSEC/nimbus/api/v1alpha1"
 	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
-	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kyverno/utils"
 	"github.com/go-logr/logr"
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/pod-security-admission/api"
 )
 
-func BuildKcpsFrom(logger logr.Logger, cnp *v1.ClusterNimbusPolicy) []kyvernov1.ClusterPolicy {
+func BuildKcpsFrom(logger logr.Logger, cnp *v1alpha1.ClusterNimbusPolicy) []kyvernov1.ClusterPolicy {
 	// Build KCPs based on given IDs
 	var kcps []kyvernov1.ClusterPolicy
 	for _, nimbusRule := range cnp.Spec.NimbusRules {
@@ -41,7 +40,7 @@ func BuildKcpsFrom(logger logr.Logger, cnp *v1.ClusterNimbusPolicy) []kyvernov1.
 }
 
 // buildKpFor builds a KyvernoPolicy based on intent ID supported by Kyverno Policy Engine.
-func buildKcpFor(id string, cnp *v1.ClusterNimbusPolicy) kyvernov1.ClusterPolicy {
+func buildKcpFor(id string, cnp *v1alpha1.ClusterNimbusPolicy) kyvernov1.ClusterPolicy {
 	switch id {
 	case idpool.EscapeToHost:
 		return clusterEscapeToHost(cnp, cnp.Spec.NimbusRules[0].Rule)
@@ -50,7 +49,7 @@ func buildKcpFor(id string, cnp *v1.ClusterNimbusPolicy) kyvernov1.ClusterPolicy
 	}
 }
 
-func clusterEscapeToHost(cnp *v1.ClusterNimbusPolicy, rule v1.Rule) kyvernov1.ClusterPolicy {
+func clusterEscapeToHost(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1.Rule) kyvernov1.ClusterPolicy {
 	var psa_level api.Level = api.LevelBaseline
 
 	if rule.Params["psa_level"] != nil {
@@ -58,85 +57,59 @@ func clusterEscapeToHost(cnp *v1.ClusterNimbusPolicy, rule v1.Rule) kyvernov1.Cl
 		switch rule.Params["psa_level"][0] {
 		case "restricted":
 			psa_level = api.LevelRestricted
-		
+
 		case "privileged":
 			psa_level = api.LevelPrivileged
-	
+
 		default:
 			psa_level = api.LevelBaseline
 		}
-		
+
 	}
 
-	var resourceFilters []kyvernov1.ResourceFilter
+	var matchFilters, excludeFilters []kyvernov1.ResourceFilter
+	var resourceFilter kyvernov1.ResourceFilter
 
-	for _,resource := range cnp.Spec.Selector.Resources {
-		kind := resource.Kind
-		name := resource.Name
-		switch kind {
-		case "Namespace":			
-			resourceFilterForNamespace := kyvernov1.ResourceFilter{
-				ResourceDescription: kyvernov1.ResourceDescription{
-					Kinds: []string{
-						utils.GetGVK("pod"),
-					},
-					Namespaces: []string{
-						name,
-					},
+	if len(cnp.Spec.NsSelector.MatchNames) > 0 {
+		resourceFilter = kyvernov1.ResourceFilter{
+			ResourceDescription: kyvernov1.ResourceDescription{
+				Kinds: []string{
+					"v1/Pod",
 				},
-			}
-
-			resourceFilters = append(resourceFilters, resourceFilterForNamespace)
-
-		default:
-			namespace := resource.Namespace
-			labels := resource.MatchLabels
-			var resourceFilter kyvernov1.ResourceFilter
-			if len(labels) != 0 {
-				resourceFilter = kyvernov1.ResourceFilter{
-					ResourceDescription: kyvernov1.ResourceDescription{
-						Kinds: []string{
-							"v1/Pod",
-						},
-						Namespaces: []string{
-							namespace,
-						},
-						Selector: &metav1.LabelSelector{
-							MatchLabels: labels,
-						},
-					},
-				}
-			} else {
-				resourceFilter = kyvernov1.ResourceFilter{
-					ResourceDescription: kyvernov1.ResourceDescription{
-						Kinds: []string{
-							"v1/Pod",
-						},
-						Namespaces: []string{
-							namespace,
-						},
-					},
-				}
-			}
-
-
-			resourceFilters = append(resourceFilters, resourceFilter)
-
+				Namespaces: cnp.Spec.NsSelector.MatchNames,
+				Selector: &metav1.LabelSelector{
+					MatchLabels: cnp.Spec.WorkloadSelector.MatchLabels,
+				},
+			},
 		}
-	} 
+		matchFilters = append(matchFilters, resourceFilter)
+	}
+
+	if len(cnp.Spec.NsSelector.ExcludeNames) > 0 {
+		resourceFilter = kyvernov1.ResourceFilter{
+			ResourceDescription: kyvernov1.ResourceDescription{
+				Namespaces: cnp.Spec.NsSelector.ExcludeNames,
+			},
+		}
+		excludeFilters = append(excludeFilters, resourceFilter)
+	}
+
 	background := true
 	return kyvernov1.ClusterPolicy{
 		Spec: kyvernov1.Spec{
-			Background: &background ,
+			Background: &background,
 			Rules: []kyvernov1.Rule{
 				{
 					Name: "restricted",
 					MatchResources: kyvernov1.MatchResources{
-						Any: resourceFilters,
+						Any: matchFilters,
+					},
+					ExcludeResources: kyvernov1.MatchResources{
+						Any: excludeFilters,
 					},
 					Validation: kyvernov1.Validation{
-						PodSecurity : &kyvernov1.PodSecurity{
-							Level: psa_level,
+						PodSecurity: &kyvernov1.PodSecurity{
+							Level:   psa_level,
 							Version: "latest",
 						},
 					},
@@ -149,4 +122,3 @@ func clusterEscapeToHost(cnp *v1.ClusterNimbusPolicy, rule v1.Rule) kyvernov1.Cl
 func addManagedByAnnotationForClusterScopedPolicy(kcp *kyvernov1.ClusterPolicy) {
 	kcp.Annotations["app.kubernetes.io/managed-by"] = "nimbus-kyverno"
 }
-

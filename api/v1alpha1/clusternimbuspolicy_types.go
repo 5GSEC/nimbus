@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2023 Authors of Nimbus
 
-package v1
+package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -9,8 +9,10 @@ import (
 
 // ClusterNimbusPolicySpec defines the desired state of ClusterNimbusPolicy
 type ClusterNimbusPolicySpec struct {
-	Selector    CwSelector    `json:"selector"`
-	NimbusRules []NimbusRules `json:"rules"`
+	NodeSelector     LabelSelector     `json:"nodeSelector,omitempty"`
+	NsSelector       NamespaceSelector `json:"nsSelector,omitempty"`
+	WorkloadSelector LabelSelector     `json:"workloadSelector,omitempty"`
+	NimbusRules      []NimbusRules     `json:"rules"`
 }
 
 // ClusterNimbusPolicyStatus defines the observed state of ClusterNimbusPolicy

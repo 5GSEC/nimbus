@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2023 Authors of Nimbus
 
-apiVersion: intent.security.nimbus.com/v1
+apiVersion: intent.security.nimbus.com/v1alpha1
 kind: SecurityIntent
 metadata:
   name: dns-manipulation
@@ -11,7 +11,7 @@ spec:
     description: "An adversary can manipulate DNS requests to redirect network traffic and potentially reveal end user activity."
     action: Block
 ---
-apiVersion: intent.security.nimbus.com/v1
+apiVersion: intent.security.nimbus.com/v1alpha1
 kind: SecurityIntentBinding
 metadata:
   name: dns-manipulation-binding
@@ -19,9 +19,6 @@ spec:
   intents:
     - name: dns-manipulation
   selector:
-    any:
-      - resources:
-          kind: Pod
-          namespace: default
-          matchLabels:
-            app: nginx
+    workloadSelector:
+      matchLabels:
+        app: nginx

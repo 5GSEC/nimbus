@@ -29,7 +29,7 @@ spec:
     - jsonPath: .status.clusterNimbusPolicy
       name: ClusterNimbusPolicy
       type: string
-    name: v1
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: ClusterSecurityIntentBinding is the Schema for the clustersecurityintentbindings
@@ -56,6 +56,10 @@ spec:
             description: ClusterSecurityIntentBindingSpec defines the desired state
               of ClusterSecurityIntentBinding
             properties:
+              cel:
+                items:
+                  type: string
+                type: array
               intents:
                 items:
                   description: MatchIntent struct defines the request for a specific
@@ -69,32 +73,34 @@ spec:
                 type: array
               selector:
                 properties:
-                  cel:
-                    items:
-                      type: string
-                    type: array
-                  resources:
-                    items:
-                      properties:
-                        kind:
+                  nodeSelector:
+                    properties:
+                      matchLabels:
+                        additionalProperties:
                           type: string
-                        matchLabels:
-                          additionalProperties:
-                            type: string
-                          type: object
-                        name:
+                        type: object
+                    type: object
+                  nsSelector:
+                    properties:
+                      excludeNames:
+                        items:
                           type: string
-                        namespace:
+                        type: array
+                      matchNames:
+                        items:
                           type: string
-                      required:
-                      - kind
-                      - name
-                      type: object
-                    type: array
+                        type: array
+                    type: object
+                  workloadSelector:
+                    properties:
+                      matchLabels:
+                        additionalProperties:
+                          type: string
+                        type: object
+                    type: object
                 type: object
             required:
             - intents
-            - selector
             type: object
           status:
             description: ClusterSecurityIntentBindingStatus defines the observed state
