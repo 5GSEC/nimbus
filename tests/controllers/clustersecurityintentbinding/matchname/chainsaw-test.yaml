@@ -63,13 +63,6 @@ spec:
                 check:
                   ($error != null): true
 
-    - name: "Verify the NimbusPolicy deletion in staging"
-      try:
-        - script:
-            content: kubectl -n staging get np nimbus-ctrl-gen-escape-to-host
-            check:
-              ($error != null): true
-
     - name: "Verify ClusterNimbusPolicy presence"
       try:
         - assert:

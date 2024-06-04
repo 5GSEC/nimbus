@@ -1,15 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2023 Authors of Nimbus
+# Copyright 2024 Authors of Nimbus
 
 apiVersion: intent.security.nimbus.com/v1alpha1
 kind: ClusterSecurityIntentBinding
 metadata:
-  name: escape-to-host
+  name: dns-manipulation-binding
 spec:
   intents:
-    - name: escape-to-host
+    - name: dns-manipulation
   selector:
     nsSelector:
       matchNames:
-        - dev
-        - staging
+        - "*"

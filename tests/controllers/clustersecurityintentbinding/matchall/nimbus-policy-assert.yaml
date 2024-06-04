@@ -1,21 +1,20 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2023 Authors of Nimbus
+# Copyright 2024 Authors of Nimbus
 
 apiVersion: intent.security.nimbus.com/v1alpha1
 kind: NimbusPolicy
 metadata:
-  name: nimbus-ctlr-gen-escape-to-host
-  namespace: prod
+  name: nimbus-ctlr-gen-dns-manipulation-binding
   ownerReferences:
     - apiVersion: intent.security.nimbus.com/v1alpha1
       blockOwnerDeletion: true
       controller: true
       kind: ClusterSecurityIntentBinding
-      name: escape-to-host
+      name: dns-manipulation-binding
 spec:
   rules:
-    - description: A attacker can breach container boundaries and can gain access to 
-       the host machine
-      id: escapeToHost
+    - description: An adversary can manipulate DNS requests to redirect network traffic
+        and potentially reveal end user activity.
+      id: dnsManipulation
       rule:
         action: Block

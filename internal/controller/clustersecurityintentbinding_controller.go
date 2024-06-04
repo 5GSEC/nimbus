@@ -349,60 +349,57 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 	}
 
 	var nsList corev1.NamespaceList
-	var nsFilteredList []nsTrackingObj
 	err = r.List(ctx, &nsList)
 	if err != nil && !apierrors.IsNotFound(err) {
 		logger.Error(err, "failed to fetch list of Namespaces", "ClusterNimbusPolicy.Name", req.Name)
 		return err
 	}
-	if len(csib.Spec.Selector.NsSelector.ExcludeNames) > 0 {
-		// get the namespaces after excluding the specified ns, and the blacklist.
-		for _, nso := range nsList.Items {
-			var exclude bool = false
-			if slices.Contains(csib.Spec.Selector.NsSelector.ExcludeNames, nso.Name) {
-				exclude = true
-			}
-			if slices.Contains(nsBlackList, nso.Name) {
-				exclude = true
-			}
-			if !exclude {
-				nsFilteredList = append(nsFilteredList, nsTrackingObj{ns: &nso})
-			}
+
+	// Populate a map with all namespaces
+	nsMap := make(map[string]corev1.Namespace)
+	for _, nso := range nsList.Items {
+		nsMap[nso.Name] = nso
+	}
+
+	// filter out the blacklist, deleted namespaces
+	for ns, nsObj := range nsMap {
+		if slices.Contains(nsBlackList, ns) {
+			delete(nsMap, ns)
+			continue
 		}
-	} else if ml := len(csib.Spec.Selector.NsSelector.MatchNames); ml > 0 {
-		var allNs bool = false
-		if ml == 1 && csib.Spec.Selector.NsSelector.MatchNames[0] == wildcard {
-			allNs = true
+
+		if nsObj.GetDeletionTimestamp() != nil {
+			delete(nsMap, ns)
+			continue
 		}
-		for _, nso := range nsList.Items {
-			var include bool = false
-			if allNs || slices.Contains(csib.Spec.Selector.NsSelector.MatchNames, nso.Name) {
-				include = true
+
+		if len(csib.Spec.Selector.NsSelector.ExcludeNames) > 0 {
+			if slices.Contains(csib.Spec.Selector.NsSelector.ExcludeNames, ns) {
+				delete(nsMap, ns)
+				continue
 			}
-			// next run through the blacklist
-			if slices.Contains(nsBlackList, nso.Name) {
-				include = false
+		} else if ml := len(csib.Spec.Selector.NsSelector.MatchNames); ml > 0 {
+			if ml == 1 && csib.Spec.Selector.NsSelector.MatchNames[0] == wildcard {
+				continue
 			}
-			if include {
-				nsFilteredList = append(nsFilteredList, nsTrackingObj{ns: &nso})
+			if !slices.Contains(csib.Spec.Selector.NsSelector.MatchNames, ns) {
+				delete(nsMap, ns)
+				continue
 			}
 		}
 	}
 
-	// DEBUG: print the tracking list
-	logger.Info("Printing the Namespace List", "Length of namespace list", len(nsList.Items))
-
-	// The nsFilteredList is the spec. We need to ensure that there are NP
+	// The nsMap is the spec. We need to ensure that there are NP
 	// for the specified namespaces. 3 cases here
 	//   - If a namespace is in spec, and in the NP list, then mark NP for update.
 	//   - If the namespace is in spec, and not there in the NP list, then
 	//     build an NP for this namespace, and mark it for create.
 	//   - If there are NPs in namespaces which are not in the spec list, delete
 	//     those NPs
-	for _, ns_spec := range nsFilteredList {
+	for _, nsSpec := range nsMap {
 		var seen bool = false
 		for index, np_actual := range npFilteredTrackingList {
-			if ns_spec.ns.Name == np_actual.np.Namespace {
+			if nsSpec.Name == np_actual.np.Namespace {
 				npFilteredTrackingList[index].update = true
 				seen = true
 				break
@@ -410,7 +407,7 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 		}
 		if !seen {
 			// construct the nimbus policy object as it is not present in cluster
-			nimbusPolicy, err := policybuilder.BuildNimbusPolicyFromClusterBinding(ctx, logger, r.Client, r.Scheme, csib, ns_spec.ns.Name)
+			nimbusPolicy, err := policybuilder.BuildNimbusPolicyFromClusterBinding(ctx, logger, r.Client, r.Scheme, csib, nsSpec.Name)
 			if err == nil {
 				npFilteredTrackingList = append(npFilteredTrackingList, npTrackingObj{create: true, np: nimbusPolicy})
 			}
@@ -420,11 +417,16 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 	// run through the tracking list, and create/update/delete the nimbus policies
 	for _, nobj := range npFilteredTrackingList {
 		if nobj.create {
-			nobj.np.Status.Status = StatusCreated
-			nobj.np.Status.LastUpdated = metav1.Now()
 			if err := r.Create(ctx, nobj.np); err != nil {
 				logger.Error(err, "failed to create NimbusPolicy", "NimbusPolicy.Name", nobj.np.Name)
-				// returning error here will restart the reconcile request with error
+				return err
+			}
+			npReq := ctrl.Request{
+				NamespacedName: types.NamespacedName{
+					Namespace: nobj.np.GetNamespace(),
+					Name:      nobj.np.GetName(),
+				}}
+			if err = r.updateNpStatus(ctx, logger, npReq, StatusCreated); err != nil {
 				return err
 			}
 			logger.Info("NimbusPolicy created", "NimbusPolicy.Name", nobj.np.Name)
@@ -456,10 +458,16 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 			}
 
 			newNimbusPolicy.ObjectMeta.ResourceVersion = nobj.np.ObjectMeta.ResourceVersion
-			newNimbusPolicy.Status.Status = StatusCreated
-			newNimbusPolicy.Status.LastUpdated = metav1.Now()
 			if err := r.Update(ctx, newNimbusPolicy); err != nil {
 				logger.Error(err, "failed to update NimbusPolicy", "NimbusPolicy.Name", newNimbusPolicy.Name)
+				return err
+			}
+			npReq := ctrl.Request{
+				NamespacedName: types.NamespacedName{
+					Namespace: newNimbusPolicy.GetNamespace(),
+					Name:      newNimbusPolicy.GetName(),
+				}}
+			if err = r.updateNpStatus(ctx, logger, npReq, StatusCreated); err != nil {
 				return err
 			}
 			logger.Info("NimbusPolicy updated", "NimbusPolicy.Name", newNimbusPolicy.Name)
@@ -469,7 +477,7 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 		} else {
 			// delete the object
 			logger.Info("Deleting NimbusPolicy since no namespaces found", "NimbusPolicyName", nobj.np.Name)
-			if err = r.Delete(context.Background(), nobj.np); err != nil {
+			if err = r.Delete(ctx, nobj.np); err != nil {
 				logger.Error(err, "failed to delete NimbusPolicy", "NimbusPolicyName", nobj.np.Name)
 				return err
 			}
@@ -477,6 +485,26 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 		}
 	}
 
+	return nil
+}
+
+func (r *ClusterSecurityIntentBindingReconciler) updateNpStatus(ctx context.Context, logger logr.Logger, req ctrl.Request, status string) error {
+	np := &v1alpha1.NimbusPolicy{}
+	if retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		if err := r.Get(ctx, req.NamespacedName, np); err != nil {
+			return err
+		}
+
+		np.Status.Status = status
+		np.Status.LastUpdated = metav1.Now()
+		if err := r.Status().Update(ctx, np); err != nil {
+			return err
+		}
+		return nil
+	}); retryErr != nil {
+		logger.Error(retryErr, "failed to update NimbusPolicy status", "NimbusPolicy.Name", req.Name, "NimbusPolicy.Namespace", req.Namespace)
+		return retryErr
+	}
 	return nil
 }
 
@@ -493,7 +521,7 @@ func (r *ClusterSecurityIntentBindingReconciler) findCsibsForNamespace(ctx conte
 
 	for _, csib := range csibs.Items {
 
-		var toBeReconciled bool = false
+		var toBeReconciled = false
 
 		if csib.Status.Status == StatusValidationFail {
 			continue

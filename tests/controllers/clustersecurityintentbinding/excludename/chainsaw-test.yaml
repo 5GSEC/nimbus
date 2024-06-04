@@ -93,7 +93,7 @@ spec:
             check:
               ($error != null): true
 
-    - name: "Verify NimbusPolicy absence in dev namespace"
+    - name: "Verify NimbusPolicy absence in prod namespace"
       try:
         - script:
             content: kubectl -n prod get np nimbus-ctrl-gen-escape-to-host
