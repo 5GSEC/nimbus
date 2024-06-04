@@ -49,6 +49,8 @@ func buildKcpFor(id string, cnp *v1alpha1.ClusterNimbusPolicy) kyvernov1.Cluster
 	}
 }
 
+var nsBlackList = []string{"kube-system"}
+
 func clusterEscapeToHost(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1.Rule) kyvernov1.ClusterPolicy {
 	var psa_level api.Level = api.LevelBaseline
 
@@ -70,22 +72,51 @@ func clusterEscapeToHost(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1.Rule) 
 	var matchFilters, excludeFilters []kyvernov1.ResourceFilter
 	var resourceFilter kyvernov1.ResourceFilter
 
+	// exclude kube-system
+	resourceFilter = kyvernov1.ResourceFilter{
+		ResourceDescription: kyvernov1.ResourceDescription{
+			Namespaces: nsBlackList,
+		},
+	}
+	excludeFilters = append(excludeFilters, resourceFilter)
+
 	if len(cnp.Spec.NsSelector.MatchNames) > 0 {
+		if len(cnp.Spec.WorkloadSelector.MatchLabels) > 0 {
+			resourceFilter = kyvernov1.ResourceFilter{
+				ResourceDescription: kyvernov1.ResourceDescription{
+					Kinds: []string{
+						"v1/Pod",
+					},
+					Namespaces: cnp.Spec.NsSelector.MatchNames,
+					Selector: &metav1.LabelSelector{
+						MatchLabels: cnp.Spec.WorkloadSelector.MatchLabels,
+					},
+				},
+			}
+
+		} else {
+			resourceFilter = kyvernov1.ResourceFilter{
+				ResourceDescription: kyvernov1.ResourceDescription{
+					Kinds: []string{
+						"v1/Pod",
+					},
+					Namespaces: cnp.Spec.NsSelector.MatchNames,
+				},
+			}
+		}
+		matchFilters = append(matchFilters, resourceFilter)
+
+	} else if len(cnp.Spec.NsSelector.ExcludeNames) > 0 {
+
 		resourceFilter = kyvernov1.ResourceFilter{
 			ResourceDescription: kyvernov1.ResourceDescription{
 				Kinds: []string{
 					"v1/Pod",
 				},
-				Namespaces: cnp.Spec.NsSelector.MatchNames,
-				Selector: &metav1.LabelSelector{
-					MatchLabels: cnp.Spec.WorkloadSelector.MatchLabels,
-				},
 			},
 		}
 		matchFilters = append(matchFilters, resourceFilter)
-	}
 
-	if len(cnp.Spec.NsSelector.ExcludeNames) > 0 {
 		resourceFilter = kyvernov1.ResourceFilter{
 			ResourceDescription: kyvernov1.ResourceDescription{
 				Namespaces: cnp.Spec.NsSelector.ExcludeNames,

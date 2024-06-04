@@ -486,6 +486,18 @@ func (r *ClusterSecurityIntentBindingReconciler) createOrUpdateNp(ctx context.Co
 
 func (r *ClusterSecurityIntentBindingReconciler) updateNpStatus(ctx context.Context, logger logr.Logger, req ctrl.Request, status string) error {
 	np := &v1alpha1.NimbusPolicy{}
+
+	// Get the np object. This might take multiple retries since object might have been just created
+	if retryErr := retry.OnError(retry.DefaultRetry, apierrors.IsNotFound, func() error {
+		if err := r.Get(ctx, req.NamespacedName, np); err != nil {
+			return err
+		}
+		return nil
+	}); retryErr != nil {
+		logger.Error(retryErr, "failed to fetch NimbusPolicy", "NimbusPolicy.Name", req.Name)
+		return retryErr
+	}
+
 	if retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		if err := r.Get(ctx, req.NamespacedName, np); err != nil {
 			return err
