@@ -15,25 +15,51 @@ on:
 permissions: read-all
 
 jobs:
+  files-changed:
+    name: Detect what files changed
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      nimbus: ${{ steps.filter.outputs.nimbus}}
+      adapters: ${{ steps.filter.outputs.adapters }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3.0.2
+        id: filter
+        with:
+          filters: |
+            nimbus:
+              - 'api/**'
+              - 'cmd/**'
+              - 'internal/**'
+              - 'pkg/processor/**'
+              - 'tests/controllers/**'
+              - 'Dockerfile'
+              - 'Makefile'
+            adapters:
+              - 'pkg/adapter/**'
+
   license:
     name: License
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Check License Header
-        uses: apache/skywalking-eyes@a790ab8dd23a7f861c18bd6aaa9b012e3a234bce
+        uses: apache/skywalking-eyes@3ea9df11bb3a5a85665377d1fd10c02edecf2c40
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   static-checks:
+    needs: files-changed
+    if: ${{ needs.files-changed.outputs.nimbus == 'true' ||  needs.files-changed.outputs.adapters == 'true' }}
     name: Static checks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: '1.22'
 
@@ -49,6 +75,8 @@ jobs:
           skip-cache: true # https://github.com/golangci/golangci-lint-action/issues/244#issuecomment-1052197778
 
   go-sec:
+    needs: files-changed
+    if: ${{ needs.files-changed.outputs.nimbus == 'true' ||  needs.files-changed.outputs.adapters == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -56,7 +84,7 @@ jobs:
       GO111MODULE: on
     steps:
       - name: Checkout Source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Run Gosec Security Scanner
         uses: securego/gosec@master
@@ -65,22 +93,26 @@ jobs:
           args: '-no-fail -fmt sarif -out results.sarif ./...'
 
       - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: results.sarif
 
   build-nimbus-image:
+    needs: files-changed
+    if: ${{ needs.files-changed.outputs.nimbus == 'true' }}
     name: Build Nimbus Operator image
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Build image
         run: make docker-build
 
   build-adapters-image:
+    needs: files-changed
+    if: ${{ needs.files-changed.outputs.adapters == 'true' }}
     strategy:
       matrix:
         adapters: [ "nimbus-kubearmor", "nimbus-netpol", "nimbus-kyverno" ]
@@ -89,13 +121,15 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Build image
         working-directory: ./pkg/adapter/${{ matrix.adapters }}
         run: make docker-build
 
-  chainsaw-integration-tests:
+  integration-tests:
+    needs: files-changed
+    if: ${{ needs.files-changed.outputs.nimbus == 'true' }}
     name: Integration-Test
     runs-on: ubuntu-latest
     steps:
@@ -104,7 +138,7 @@ jobs:
 
         - name: Install helm
           id: helm
-          uses: azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78 # v3.5
+          uses: azure/setup-helm@fe7b79cd5ee1e45176fcad797de68ecaf3ca4814 # v4.2.0
           with:
             token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -130,16 +164,18 @@ jobs:
         - name: Run Tests
           run: make integration-test
 
-  chainsaw-e2e-tests:
+  e2e-tests:
+    needs: files-changed
+    if: ${{ needs.files-changed.outputs.nimbus == 'true' || needs.files-changed.outputs.adapters == 'true' }}
     name: E2E-Test
     runs-on: ubuntu-latest
     steps:
         - name: Checkout source code
-          uses: actions/checkout@v3
+          uses: actions/checkout@v4
 
         - name: Install helm
           id: helm
-          uses: azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78 # v3.5
+          uses: azure/setup-helm@fe7b79cd5ee1e45176fcad797de68ecaf3ca4814 # v4.2.0
           with:
             token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -179,7 +215,6 @@ jobs:
           run: |
             kubectl create -f https://raw.githubusercontent.com/kyverno/kyverno/main/config/crds/kyverno/kyverno.io_clusterpolicies.yaml 
             kubectl create -f https://raw.githubusercontent.com/kyverno/kyverno/main/config/crds/kyverno/kyverno.io_policies.yaml
-        
 
         - name: Install Nimbus
           run: |
