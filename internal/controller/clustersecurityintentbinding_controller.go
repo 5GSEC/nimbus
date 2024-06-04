@@ -273,10 +273,6 @@ type npTrackingObj struct {
 	np     *v1alpha1.NimbusPolicy
 }
 
-type nsTrackingObj struct {
-	ns *corev1.Namespace
-}
-
 // we should not create object in these ns
 var nsBlackList = []string{"kube-system"}
 
