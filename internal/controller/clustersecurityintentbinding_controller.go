@@ -93,6 +93,10 @@ func (r *ClusterSecurityIntentBindingReconciler) Reconcile(ctx context.Context, 
 		return requeueWithError(err)
 	}
 
+	if err = r.updateCsibStatusWithNpNamespacesInfo(ctx, logger, req); err != nil {
+		return requeueWithError(err)
+	}
+
 	return doNotRequeue()
 }
 
@@ -690,6 +694,8 @@ func (r *ClusterSecurityIntentBindingReconciler) updateCSibStatusWithBoundSisAnd
 		latestCsib.Status.NumberOfBoundIntents = 0
 		latestCsib.Status.BoundIntents = nil
 		latestCsib.Status.ClusterNimbusPolicy = ""
+		latestCsib.Status.NumberOfNimbusPolicies = 0
+		latestCsib.Status.NimbusPolicyNamespaces = nil
 		if err := r.Status().Update(ctx, latestCsib); err != nil {
 			logger.Error(err, "failed to update ClusterSecurityIntentBinding status", "ClusterSecurityIntentBinding.Name", latestCsib.Name)
 			return err
@@ -701,6 +707,52 @@ func (r *ClusterSecurityIntentBindingReconciler) updateCSibStatusWithBoundSisAnd
 	latestCsib.Status.NumberOfBoundIntents = int32(len(latestCwnp.Spec.NimbusRules))
 	latestCsib.Status.BoundIntents = extractBoundIntentsNameFromCSib(ctx, r.Client, req.Name)
 	latestCsib.Status.ClusterNimbusPolicy = req.Name
+
+	if err := r.Status().Update(ctx, latestCsib); err != nil {
+		logger.Error(err, "failed to update ClusterSecurityIntentBinding status", "ClusterSecurityIntentBinding.Name", latestCsib.Name)
+		return err
+	}
+
+	return nil
+}
+
+func (r *ClusterSecurityIntentBindingReconciler) updateCsibStatusWithNpNamespacesInfo(ctx context.Context, logger logr.Logger, req ctrl.Request) error {
+	latestCsib := &v1alpha1.ClusterSecurityIntentBinding{}
+	if err := r.Get(ctx, req.NamespacedName, latestCsib); err != nil && !apierrors.IsNotFound(err) {
+		logger.Error(err, "failed to fetch ClusterSecurityIntentBinding", "ClusterSecurityIntentBinding.Name", req.Name)
+		return err
+	}
+
+	latestCwnp := &v1alpha1.ClusterNimbusPolicy{}
+	if retryErr := retry.OnError(retry.DefaultRetry, apierrors.IsNotFound, func() error {
+		if err := r.Get(ctx, req.NamespacedName, latestCwnp); err != nil {
+			return err
+		}
+		return nil
+	}); retryErr != nil {
+		if !apierrors.IsNotFound(retryErr) {
+			logger.Error(retryErr, "failed to fetch ClusterNimbusPolicy", "ClusterNimbusPolicy.Name", req.Name)
+			return retryErr
+		}
+
+		// Remove outdated SecurityIntent(s) and ClusterNimbusPolicy info
+		latestCsib.Status.NumberOfBoundIntents = 0
+		latestCsib.Status.BoundIntents = nil
+		latestCsib.Status.ClusterNimbusPolicy = ""
+		latestCsib.Status.NumberOfNimbusPolicies = 0
+		latestCsib.Status.NimbusPolicyNamespaces = nil
+		if err := r.Status().Update(ctx, latestCsib); err != nil {
+			logger.Error(err, "failed to update ClusterSecurityIntentBinding status", "ClusterSecurityIntentBinding.Name", latestCsib.Name)
+			return err
+		}
+		return nil
+	}
+
+	// Update necessary fields of ClusterSecurityIntentBinding status.
+	// The other fields will remain the same
+	npNamespaces := extractNPNamespacesFromCsib(ctx, r.Client, req.Name)
+	latestCsib.Status.NumberOfNimbusPolicies = int32(len(npNamespaces))
+	latestCsib.Status.NimbusPolicyNamespaces = npNamespaces
 
 	if err := r.Status().Update(ctx, latestCsib); err != nil {
 		logger.Error(err, "failed to update ClusterSecurityIntentBinding status", "ClusterSecurityIntentBinding.Name", latestCsib.Name)
