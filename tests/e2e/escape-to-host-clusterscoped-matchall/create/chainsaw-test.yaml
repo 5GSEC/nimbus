@@ -13,6 +13,8 @@ spec:
       try:
         - apply:
             file: ../ns.yaml
+        - assert:
+            file: ../ns.yaml
 
     - name: "Create a SecurityIntent"
       try:
@@ -51,7 +53,6 @@ spec:
             check:
               ($error != null): true
 
-
     - name: "Verify Cluster KyvernoPolicy creation"
       try:
         - assert:
@@ -59,13 +60,18 @@ spec:
     
     - name: "Verify spec, status of created ClusterSecurityIntentBinding"
       description: >
-        Verify the created SecurityIntentBinding status subresource includes the number and names of bound intents, along with the generated NimbusPolicy name.
+        Verify the created SecurityIntentBinding status subresource includes the number and names of 
+        bound intents, along with the number of generated NimbusPolicy. 
+        The number of generated nimbus policies are checked by getting the number of lines in the 
+        "kubectl get ns" operation. This number is then reduced by 2 - one line for the header (NAME
+        STATUS AGE)  and another line for the kube-system namespace as we do not create Nimbus
+        policies in that namespace
       try:
         - script:
-            content: kubectl get --raw /metrics | awk '/apiserver_storage_objects{resource="namespaces"}/{print $2;}'
+            content: kubectl get ns | wc -l
             outputs:
             - name: nscount
-              value: ($stdout)
+              value: (to_number($stdout) - `2`)
         - assert:
             file: ../csib-assert.yaml
       catch:

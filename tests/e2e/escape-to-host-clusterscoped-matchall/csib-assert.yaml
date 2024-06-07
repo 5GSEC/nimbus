@@ -20,5 +20,5 @@ status:
   - escape-to-host
   clusterNimbusPolicy: escape-to-host-binding
   numberOfBoundIntents: 1
-  numberOfNimbusPolicies: (to_number($nscount) - `1`)
+  numberOfNimbusPolicies: ($nscount)
   status: Created
