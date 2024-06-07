@@ -22,9 +22,8 @@
 | 12 | [4. Create the management, regional namespaces](#step-4. Create the management, regional namespaces) | 0 | 1 | 0 | 0 |
 | 13 | [Verify ClusterNimbusPolicy presence](#step-Verify ClusterNimbusPolicy presence) | 0 | 1 | 0 | 0 |
 | 14 | [Verify NimbusPolicy absence in dev namespace](#step-Verify NimbusPolicy absence in dev namespace) | 0 | 1 | 0 | 0 |
-| 15 | [Verify NimbusPolicy absence in dev namespace](#step-Verify NimbusPolicy absence in dev namespace) | 0 | 1 | 0 | 0 |
-| 16 | [Verify NimbusPolicy absence in prod namespace](#step-Verify NimbusPolicy absence in prod namespace) | 0 | 1 | 0 | 0 |
-| 17 | [Verify NimbusPolicy absence in regional namespace](#step-Verify NimbusPolicy absence in regional namespace) | 0 | 1 | 0 | 0 |
+| 15 | [Verify NimbusPolicy absence in prod namespace](#step-Verify NimbusPolicy absence in prod namespace) | 0 | 1 | 0 | 0 |
+| 16 | [Verify NimbusPolicy absence in regional namespace](#step-Verify NimbusPolicy absence in regional namespace) | 0 | 1 | 0 | 0 |
 
 ### Step: `1. Create prod, dev, staging Namespaces`
 
@@ -155,16 +154,6 @@
 | # | Operation | Bindings | Outputs | Description |
 |:-:|---|:-:|:-:|---|
 | 1 | `assert` | 0 | 0 | *No description* |
-
-### Step: `Verify NimbusPolicy absence in dev namespace`
-
-*No description*
-
-#### Try
-
-| # | Operation | Bindings | Outputs | Description |
-|:-:|---|:-:|:-:|---|
-| 1 | `script` | 0 | 0 | *No description* |
 
 ### Step: `Verify NimbusPolicy absence in dev namespace`
 

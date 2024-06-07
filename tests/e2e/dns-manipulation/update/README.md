@@ -12,8 +12,8 @@ This test validates that direct updates to the generated adapter's policies are 
 | 3 | [Verify NimbusPolicy creation](#step-Verify NimbusPolicy creation) | 0 | 1 | 0 | 0 |
 | 4 | [Verify NetworkPolicy creation](#step-Verify NetworkPolicy creation) | 0 | 1 | 0 | 0 |
 | 5 | [Verify KubearmorPolicy creation](#step-Verify KubearmorPolicy creation) | 0 | 1 | 0 | 0 |
-| 6 | [Update existing Netpol](#step-Update existing Netpol) | 0 | 1 | 0 | 0 |
-| 7 | [Verify discarding of the changes made in netpol](#step-Verify discarding of the changes made in netpol) | 0 | 1 | 0 | 0 |
+| 6 | [Update existing NetworkPolicy](#step-Update existing NetworkPolicy) | 0 | 1 | 0 | 0 |
+| 7 | [Verify discarding of the changes made in NetworkPolicy](#step-Verify discarding of the changes made in NetworkPolicy) | 0 | 1 | 0 | 0 |
 | 8 | [Update existing KubearmorPolicy](#step-Update existing KubearmorPolicy) | 0 | 1 | 0 | 0 |
 | 9 | [Verify discarding of the changes made in KubeArmorPolicy](#step-Verify discarding of the changes made in KubeArmorPolicy) | 0 | 1 | 0 | 0 |
 
@@ -67,7 +67,7 @@ This test validates that direct updates to the generated adapter's policies are 
 |:-:|---|:-:|:-:|---|
 | 1 | `assert` | 0 | 0 | *No description* |
 
-### Step: `Update existing Netpol`
+### Step: `Update existing NetworkPolicy`
 
 *No description*
 
@@ -77,7 +77,7 @@ This test validates that direct updates to the generated adapter's policies are 
 |:-:|---|:-:|:-:|---|
 | 1 | `apply` | 0 | 0 | *No description* |
 
-### Step: `Verify discarding of the changes made in netpol`
+### Step: `Verify discarding of the changes made in NetworkPolicy`
 
 *No description*
 
