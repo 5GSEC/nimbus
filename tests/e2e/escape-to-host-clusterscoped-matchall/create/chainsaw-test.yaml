@@ -1,0 +1,75 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: escape-to-host-clusterscoped-matchall-adapter-policy-creation
+spec:
+  description: >
+   This test validates that creating a `escapeToHost` SecurityIntent with ClusterSecurityIntentBinding with a matchNames of "*" generates the expected cluster Kyverno Policy, and kubearmor policies in all the namespaces in the cluster except kube-system
+  steps:
+    - name: "Create the dev, staging namespaces "
+      try:
+        - apply:
+            file: ../ns.yaml
+
+    - name: "Create a SecurityIntent"
+      try:
+        - apply:
+            file: ../../resources/namespaced/escape-to-host-si.yaml
+
+    - name: "Create a ClusterSecurityIntentBinding"
+      try:
+        - apply:
+            file: ../../resources/clusterscoped/escape-to-host-csib-match-all.yaml
+
+    - name: "Verify ClusterNimbusPolicy creation"
+      try:
+        - assert:
+            file: ../cwnp-assert.yaml
+
+    - name: "Verify Nimbus Policy creation in dev"
+      try:
+        - assert:
+            file: ../nimbus-policy-assert-ns-dev.yaml
+
+    - name: "Verify Nimbus Policy creation in staging"
+      try:
+        - assert:
+            file: ../nimbus-policy-assert-ns-staging.yaml
+
+    - name: "Verify Nimbus Policy creation in default"
+      try:
+        - assert:
+            file: ../nimbus-policy-assert-ns-default.yaml
+
+    - name: "Verify NimbusPolicy absence in kube-system"
+      try:
+        - script:
+            content: kubectl -n kube-system get np nimbus-ctlr-gen-escape-to-host-binding
+            check:
+              ($error != null): true
+
+
+    - name: "Verify Cluster KyvernoPolicy creation"
+      try:
+        - assert:
+            file: ../cluster-kyverno-policy.yaml
+    
+    - name: "Verify spec, status of created ClusterSecurityIntentBinding"
+      description: >
+        Verify the created SecurityIntentBinding status subresource includes the number and names of bound intents, along with the generated NimbusPolicy name.
+      try:
+        - script:
+            content: kubectl get --raw /metrics | awk '/apiserver_storage_objects{resource="namespaces"}/{print $2;}'
+            outputs:
+            - name: nscount
+              value: ($stdout)
+        - assert:
+            file: ../csib-assert.yaml
+      catch:
+        - script:
+            content: kubectl get ns
+        - script:
+            content: kubectl get csib -A -o yaml

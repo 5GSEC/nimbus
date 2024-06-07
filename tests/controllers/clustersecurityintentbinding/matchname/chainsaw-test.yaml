@@ -44,7 +44,7 @@ spec:
     - name: "Verify NimbusPolicy absence in prod"
       try:
         - script:
-            content: kubectl -n prod get np nimbus-ctrl-gen-escape-to-host
+            content: kubectl -n prod get np nimbus-ctlr-gen-escape-to-host
             check:
               ($error != null): true
 
@@ -76,7 +76,7 @@ spec:
     - name: "Verify NimbusPolicy absence in prod"
       try:
         - script:
-            content: kubectl -n prod get np nimbus-ctrl-gen-escape-to-host
+            content: kubectl -n prod get np nimbus-ctlr-gen-escape-to-host
             check:
               ($error != null): true
 

@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2024 Authors of Nimbus
+
+apiVersion: intent.security.nimbus.com/v1alpha1
+kind: ClusterSecurityIntentBinding
+metadata:
+  name: escape-to-host-binding
+spec:
+  intents:
+  - name: escape-to-host
+  selector:
+    nsSelector:
+      matchNames:
+      - '*'
+    workloadSelector:
+      matchLabels:
+        app: nginx
+status:
+  boundIntents:
+  - escape-to-host
+  clusterNimbusPolicy: escape-to-host-binding
+  numberOfBoundIntents: 1
+  numberOfNimbusPolicies: (to_number($nscount) - `1`)
+  status: Created
