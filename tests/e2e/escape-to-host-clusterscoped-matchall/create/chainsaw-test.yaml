@@ -57,6 +57,9 @@ spec:
       try:
         - assert:
             file: ../cluster-kyverno-policy.yaml
+      catch:
+        - script:
+            content: kubectl get cpol  escape-to-host-binding-escapetohost  -o yaml
     
     - name: "Verify spec, status of created ClusterSecurityIntentBinding"
       description: >
