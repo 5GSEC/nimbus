@@ -24,10 +24,6 @@ spec:
       - resources:
           namespaces:
           - kube-system
-      resources: {}
-    generate:
-      clone: {}
-      cloneList: {}
     match:
       any:
       - resources:
@@ -38,8 +34,6 @@ spec:
           selector:
             matchLabels:
               app: nginx
-      resources: {}
-    mutate: {}
     name: restricted
     skipBackgroundRequests: true
     validate:
@@ -48,7 +42,6 @@ spec:
         version: latest
   validationFailureAction: Enforce
 status:
-  autogen: {}
   ready: true
   rulecount:
     generate: 0
