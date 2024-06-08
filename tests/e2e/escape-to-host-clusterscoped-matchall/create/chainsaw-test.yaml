@@ -60,22 +60,29 @@ spec:
     
     - name: "Verify spec, status of created ClusterSecurityIntentBinding"
       description: >
-        Verify the created SecurityIntentBinding status subresource includes the number and names of 
-        bound intents, along with the number of generated NimbusPolicy. 
-        The number of generated nimbus policies are checked by getting the number of lines in the 
-        "kubectl get ns" operation. This number is then reduced by 2 - one line for the header (NAME
-        STATUS AGE)  and another line for the kube-system namespace as we do not create Nimbus
-        policies in that namespace
+        Verify that created ClusterSecurityIntentBinding status subresource includes the number and names of 
+        bound intents, along with the names of generated NimbusPolicy. 
       try:
-        - script:
-            content: kubectl get ns | wc -l
-            outputs:
-            - name: nscount
-              value: (to_number($stdout) - `2`)
         - assert:
             file: ../csib-assert.yaml
+        - script:
+            content: kubectl get csib escape-to-host-binding -o=jsonpath='{.status.nimbusPolicyNamespaces}'
+            check: 
+              (contains($stdout, 'default')): true
+        - script:
+            content: kubectl get csib escape-to-host-binding -o=jsonpath='{.status.nimbusPolicyNamespaces}'
+            check: 
+              (contains($stdout, 'dev')): true
+        - script:
+            content: kubectl get csib escape-to-host-binding -o=jsonpath='{.status.nimbusPolicyNamespaces}'
+            check: 
+              (contains($stdout, 'staging')): true
+        - script:
+            content: kubectl get csib escape-to-host-binding -o=jsonpath='{.status.nimbusPolicyNamespaces}'
+            check: 
+              (contains($stdout, 'kube-system')): false
       catch:
         - script:
             content: kubectl get ns
         - script:
-            content: kubectl get csib -A -o yaml
+            content: kubectl get csib escape-to-host-binding -o yaml
