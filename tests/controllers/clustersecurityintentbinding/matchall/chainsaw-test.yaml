@@ -76,7 +76,7 @@ spec:
     - name: "Verify the NimbusPolicy deletion"
       try:
         - script:
-            content: kubectl -n prod get np nimbus-ctrl-gen-dns-manipulation-binding
+            content: kubectl -n prod get np nimbus-ctlr-gen-dns-manipulation-binding
             check:
               ($error != null): true
 

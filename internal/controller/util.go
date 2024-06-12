@@ -72,6 +72,26 @@ func extractBoundIntentsNameFromCSib(ctx context.Context, c client.Client, name 
 	return boundIntentsName
 }
 
+func extractNPNamespacesFromCsib(ctx context.Context, c client.Client, name string) []string {
+	logger := log.FromContext(ctx)
+
+	var npNs []string
+
+	nps := &v1alpha1.NimbusPolicyList{}
+	if err := c.List(ctx, nps); err != nil {
+		logger.Error(err, "failed to list Nimbus Policies")
+		return nil
+	}
+
+	for _, np := range nps.Items {
+		if np.Name == "nimbus-ctlr-gen-"+name {
+			npNs = append(npNs, np.Namespace)
+		}
+	}
+
+	return npNs
+}
+
 func ownerExists(c client.Client, controllee client.Object) bool {
 	// Don't even try to look if it has no ControllerRef.
 	controller := metav1.GetControllerOf(controllee)

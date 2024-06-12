@@ -36,14 +36,14 @@ spec:
     - name: "Verify NimbusPolicy absence in dev namespace"
       try:
         - script:
-            content: kubectl -n dev get np nimbus-ctrl-gen-escape-to-host
+            content: kubectl -n dev get np nimbus-ctlr-gen-escape-to-host
             check:
               ($error != null): true
 
     - name: "Verify NimbusPolicy absence in staging namespace"
       try:
         - script:
-            content: kubectl -n staging get np nimbus-ctrl-gen-escape-to-host
+            content: kubectl -n staging get np nimbus-ctlr-gen-escape-to-host
             check:
               ($error != null): true
 
@@ -65,14 +65,14 @@ spec:
     - name: "Verify NimbusPolicy absence in dev namespace"
       try:
         - script:
-            content: kubectl -n dev get np nimbus-ctrl-gen-escape-to-host
+            content: kubectl -n dev get np nimbus-ctlr-gen-escape-to-host
             check:
               ($error != null): true
 
     - name: "Verify NimbusPolicy absence in prod namespace"
       try:
         - script:
-            content: kubectl -n prod get np nimbus-ctrl-gen-escape-to-host
+            content: kubectl -n prod get np nimbus-ctlr-gen-escape-to-host
             check:
               ($error != null): true
 
@@ -89,27 +89,20 @@ spec:
     - name: "Verify NimbusPolicy absence in dev namespace"
       try:
         - script:
-            content: kubectl -n dev get np nimbus-ctrl-gen-escape-to-host
+            content: kubectl -n dev get np nimbus-ctlr-gen-escape-to-host
             check:
               ($error != null): true
 
     - name: "Verify NimbusPolicy absence in prod namespace"
       try:
         - script:
-            content: kubectl -n prod get np nimbus-ctrl-gen-escape-to-host
-            check:
-              ($error != null): true
-
-    - name: "Verify NimbusPolicy absence in prod namespace"
-      try:
-        - script:
-            content: kubectl -n prod get np nimbus-ctrl-gen-escape-to-host
+            content: kubectl -n prod get np nimbus-ctlr-gen-escape-to-host
             check:
               ($error != null): true
 
     - name: "Verify NimbusPolicy absence in regional namespace"
       try:
         - script:
-            content: kubectl -n regional get np nimbus-ctrl-gen-escape-to-host
+            content: kubectl -n regional get np nimbus-ctlr-gen-escape-to-host
             check:
               ($error != null): true
