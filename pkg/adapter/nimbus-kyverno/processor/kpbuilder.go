@@ -59,10 +59,7 @@ func escapeToHost(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov1.Polic
 		switch rule.Params["psa_level"][0] {
 		case "restricted":
 			psa_level = api.LevelRestricted
-
-		case "privileged":
-			psa_level = api.LevelPrivileged
-
+		
 		default:
 			psa_level = api.LevelBaseline
 		}
@@ -76,7 +73,7 @@ func escapeToHost(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov1.Polic
 			Background: &background,
 			Rules: []kyvernov1.Rule{
 				{
-					Name: "restricted",
+					Name: "pod-security-standard",
 					MatchResources: kyvernov1.MatchResources{
 						Any: kyvernov1.ResourceFilters{
 							kyvernov1.ResourceFilter{
