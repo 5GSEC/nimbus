@@ -40,7 +40,7 @@ spec:
               app: nginx
       resources: {}
     mutate: {}
-    name: restricted
+    name: pod-security-standard 
     skipBackgroundRequests: true
     validate:
       podSecurity:
