@@ -6,7 +6,10 @@ package controller
 import (
 	"context"
 
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -96,4 +99,29 @@ func ownerExists(c client.Client, controllee client.Object) bool {
 	// Verify whether the controller we found is same that the ControllerRef points
 	// to.
 	return objToGet.GetUID() == ownerUid
+}
+
+// listPodsBySelector lists all Pods in a given namespace that match the provided label selector.
+func listPodsBySelector(ctx context.Context, c client.Client, namespace string, selector map[string]string) ([]corev1.Pod, error) {
+	var podList corev1.PodList
+	listOpts := &client.ListOptions{
+		Namespace:     namespace,
+		LabelSelector: labels.SelectorFromSet(selector),
+	}
+	if err := c.List(ctx, &podList, listOpts); err != nil {
+		return nil, err
+	}
+	return podList.Items, nil
+}
+
+// listDeploymentsBySelector 함수 추가
+func listDeploymentsBySelector(ctx context.Context, c client.Client, namespace string, selector map[string]string) ([]appsv1.Deployment, error) {
+	var deploymentList appsv1.DeploymentList
+	if err := c.List(ctx, &deploymentList, &client.ListOptions{
+		Namespace:     namespace,
+		LabelSelector: labels.SelectorFromSet(selector),
+	}); err != nil {
+		return nil, err
+	}
+	return deploymentList.Items, nil
 }

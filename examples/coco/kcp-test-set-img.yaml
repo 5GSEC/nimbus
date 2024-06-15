@@ -1,0 +1,32 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: set-image-pull-policy
+spec:
+  background: true
+  validationFailureAction: Enforce
+  mutateExistingOnPolicyUpdate: true
+  rules:
+    - name: set-image-pull-policy
+      match:
+        any:
+        - resources:
+            kinds:
+            - v1/Pod
+            namespaces:
+            - default
+            selector:
+              matchLabels:
+                app: nginx-test
+      mutate:
+        patchStrategicMerge:
+          spec:
+            containers:
+              # match images which end with httpd:latest
+              - (image): "httpd:latest"
+                # set the imagePullPolicy to "IfNotPresent"
+                imagePullPolicy: "IfNotPresent"
+        targets:
+          - apiVersion: v1
+            kind: Pod
+            namespace: default

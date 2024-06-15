@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	v1 "github.com/5GSEC/nimbus/api/v1"
+	common "github.com/5GSEC/nimbus/pkg/adapter/common"
 	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 )
 
@@ -23,7 +24,7 @@ func BuildDeployFromCVM(logger logr.Logger, np *v1.NimbusPolicy, oldDeployment *
 			deployment.Name = oldDeployment.Name
 			deployment.Namespace = np.Namespace
 			deployment.Spec.Template.ObjectMeta.Labels = np.Spec.Selector.MatchLabels
-			AddManagedByAnnotation(&deployment)
+			AddManagedByAnnotationDeploy(&deployment)
 			deployments = append(deployments, deployment)
 		} else {
 			logger.Info("Coco adapter does not support this ID", "ID", id,
@@ -101,46 +102,46 @@ func BuildDeployFromPod(pod *corev1.Pod, np *v1.NimbusPolicy) appsv1.Deployment 
 		},
 	}
 
-	AddManagedByAnnotation(&newDeployment)
+	AddManagedByAnnotationDeploy(&newDeployment)
 	return newDeployment
 }
 
-func BuildDeployFromK8s(logger logr.Logger, oldDeployment appsv1.Deployment) appsv1.Deployment {
-	deployment := normalPodDeploy(oldDeployment)
-	deployment.Name = oldDeployment.Name
-	deployment.Namespace = oldDeployment.Namespace
-	deployment.Spec.Template.ObjectMeta.Labels = oldDeployment.Spec.Template.Labels
-	AddManagedByAnnotation(&deployment)
+func BuildDeployFromK8s(logger logr.Logger, deployData common.DeployData) appsv1.Deployment {
+	deployment := normalPodDeploy(deployData)
+	deployment.Name = deployData.Name
+	deployment.Namespace = deployData.Namespace
+	deployment.Spec.Template.ObjectMeta.Labels = deployData.Spec.Template.Labels
+	AddManagedByAnnotationDeploy(&deployment)
 	return deployment
 }
 
-func normalPodDeploy(deployment appsv1.Deployment) appsv1.Deployment {
-	replicas := int32(1) // Adjust as needed
+func normalPodDeploy(deployData common.DeployData) appsv1.Deployment {
+	replicas := int32(1)
 	return appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      deployment.Name,
-			Namespace: deployment.Namespace,
+			Name:      deployData.Name,
+			Namespace: deployData.Namespace,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: deployment.Spec.Selector.MatchLabels,
+				MatchLabels: deployData.Spec.Selector.MatchLabels,
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: deployment.Spec.Template.Labels,
+					Labels: deployData.Spec.Template.Labels,
 				},
 				Spec: corev1.PodSpec{
-					Containers:       deployment.Spec.Template.Spec.Containers,
-					ImagePullSecrets: deployment.Spec.Template.Spec.ImagePullSecrets,
-					Volumes:          deployment.Spec.Template.Spec.Volumes,
+					Containers:       deployData.Spec.Template.Spec.Containers,
+					ImagePullSecrets: deployData.Spec.Template.Spec.ImagePullSecrets,
+					Volumes:          deployData.Spec.Template.Spec.Volumes,
 				},
 			},
 		},
 	}
 }
 
-func AddManagedByAnnotation(deployment *appsv1.Deployment) {
+func AddManagedByAnnotationDeploy(deployment *appsv1.Deployment) {
 	if deployment.Annotations == nil {
 		deployment.Annotations = make(map[string]string)
 	}

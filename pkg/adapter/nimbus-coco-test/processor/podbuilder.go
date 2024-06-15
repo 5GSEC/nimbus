@@ -11,6 +11,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	v1 "github.com/5GSEC/nimbus/api/v1"
+	common "github.com/5GSEC/nimbus/pkg/adapter/common"
 	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 )
 
@@ -56,21 +57,19 @@ func cocoWorkloadPod(oldPod *corev1.Pod) corev1.Pod {
 	}
 }
 
-func BuildpodsFromK8s(logger logr.Logger, oldPod corev1.Pod) corev1.Pod {
-	pod := normalPod(oldPod)
-	pod.Name = removeIDPrefix(oldPod.Name)
-	pod.Namespace = oldPod.Namespace
-	pod.ObjectMeta.Labels = oldPod.Labels
-	AddManagedByAnnotationPod(&pod)
+func BuildpodsFromK8s(logger logr.Logger, podData common.PodData) corev1.Pod {
+	pod := normalPod(podData)
+	pod.Name = removeIDPrefix(podData.Name)
+	pod.Namespace = podData.Namespace
 	return pod
 }
 
-func normalPod(pod corev1.Pod) corev1.Pod {
+func normalPod(podData common.PodData) corev1.Pod {
 	return corev1.Pod{
 		Spec: corev1.PodSpec{
-			Containers:       pod.Spec.Containers,
-			ImagePullSecrets: pod.Spec.ImagePullSecrets,
-			Volumes:          pod.Spec.Volumes,
+			Containers:       podData.Spec.Containers,
+			ImagePullSecrets: podData.Spec.ImagePullSecrets,
+			Volumes:          podData.Spec.Volumes,
 		},
 	}
 }

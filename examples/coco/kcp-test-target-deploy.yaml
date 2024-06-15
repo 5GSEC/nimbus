@@ -1,0 +1,22 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: run-pod-using-kata
+spec:
+  background: true
+  validationFailureAction: Enforce
+  mutateExistingOnPolicyUpdate: true
+  rules:
+  - name: coco-workload
+    match:
+      resources:
+        kinds:
+        - Deployment
+    mutate:
+      patchStrategicMerge:
+        spec:
+          +(runtimeClassName): kata-qemu-snp
+      targets:
+      - apiVersion: apps/v1
+        kind: Deployment
+        namespace: default

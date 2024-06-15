@@ -5,10 +5,14 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"strings"
 
 	"github.com/go-logr/logr"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/types/known/structpb"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -23,6 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	v1 "github.com/5GSEC/nimbus/api/v1"
+	pb "github.com/5GSEC/nimbus/pkg/grpc"
 	processorerrors "github.com/5GSEC/nimbus/pkg/processor/errors"
 	"github.com/5GSEC/nimbus/pkg/processor/policybuilder"
 )
@@ -48,7 +53,19 @@ func (r *SecurityIntentBindingReconciler) Reconcile(ctx context.Context, req ctr
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			logger.Info("SecurityIntentBinding not found. Ignoring since object must be deleted")
+			logger.Info("test")
+			np := &v1.NimbusPolicy{}
+			if err := r.Get(ctx, req.NamespacedName, np); err == nil {
+				logger.Info("test")
+				for _, rule := range np.Spec.NimbusRules {
+					logger.Info("test")
+					if rule.ID == "cocoWorkload" {
+						return r.handleSibDeletion(ctx, np)
+					}
+				}
+			}
 			return doNotRequeue()
+
 		}
 		logger.Error(err, "failed to fetch SecurityIntentBinding", "SecurityIntentBinding.Name", req.Name, "SecurityIntentBinding.Namespace", req.Namespace)
 		return requeueWithError(err)
@@ -91,6 +108,82 @@ func (r *SecurityIntentBindingReconciler) SetupWithManager(mgr ctrl.Manager) err
 			handler.EnqueueRequestsFromMapFunc(r.findSibsForSi),
 		).
 		Complete(r)
+}
+
+func (r *SecurityIntentBindingReconciler) handleSibDeletion(ctx context.Context, np *v1.NimbusPolicy) (ctrl.Result, error) {
+	logger := log.FromContext(ctx)
+	pods, err := listPodsBySelector(ctx, r.Client, np.Namespace, np.Spec.Selector.MatchLabels)
+	if err != nil {
+		logger.Error(err, "failed to list pods", "Namespace", np.Namespace)
+		return requeueWithError(err)
+	}
+	logger.Info("test")
+	if len(pods) == 0 {
+		logger.Info("No pods found for the given NimbusPolicy", "NimbusPolicy.Namespace", np.Namespace)
+		return doNotRequeue()
+	}
+	logger.Info("test")
+	// gRPC 클라이언트 연결을 lazy-loading 방식으로 전환하여, 필요할 때만 연결을 생성하고 재사용할 수 있도록 수정
+	var conn *grpc.ClientConn
+	var client pb.ResourceDataServiceClient
+	defer func() {
+		if conn != nil {
+			conn.Close()
+		}
+	}()
+	logger.Info("test")
+	for _, pod := range pods {
+		if pod.Spec.RuntimeClassName != nil && *pod.Spec.RuntimeClassName == "kata-qemu-snp" {
+			// gRPC 클라이언트가 nil일 경우에만 연결 및 클라이언트를 생성
+			if conn == nil {
+				conn, err = grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+				if err != nil {
+					logger.Error(err, "failed to connect to gRPC server")
+					return requeueWithError(err)
+				}
+				client = pb.NewResourceDataServiceClient(conn)
+			}
+			logger.Info("test")
+			specJSON, err := json.Marshal(pod.Spec)
+			if err != nil {
+				logger.Error(err, "failed to marshal PodSpec to JSON")
+				continue
+			}
+			logger.Info("test")
+			logger.Info("Serialized PodSpec to JSON", "Pod.Name", pod.Name, "JSON", string(specJSON))
+
+			var specMap map[string]interface{}
+			if err := json.Unmarshal(specJSON, &specMap); err != nil {
+				logger.Error(err, "failed to unmarshal JSON to map[string]interface{}")
+				continue
+			}
+			logger.Info("test")
+			logger.Info("Deserialized JSON to map[string]interface{}", "Pod.Name", pod.Name)
+
+			specStruct, err := structpb.NewStruct(specMap)
+			if err != nil {
+				logger.Error(err, "failed to convert map[string]interface{} to structpb.Struct")
+				continue
+			}
+			podData := &pb.ResourceData{
+				Name:      pod.Name,
+				Namespace: pod.Namespace,
+				Spec:      specStruct,
+			}
+			logger.Info("test")
+			logger.Info("Sending pod data to adapter via gRPC", "Pod.Name", pod.Name, "Pod.Namespace", pod.Namespace, "Pod.Spec", pod.Spec)
+			_, err = client.SendPodData(ctx, podData)
+			if err != nil {
+				logger.Error(err, "failed to send pod data via gRPC")
+				return requeueWithError(err)
+			}
+			logger.Info("test")
+		} else {
+			logger.Info("Pod does not match RuntimeClassName criteria", "Pod.Name", pod.Name, "RuntimeClassName", pod.Spec.RuntimeClassName)
+		}
+	}
+
+	return doNotRequeue()
 }
 
 func (r *SecurityIntentBindingReconciler) createFn(createEvent event.CreateEvent) bool {

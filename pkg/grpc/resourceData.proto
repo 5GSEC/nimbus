@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package nimbus;
+
+option go_package = "github.com/5GSEC/nimbus/pkg/grpc";
+
+import "google/protobuf/struct.proto";
+
+service ResourceDataService {
+    rpc SendPodData (ResourceData) returns (Response);
+}
+
+message ResourceData {
+    string name = 1;
+    string namespace = 2;
+    google.protobuf.Struct spec = 3;
+}
+
+message Response {
+    string message = 1;
+}

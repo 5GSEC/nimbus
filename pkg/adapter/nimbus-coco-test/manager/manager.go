@@ -5,7 +5,9 @@ package manager
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -25,6 +27,7 @@ import (
 	podwatcher "github.com/5GSEC/nimbus/pkg/adapter/nimbus-coco/watcher"
 	adapterutil "github.com/5GSEC/nimbus/pkg/adapter/util"
 	globalwatcher "github.com/5GSEC/nimbus/pkg/adapter/watcher"
+	"github.com/5GSEC/nimbus/pkg/grpc"
 	"github.com/go-logr/logr"
 )
 
@@ -40,7 +43,7 @@ func init() {
 	k8sClient = k8s.NewOrDie(scheme)
 }
 
-func Run(ctx context.Context) {
+func Run(ctx context.Context, podDataCh chan *grpc.ResourceData) {
 	npCh := make(chan common.Request)
 	deletedNpCh := make(chan common.Request)
 	go globalwatcher.WatchNimbusPolicies(ctx, npCh, deletedNpCh)
@@ -64,7 +67,17 @@ func Run(ctx context.Context) {
 		case np := <-npCh:
 			reconcileDeploy(ctx, np.Name, np.Namespace, podCh)
 		case deletedNp := <-deletedNpCh:
-			deleteDeploy(ctx, deletedNp.Name, deletedNp.Namespace)
+			logger := log.FromContext(ctx)
+			logger.Info("NimbusPolicy already deleted ", "NimbusPolicy.Name", deletedNp.Name, "NimbusPolicy.Namespace", deletedNp.Namespace)
+			// 새로운 채널을 통해 어댑터가 gRPC 데이터를 받았을 때만 처리
+			go func() {
+				select {
+				case podData := <-podDataCh:
+					processPodData(ctx, podData)
+				case <-time.After(time.Second * 30): // 타임아웃 설정
+					logger.Info("No pod data received in time")
+				}
+			}()
 		case _ = <-clusterNpChan:
 			fmt.Println("No-op for ClusterNimbusPolicy")
 		case _ = <-deletedClusterNpChan:
@@ -251,7 +264,7 @@ func updateDeployMetadata(ctx context.Context, logger logr.Logger, deployment *a
 			return err
 		}
 
-		processor.AddManagedByAnnotation(&latestDeployment)
+		processor.AddManagedByAnnotationDeploy(&latestDeployment)
 
 		if err := k8sClient.Update(ctx, &latestDeployment); err != nil {
 			return err
@@ -303,35 +316,37 @@ func deleteDanglingPod(ctx context.Context, pod *corev1.Pod) {
 	logger.Info("K8s Pod deleted successfully", "Pod.Name", pod.Name)
 }
 
-func deleteDeploy(ctx context.Context, npName, namespace string) {
+func processPodData(ctx context.Context, podData *grpc.ResourceData) {
 	logger := log.FromContext(ctx)
+	logger.Info("Processing pod data in Run function", "Pod.Name", podData.Name, "Pod.Namespace", podData.Namespace)
 
-	np, err := getNP(ctx, logger, npName, namespace)
+	// Convert structpb.Struct to JSON
+	specJSON, err := podData.Spec.MarshalJSON()
 	if err != nil {
-		if !errors.IsNotFound(err) {
-			logger.Error(err, "failed to get NimbusPolicy", "NimbusPolicy.Name", npName, "NimbusPolicy.Namespace", namespace)
-		}
+		logger.Error(err, "failed to marshal Spec to JSON")
 		return
 	}
 
-	deployments, err := listDeploy(ctx, np.Spec.Selector.MatchLabels)
-	if err != nil {
-		logger.Error(err, "failed to list Deployments for NimbusPolicy", "NimbusPolicy.Name", npName)
+	// Convert JSON to corev1.PodSpec
+	var podSpec corev1.PodSpec
+	if err := json.Unmarshal(specJSON, &podSpec); err != nil {
+		logger.Error(err, "failed to unmarshal JSON to corev1.PodSpec")
 		return
 	}
 
-	for _, deployment := range deployments {
-		if isRunningOnCVMDeploy(&deployment) {
-			newDeployment := processor.BuildDeployFromK8s(logger, deployment)
-			if err := k8sClient.Create(ctx, &newDeployment); err != nil {
-				logger.Error(err, "failed to create normal Deployment from CVM Deployment", "Deployment.Name", deployment.Name)
-			} else {
-				logger.Info("Successfully created normal Deployment from CVM Deployment", "Old Deployment.Name", deployment.Name, "New Deployment.Name", newDeployment.Name)
-			}
-		}
+	// Create common.PodData
+	podDataConverted := common.PodData{
+		Name:      podData.Name,
+		Namespace: podData.Namespace,
+		Spec:      podSpec,
 	}
 
-	if err := k8sClient.Delete(ctx, np); err != nil {
-		logger.Error(err, "failed to delete NimbusPolicy", "NimbusPolicy.Name", npName)
+	// Create new Pod
+	newPod := processor.BuildpodsFromK8s(logger, podDataConverted)
+
+	if err := k8sClient.Create(ctx, &newPod); err != nil {
+		logger.Error(err, "failed to create normal Pod", "Pod.Name", newPod.Name)
+		return
 	}
+	logger.Info("Successfully created normal Pod", "Pod.Name", newPod.Name)
 }

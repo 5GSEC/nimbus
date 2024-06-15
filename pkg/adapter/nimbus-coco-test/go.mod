@@ -5,7 +5,7 @@ go 1.22.0
 replace github.com/5GSEC/nimbus => ../../../../nimbus
 
 require (
-	github.com/5GSEC/nimbus v0.0.0-00010101000000-000000000000
+	github.com/5GSEC/nimbus v0.0.0-20240614053124-4aec2fc85fbf
 	github.com/go-logr/logr v1.4.1
 	k8s.io/api v0.30.1
 	k8s.io/apimachinery v0.30.1
@@ -48,13 +48,15 @@ require (
 	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a // indirect
 	golang.org/x/net v0.23.0 // indirect
-	golang.org/x/oauth2 v0.16.0 // indirect
+	golang.org/x/oauth2 v0.18.0 // indirect
 	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/term v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240318140521-94a12d6c2237 // indirect
+	google.golang.org/grpc v1.64.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

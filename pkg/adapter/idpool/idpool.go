@@ -43,7 +43,7 @@ var NetPolIDs = []string{
 
 // KyvIds are IDs supported by Kyverno.
 var KyvIds = []string{
-	EscapeToHost,
+	EscapeToHost, CocoWorkload,
 }
 
 var CocoIds = []string{

@@ -1,0 +1,29 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: database-backup-labeling
+spec:
+  background: true
+  validationFailureAction: Enforce
+  mutateExistingOnPolicyUpdate: true
+  rules:
+    - name: assign-backup-database
+      match:
+        any:
+        - resources:
+            kinds:
+            - v1/Pod
+            namespaces:
+            - default
+            selector:
+              matchLabels:
+                app: nginx-test
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            labels:
+              +(backup-needed): "yes"
+        targets:
+          - apiVersion: v1
+            kind: Pod
+            namespace: default
