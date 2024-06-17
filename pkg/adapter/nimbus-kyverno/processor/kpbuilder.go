@@ -16,22 +16,6 @@ import (
 	"k8s.io/pod-security-admission/api"
 )
 
-// type InnerSpec struct {
-// 	RuntimeClassName string `yaml:"runtimeClassName"`
-// }
-
-// type TemplateSpec struct {
-// 	Spec Spec `yaml:"spec"`
-// }
-
-// type Template struct {
-// 	Spec Spec `yaml:"spec"`
-// }
-
-// type Spec struct {
-// 	Template Template `yaml:"template"`
-// }
-
 func BuildKpsFrom(logger logr.Logger, np *v1alpha1.NimbusPolicy) []kyvernov1.Policy {
 	// Build KPs based on given IDs
 	var kps []kyvernov1.Policy
@@ -72,13 +56,6 @@ func buildKpFor(id string, np *v1alpha1.NimbusPolicy) kyvernov1.Policy {
 
 func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov1.Policy {
 	labels := np.Spec.Selector.MatchLabels
-	// data := Template{
-	// 	Spec: TemplateSpec{
-	// 		Spec: Spec{
-	// 			RuntimeClassName: "kata-qemu-snp",
-	// 		},
-	// 	},
-	// }
 	data := `
 	spec:
 	  template:

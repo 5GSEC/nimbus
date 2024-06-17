@@ -11,13 +11,12 @@ import (
 	"github.com/go-logr/logr"
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
 	"gopkg.in/yaml.v2"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/pod-security-admission/api"
 )
 
-func BuildKcpsFrom(logger logr.Logger, cnp *v1alpha1.ClusterNimbusPolicy, client client.Client) []kyvernov1.ClusterPolicy {
+func BuildKcpsFrom(logger logr.Logger, cnp *v1alpha1.ClusterNimbusPolicy) []kyvernov1.ClusterPolicy {
 	// Build KCPs based on given IDs
 	var kcps []kyvernov1.ClusterPolicy
 	for _, nimbusRule := range cnp.Spec.NimbusRules {
@@ -112,14 +111,6 @@ func clusterCocoRuntimeAddition(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1
 		}
 		excludeFilters = append(excludeFilters, resourceFilter)
 	}
-
-	// data := Template{
-	// 	Spec: TemplateSpec{
-	// 		Spec: Spec{
-	// 			RuntimeClassName: "kata-qemu-snp",
-	// 		},
-	// 	},
-	// }
 	data := `
 	spec:
 	  template:

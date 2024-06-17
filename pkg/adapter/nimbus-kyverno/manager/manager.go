@@ -197,7 +197,7 @@ func createOrUpdateKcp(ctx context.Context, cnpName string) {
 	}
 
 	deleteDanglingkcps(ctx, cnp, logger)
-	kcps := processor.BuildKcpsFrom(logger, &cnp, k8sClient)
+	kcps := processor.BuildKcpsFrom(logger, &cnp)
 
 	for idx := range kcps {
 		kcp := kcps[idx]
