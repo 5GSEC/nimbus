@@ -10,11 +10,14 @@ import (
 	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 	"github.com/go-logr/logr"
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
+	"gopkg.in/yaml.v2"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/pod-security-admission/api"
 )
 
-func BuildKcpsFrom(logger logr.Logger, cnp *v1alpha1.ClusterNimbusPolicy) []kyvernov1.ClusterPolicy {
+func BuildKcpsFrom(logger logr.Logger, cnp *v1alpha1.ClusterNimbusPolicy, client client.Client) []kyvernov1.ClusterPolicy {
 	// Build KCPs based on given IDs
 	var kcps []kyvernov1.ClusterPolicy
 	for _, nimbusRule := range cnp.Spec.NimbusRules {
@@ -44,12 +47,118 @@ func buildKcpFor(id string, cnp *v1alpha1.ClusterNimbusPolicy) kyvernov1.Cluster
 	switch id {
 	case idpool.EscapeToHost:
 		return clusterEscapeToHost(cnp, cnp.Spec.NimbusRules[0].Rule)
+	case idpool.CocoWorkload:
+		return clusterCocoRuntimeAddition(cnp, cnp.Spec.NimbusRules[0].Rule)
 	default:
 		return kyvernov1.ClusterPolicy{}
 	}
 }
 
 var nsBlackList = []string{"kube-system"}
+
+func clusterCocoRuntimeAddition(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1.Rule) kyvernov1.ClusterPolicy {
+	var matchFilters, excludeFilters []kyvernov1.ResourceFilter
+	var resourceFilter kyvernov1.ResourceFilter
+
+	// exclude kube-system
+	resourceFilter = kyvernov1.ResourceFilter{
+		ResourceDescription: kyvernov1.ResourceDescription{
+			Namespaces: nsBlackList,
+		},
+	}
+	excludeFilters = append(excludeFilters, resourceFilter)
+
+	if len(cnp.Spec.NsSelector.MatchNames) > 0 {
+		if len(cnp.Spec.WorkloadSelector.MatchLabels) > 0 {
+			resourceFilter = kyvernov1.ResourceFilter{
+				ResourceDescription: kyvernov1.ResourceDescription{
+					Kinds: []string{
+						"v1/Pod",
+					},
+					Namespaces: cnp.Spec.NsSelector.MatchNames,
+					Selector: &metav1.LabelSelector{
+						MatchLabels: cnp.Spec.WorkloadSelector.MatchLabels,
+					},
+				},
+			}
+
+		} else {
+			resourceFilter = kyvernov1.ResourceFilter{
+				ResourceDescription: kyvernov1.ResourceDescription{
+					Kinds: []string{
+						"v1/Pod",
+					},
+					Namespaces: cnp.Spec.NsSelector.MatchNames,
+				},
+			}
+		}
+		matchFilters = append(matchFilters, resourceFilter)
+
+	} else if len(cnp.Spec.NsSelector.ExcludeNames) > 0 {
+
+		resourceFilter = kyvernov1.ResourceFilter{
+			ResourceDescription: kyvernov1.ResourceDescription{
+				Kinds: []string{
+					"v1/Pod",
+				},
+			},
+		}
+		matchFilters = append(matchFilters, resourceFilter)
+
+		resourceFilter = kyvernov1.ResourceFilter{
+			ResourceDescription: kyvernov1.ResourceDescription{
+				Namespaces: cnp.Spec.NsSelector.ExcludeNames,
+			},
+		}
+		excludeFilters = append(excludeFilters, resourceFilter)
+	}
+
+	// data := Template{
+	// 	Spec: TemplateSpec{
+	// 		Spec: Spec{
+	// 			RuntimeClassName: "kata-qemu-snp",
+	// 		},
+	// 	},
+	// }
+	data := `
+	spec:
+	  template:
+	    spec:
+		  runtimeClassName: kata-qemu
+		  `
+	yamlBytes, err := yaml.Marshal(&data)
+	if err != nil {
+		panic(err)
+	}
+	return kyvernov1.ClusterPolicy{
+		Spec: kyvernov1.Spec{
+			Rules: []kyvernov1.Rule{
+				{
+					Name: "add-runtime-class-to-pods",
+					MatchResources: kyvernov1.MatchResources{
+						Any: matchFilters,
+					},
+					ExcludeResources: kyvernov1.MatchResources{
+						Any: excludeFilters,
+					},
+					Mutation: kyvernov1.Mutation{
+						Targets: []kyvernov1.TargetResourceSpec{
+							kyvernov1.TargetResourceSpec{
+								ResourceSpec: kyvernov1.ResourceSpec{
+									APIVersion: "v1",
+									Kind: "Pod",
+								},
+							},
+						},
+						RawPatchStrategicMerge: &v1.JSON{
+							Raw: yamlBytes,
+						} ,
+					},
+				},
+			},
+		},
+	}
+}
 
 func clusterEscapeToHost(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1.Rule) kyvernov1.ClusterPolicy {
 	var psa_level api.Level = api.LevelBaseline

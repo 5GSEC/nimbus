@@ -1,0 +1,24 @@
+apiVersion: intent.security.nimbus.com/v1alpha1
+kind: SecurityIntent
+metadata:
+  name: coco-workload
+spec:
+  intent:
+    id: cocoWorkload
+    description: "Ensure workload is encryted by running the specified workload in a Confidential VM"
+    action: Block
+---
+apiVersion: intent.security.nimbus.com/v1alpha1
+kind: ClusterSecurityIntentBinding
+metadata:
+  name: coco-workload-binding
+spec:
+  intents:
+    - name: coco-workload
+  selector:
+    nsSelector:
+      matchNames:
+        - "*"
+    workloadSelector:
+      matchLabels:
+        app: nginx

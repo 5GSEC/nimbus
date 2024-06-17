@@ -19,7 +19,8 @@ const (
 	EscapeToHost              = "escapeToHost"
 	DisallowChRoot            = "disallowChRoot"
 	DisallowCapabilities      = "disallowCapabilities"
-	ExploitPFA                = "PreventExecutionFromTempOrLogsFolders"
+	ExploitPFA                = "preventExecutionFromTempOrLogsFolders"
+	CocoWorkload              = "cocoWorkload"
 )
 
 // KaIds are IDs supported by KubeArmor.
@@ -44,6 +45,7 @@ var NetPolIDs = []string{
 // KyvIds are IDs supported by Kyverno.
 var KyvIds = []string{
 	EscapeToHost,
+	CocoWorkload,
 }
 
 // IsIdSupportedBy determines whether a given ID is supported by a security engine.

@@ -10,9 +10,27 @@ import (
 	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 	"github.com/go-logr/logr"
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
+	"gopkg.in/yaml.v2"
+	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/pod-security-admission/api"
 )
+
+// type InnerSpec struct {
+// 	RuntimeClassName string `yaml:"runtimeClassName"`
+// }
+
+// type TemplateSpec struct {
+// 	Spec Spec `yaml:"spec"`
+// }
+
+// type Template struct {
+// 	Spec Spec `yaml:"spec"`
+// }
+
+// type Spec struct {
+// 	Template Template `yaml:"template"`
+// }
 
 func BuildKpsFrom(logger logr.Logger, np *v1alpha1.NimbusPolicy) []kyvernov1.Policy {
 	// Build KPs based on given IDs
@@ -45,9 +63,73 @@ func buildKpFor(id string, np *v1alpha1.NimbusPolicy) kyvernov1.Policy {
 	switch id {
 	case idpool.EscapeToHost:
 		return escapeToHost(np, np.Spec.NimbusRules[0].Rule)
+	case idpool.CocoWorkload:
+		return cocoRuntimeAddition(np, np.Spec.NimbusRules[0].Rule)
 	default:
 		return kyvernov1.Policy{}
 	}
+}
+
+func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov1.Policy {
+	labels := np.Spec.Selector.MatchLabels
+	// data := Template{
+	// 	Spec: TemplateSpec{
+	// 		Spec: Spec{
+	// 			RuntimeClassName: "kata-qemu-snp",
+	// 		},
+	// 	},
+	// }
+	data := `
+	spec:
+	  template:
+	    spec:
+		  runtimeClassName: kata-qemu
+		  `
+	yamlBytes, err := yaml.Marshal(&data)
+	if err != nil {
+		panic(err)
+	}
+	kp := kyvernov1.Policy{
+		Spec: kyvernov1.Spec{
+			Rules: []kyvernov1.Rule{
+				{
+					Name: "add runtime",
+					MatchResources: kyvernov1.MatchResources{
+						Any: kyvernov1.ResourceFilters{
+							kyvernov1.ResourceFilter{
+								ResourceDescription: kyvernov1.ResourceDescription{
+									Kinds: []string{
+										"v1/Pod",
+									},
+									Selector: &metav1.LabelSelector{
+										MatchLabels: np.Spec.Selector.MatchLabels,
+									},
+								},
+							},
+						},
+					},
+					Mutation: kyvernov1.Mutation{
+						Targets: []kyvernov1.TargetResourceSpec{
+							kyvernov1.TargetResourceSpec{
+								ResourceSpec: kyvernov1.ResourceSpec{
+									APIVersion: "v1",
+									Kind:       "Pod",
+								},
+							},
+						},
+						RawPatchStrategicMerge: &v1.JSON{
+							Raw: yamlBytes,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	if len(labels) > 0 {
+		kp.Spec.Rules[0].MatchResources.Any[0].ResourceDescription.Selector.MatchLabels = labels
+	}
+	return kp
 }
 
 func escapeToHost(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov1.Policy {
