@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-test-coco
+  labels:
+    app: nginx-coco
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-coco
+  template:
+    metadata:
+      labels:
+        app: nginx-coco
+    spec:
+      containers:
+      - name: nginx-coco
+        image: 1hcoj/nginx
