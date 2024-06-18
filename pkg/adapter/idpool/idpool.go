@@ -15,7 +15,7 @@ const (
 	EscapeToHost              = "escapeToHost"
 	DisallowChRoot            = "disallowChRoot"
 	DisallowCapabilities      = "disallowCapabilities"
-	ExploitPFA                = "PreventExecutionFromTempOrLogsFolders"
+	ExploitPFA                = "preventExecutionFromTempOrLogsFolders"
 	EnsureTLS                 = "ensureTLS"
 )
 
