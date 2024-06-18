@@ -10,6 +10,7 @@ import (
 	"github.com/go-logr/logr"
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -17,7 +18,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	v1alpha1 "github.com/5GSEC/nimbus/api/v1alpha1"
+	"github.com/5GSEC/nimbus/api/v1alpha1"
 	"github.com/5GSEC/nimbus/pkg/adapter/common"
 	"github.com/5GSEC/nimbus/pkg/adapter/k8s"
 	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kyverno/processor"
@@ -38,23 +39,20 @@ func init() {
 }
 
 func Run(ctx context.Context) {
-
 	npCh := make(chan common.Request)
-	deletedNpCh := make(chan common.Request)
+	deletedNpCh := make(chan *unstructured.Unstructured)
 	go globalwatcher.WatchNimbusPolicies(ctx, npCh, deletedNpCh, "SecurityIntentBinding")
 
 	clusterNpChan := make(chan string)
-	deletedClusterNpChan := make(chan string)
+	deletedClusterNpChan := make(chan *unstructured.Unstructured)
 	go globalwatcher.WatchClusterNimbusPolicies(ctx, clusterNpChan, deletedClusterNpChan)
 
 	updatedKcpCh := make(chan string)
 	deletedKcpCh := make(chan string)
-
 	go watcher.WatchKcps(ctx, updatedKcpCh, deletedKcpCh)
 
 	updatedKpCh := make(chan common.Request)
 	deletedKpCh := make(chan common.Request)
-
 	go watcher.WatchKps(ctx, updatedKpCh, deletedKpCh)
 
 	for {
@@ -62,10 +60,13 @@ func Run(ctx context.Context) {
 		case <-ctx.Done():
 			close(npCh)
 			close(deletedNpCh)
+
 			close(clusterNpChan)
 			close(deletedClusterNpChan)
+
 			close(updatedKcpCh)
 			close(deletedKcpCh)
+
 			close(updatedKpCh)
 			close(deletedKpCh)
 			return
@@ -74,9 +75,9 @@ func Run(ctx context.Context) {
 		case createdCnp := <-clusterNpChan:
 			createOrUpdateKcp(ctx, createdCnp)
 		case deletedNp := <-deletedNpCh:
-			deleteKp(ctx, deletedNp.Name, deletedNp.Namespace)
+			logKpToDelete(ctx, deletedNp)
 		case deletedCnp := <-deletedClusterNpChan:
-			deleteKcp(ctx, deletedCnp)
+			logKcpToDelete(ctx, deletedCnp)
 		case updatedKp := <-updatedKpCh:
 			reconcileKp(ctx, updatedKp.Name, updatedKp.Namespace, true)
 		case updatedKcp := <-updatedKcpCh:
@@ -86,13 +87,12 @@ func Run(ctx context.Context) {
 		case deletedKp := <-deletedKpCh:
 			reconcileKp(ctx, deletedKp.Name, deletedKp.Namespace, true)
 		}
-
 	}
 }
 
 func reconcileKp(ctx context.Context, kpName, namespace string, deleted bool) {
 	logger := log.FromContext(ctx)
-	npName := adapterutil.ExtractNpName(kpName)
+	npName := adapterutil.ExtractAnyNimbusPolicyName(kpName)
 	var np v1alpha1.NimbusPolicy
 	err := k8sClient.Get(ctx, types.NamespacedName{Name: npName, Namespace: namespace}, &np)
 	if err != nil {
@@ -111,7 +111,7 @@ func reconcileKp(ctx context.Context, kpName, namespace string, deleted bool) {
 
 func reconcileKcp(ctx context.Context, kcpName string, deleted bool) {
 	logger := log.FromContext(ctx)
-	cnpName := adapterutil.ExtractClusterNpName(kcpName)
+	cnpName := adapterutil.ExtractAnyNimbusPolicyName(kcpName)
 	var cnp v1alpha1.ClusterNimbusPolicy
 	err := k8sClient.Get(ctx, types.NamespacedName{Name: cnpName}, &cnp)
 	if err != nil {
@@ -231,30 +231,34 @@ func createOrUpdateKcp(ctx context.Context, cnpName string) {
 			logger.Info("KyvernoClusterPolicy configured", "KyvernoClusterPolicy.Name", existingKcp.Name)
 		}
 
-		if err = adapterutil.UpdateCnpStatus(ctx, k8sClient, "KyvernoClusterPolicy/"+kcp.Name, cnp.Name, false); err != nil {
+		if err = adapterutil.UpdateCwnpStatus(ctx, k8sClient, "KyvernoClusterPolicy/"+kcp.Name, cnp.Name, false); err != nil {
 			logger.Error(err, "failed to update KyvernoClusterPolicies status in NimbusPolicy")
 		}
 	}
 }
 
-func deleteKp(ctx context.Context, npName, npNamespace string) {
+func logKpToDelete(ctx context.Context, deletedNp *unstructured.Unstructured) {
 	logger := log.FromContext(ctx)
-	var kps kyvernov1.PolicyList
 
-	if err := k8sClient.List(ctx, &kps, &client.ListOptions{Namespace: npNamespace}); err != nil {
+	var kps kyvernov1.PolicyList
+	if err := k8sClient.List(ctx, &kps, &client.ListOptions{Namespace: deletedNp.GetNamespace()}); err != nil {
 		logger.Error(err, "failed to list KyvernoPolicies")
 		return
 	}
 
 	// Kubernetes GC automatically deletes the child when the parent/owner is
-	// deleted. So, we don't need to do anything in this case since NimbusPolicy is
-	// the owner and when it gets deleted corresponding kps will be automatically
-	// deleted.
+	// deleted. So, we don't need to delete the policy because NimbusPolicy is the
+	// owner and when it gets deleted all the corresponding policies will be
+	// automatically deleted.
 	for _, kp := range kps.Items {
-		logger.Info("KyvernoPolicy already deleted due to NimbusPolicy deletion",
-			"KyvernoPolicy.Name", kp.Name, "KyvernoPolicy.Namespace", kp.Namespace,
-			"NimbusPolicy.Name", npName, "NimbusPolicy.Namespace", npNamespace,
-		)
+		for _, ownerRef := range kp.OwnerReferences {
+			if ownerRef.Name == deletedNp.GetName() && ownerRef.UID == deletedNp.GetUID() {
+				logger.Info("KyvernoPolicy deleted due to NimbusPolicy deletion",
+					"KyvernoPolicy.Name", kp.Name, "KyvernoPolicy.Namespace", kp.Namespace,
+					"NimbusPolicy.Name", deletedNp.GetName(), "NimbusPolicy.Namespace", deletedNp.GetNamespace(),
+				)
+			}
+		}
 	}
 }
 
@@ -305,7 +309,7 @@ func deleteDanglingkps(ctx context.Context, np v1alpha1.NimbusPolicy, logger log
 	}
 }
 
-func deleteKcp(ctx context.Context, cnpName string) {
+func logKcpToDelete(ctx context.Context, deletedCwnp *unstructured.Unstructured) {
 	logger := log.FromContext(ctx)
 	var kcps kyvernov1.ClusterPolicyList
 
@@ -319,10 +323,15 @@ func deleteKcp(ctx context.Context, cnpName string) {
 	// the owner and when it gets deleted corresponding kps will be automatically
 	// deleted.
 	for _, kcp := range kcps.Items {
-		logger.Info("KyvernoClusterPolicy already deleted due to ClusterNimbusPolicy deletion",
-			"KyvernoClusterPolicy.Name", kcp.Name,
-			"ClusterNimbusPolicy.Name", cnpName,
-		)
+		for _, ownerRef := range kcp.OwnerReferences {
+			if ownerRef.Name == deletedCwnp.GetName() && ownerRef.UID == deletedCwnp.GetUID() {
+				logger.Info("KyvernoClusterPolicy deleted due to ClusterNimbusPolicy deletion",
+					"KyvernoClusterPolicy.Name", kcp.Name,
+					"ClusterNimbusPolicy.Name", deletedCwnp.GetName(),
+				)
+				break
+			}
+		}
 	}
 }
 
@@ -367,7 +376,7 @@ func deleteDanglingkcps(ctx context.Context, cnp v1alpha1.ClusterNimbusPolicy, l
 
 		logger.Info("Dangling KyvernoClusterPolicy deleted", "KyvernoClusterPolicy.Name", kcp.Name)
 
-		if err := adapterutil.UpdateCnpStatus(ctx, k8sClient, "KyvernoClusterPolicy/"+kcp.Name, cnp.Name, true); err != nil {
+		if err := adapterutil.UpdateCwnpStatus(ctx, k8sClient, "KyvernoClusterPolicy/"+kcp.Name, cnp.Name, true); err != nil {
 			logger.Error(err, "failed to update KyvernoClusterPolicy statis in ClusterNimbusPolicy")
 		}
 

@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: intent.security.nimbus.com/v1alpha1
+kind: SecurityIntent
+metadata:
+  name: ensure-tls-scheduled
+spec:
+  intent:
+    id: ensureTLS
+    action: Audit
+    severity: "medium"
+    description: |
+      Assess the TLS configuration to ensure compliance with the security standards. This includes verifying TLS protocol version,
+      certificate validity and FIPS-140-3 approved cipher suites.
+      Reference: MITRE ATT&CK Technique: FGT5011 https://fight.mitre.org/techniques/FGT5011
+    params:
+      schedule: [ "* * * * *" ]
+---
+apiVersion: intent.security.nimbus.com/v1alpha1
+kind: ClusterSecurityIntentBinding
+metadata:
+  name: ensure-tls-scheduled
+spec:
+  intents:
+    - name: ensure-tls-scheduled
+  selector:
+    nsSelector:
+      matchNames:
+        - '*'
