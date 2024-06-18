@@ -11,6 +11,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -48,6 +49,24 @@ func NewDynamicClient() dynamic.Interface {
 		}
 	}
 	clientSet, err := dynamic.NewForConfig(config)
+	if err != nil {
+		panic(err)
+	}
+	return clientSet
+}
+
+// NewOrDieStaticClient returns a new Kubernetes Clientset and panics if there is
+// an error in the config.
+func NewOrDieStaticClient() kubernetes.Interface {
+	config, err := rest.InClusterConfig()
+	if err != nil && errors.Is(err, rest.ErrNotInCluster) {
+		kubeconfig := filepath.Join(os.Getenv("HOME"), ".kube", "config")
+		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
+		if err != nil {
+			panic(fmt.Sprintf("failed to load kubeconfig '%v', error: %v\n", kubeconfig, err))
+		}
+	}
+	clientSet, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		panic(err)
 	}

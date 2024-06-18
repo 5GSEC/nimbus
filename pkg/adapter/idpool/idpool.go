@@ -11,15 +11,12 @@ import (
 const (
 	SwDeploymentTools         = "swDeploymentTools"
 	UnAuthorizedSaTokenAccess = "unAuthorizedSaTokenAccess"
-	UnAuthorizedNEFAccess     = "unAuthorizedNEFAccess"
-	NFServiceDiscovery        = "nfServiceDiscovery"
 	DNSManipulation           = "dnsManipulation"
-	NetPortExec               = "netPortExec"
-	SysPathExec               = "sysPathExec"
 	EscapeToHost              = "escapeToHost"
 	DisallowChRoot            = "disallowChRoot"
 	DisallowCapabilities      = "disallowCapabilities"
-	ExploitPFA                = "PreventExecutionFromTempOrLogsFolders"
+	ExploitPFA                = "preventExecutionFromTempOrLogsFolders"
+	EnsureTLS                 = "ensureTLS"
 )
 
 // KaIds are IDs supported by KubeArmor.
@@ -46,6 +43,11 @@ var KyvIds = []string{
 	EscapeToHost,
 }
 
+// k8tlsIds are IDs supported by k8tls.
+var k8tlsIds = []string{
+	EnsureTLS,
+}
+
 // IsIdSupportedBy determines whether a given ID is supported by a security engine.
 func IsIdSupportedBy(id, securityEngine string) bool {
 	switch strings.ToLower(securityEngine) {
@@ -55,6 +57,8 @@ func IsIdSupportedBy(id, securityEngine string) bool {
 		return in(id, NetPolIDs)
 	case "kyverno":
 		return in(id, KyvIds)
+	case "k8tls":
+		return in(id, k8tlsIds)
 	default:
 		return false
 	}

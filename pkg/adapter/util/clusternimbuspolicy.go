@@ -5,30 +5,23 @@ package util
 
 import (
 	"context"
-	"strings"
+	"slices"
 
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	v1alpha1 "github.com/5GSEC/nimbus/api/v1alpha1"
+	"github.com/5GSEC/nimbus/api/v1alpha1"
 )
 
-// ExtractNpName extracts the actual NimbusPolicy name from a formatted policy
-// name.
-func ExtractClusterNpName(policyName string) string {
-	words := strings.Split(policyName, "-")
-	return strings.Join(words[:len(words)-1], "-")
-}
-
-// UpdateNpStatus updates the provided NimbusPolicy status with the number and
-// names of its descendant policies that were created. Every adapter is
-// responsible for updating the status field of the corresponding NimbusPolicy
-// with the number and names of successfully created policies by calling this
-// API. This provides feedback to users about the translation and deployment of
-// their security intent
-func UpdateCnpStatus(ctx context.Context, k8sClient client.Client, currPolicyFullName, cnpName string, decrement bool) error {
-	// Since multiple adapters may attempt to update the NimbusPolicy status
+// UpdateCwnpStatus updates provided ClusterNimbusPolicy status subresource with
+// the number and names of its descendant policies that were created. Every
+// adapter is responsible for updating the status field of the corresponding
+// ClusterNimbusPolicy with the number and names of successfully created policies
+// by calling this API. This provides feedback to users about the translation and
+// deployment of their security intent.
+func UpdateCwnpStatus(ctx context.Context, k8sClient client.Client, currPolicyFullName, cnpName string, decrement bool) error {
+	// Since multiple adapters may attempt to update the ClusterNimbusPolicy status
 	// concurrently, potentially leading to conflicts. To ensure data consistency,
 	// retry on write failures. On conflict, the update is retried with an
 	// exponential backoff strategy. This provides resilience against potential
@@ -52,7 +45,7 @@ func UpdateCnpStatus(ctx context.Context, k8sClient client.Client, currPolicyFul
 }
 
 func updateCountAndClusterPoliciesName(latestCnp *v1alpha1.ClusterNimbusPolicy, currPolicyFullName string, decrement bool) {
-	if !contains(latestCnp.Status.Policies, currPolicyFullName) {
+	if !slices.Contains(latestCnp.Status.Policies, currPolicyFullName) {
 		latestCnp.Status.NumberOfAdapterPolicies++
 		latestCnp.Status.Policies = append(latestCnp.Status.Policies, currPolicyFullName)
 	}
