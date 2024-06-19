@@ -4,13 +4,13 @@
 package processor
 
 import (
+	"encoding/json"
 	"strings"
 
 	v1alpha1 "github.com/5GSEC/nimbus/api/v1alpha1"
 	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 	"github.com/go-logr/logr"
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
-	"gopkg.in/yaml.v2"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/pod-security-admission/api"
@@ -111,13 +111,16 @@ func clusterCocoRuntimeAddition(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1
 		}
 		excludeFilters = append(excludeFilters, resourceFilter)
 	}
-	data := `
-	spec:
-	  template:
-	    spec:
-		  runtimeClassName: kata-qemu
-		  `
-	yamlBytes, err := yaml.Marshal(&data)
+	patchStrategicMerge := map[string]interface{}{
+		"spec": map[string]interface{}{
+			"template": map[string]interface{}{
+				"spec": map[string]interface{}{
+					"runtimeClassName": "kata-clh",
+				},
+			},
+		},
+	}
+	patchBytes, err := json.Marshal(patchStrategicMerge)
 	if err != nil {
 		panic(err)
 	}
@@ -142,7 +145,7 @@ func clusterCocoRuntimeAddition(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1
 							},
 						},
 						RawPatchStrategicMerge: &v1.JSON{
-							Raw: yamlBytes,
+							Raw: patchBytes,
 						} ,
 					},
 				},

@@ -4,6 +4,7 @@
 package processor
 
 import (
+	"encoding/json"
 	"strings"
 
 	v1alpha1 "github.com/5GSEC/nimbus/api/v1alpha1"
@@ -56,13 +57,19 @@ func buildKpFor(id string, np *v1alpha1.NimbusPolicy) kyvernov1.Policy {
 
 func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov1.Policy {
 	labels := np.Spec.Selector.MatchLabels
-	data := `
-	spec:
-	  template:
-	    spec:
-		  runtimeClassName: kata-qemu
-		  `
-	yamlBytes, err := yaml.Marshal(&data)
+	patchStrategicMerge := map[string]interface{}{
+		"spec": map[string]interface{}{
+			"template": map[string]interface{}{
+				"spec": map[string]interface{}{
+					"runtimeClassName": "kata-clh",
+				},
+			},
+		},
+	}
+	patchBytes, err := json.Marshal(patchStrategicMerge)
+	if err != nil {
+		panic(err)
+	}
 	if err != nil {
 		panic(err)
 	}
@@ -95,7 +102,7 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov
 							},
 						},
 						RawPatchStrategicMerge: &v1.JSON{
-							Raw: yamlBytes,
+							Raw: patchBytes,
 						},
 					},
 				},
