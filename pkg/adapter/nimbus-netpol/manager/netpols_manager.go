@@ -98,7 +98,7 @@ func createOrUpdateNetworkPolicy(ctx context.Context, npName, npNamespace string
 		return
 	}
 
-	if adapterutil.IsOrphan(np.GetOwnerReferences(), "SecurityIntentBinding") {
+	if adapterutil.IsOrphan(np.GetOwnerReferences(), "SecurityIntentBinding", "ClusterSecurityIntentBinding") {
 		logger.V(4).Info("Ignoring orphan NimbusPolicy", "NimbusPolicy.Name", npName, "NimbusPolicy.Namespace", npNamespace)
 		return
 	}
