@@ -176,7 +176,6 @@ func dnsManipulationNetpol() netv1.NetworkPolicy {
 	}
 }
 
-
 func addManagedByAnnotation(netpol *netv1.NetworkPolicy) {
 	netpol.Annotations = make(map[string]string)
 	netpol.Annotations["app.kubernetes.io/managed-by"] = "nimbus-netpol"
