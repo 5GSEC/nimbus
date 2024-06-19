@@ -11,7 +11,6 @@ import (
 	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 	"github.com/go-logr/logr"
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
-	"gopkg.in/yaml.v2"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/pod-security-admission/api"
