@@ -85,7 +85,7 @@ func clusterCocoRuntimeAddition(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1
 			resourceFilter = kyvernov1.ResourceFilter{
 				ResourceDescription: kyvernov1.ResourceDescription{
 					Kinds: []string{
-						"v1/Pod",
+						"apps/v1/Deployment",
 					},
 					Namespaces: cnp.Spec.NsSelector.MatchNames,
 				},
@@ -98,7 +98,7 @@ func clusterCocoRuntimeAddition(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1
 		resourceFilter = kyvernov1.ResourceFilter{
 			ResourceDescription: kyvernov1.ResourceDescription{
 				Kinds: []string{
-					"v1/Pod",
+					"apps/v1/Deployment",
 				},
 			},
 		}
@@ -139,8 +139,8 @@ func clusterCocoRuntimeAddition(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1
 						Targets: []kyvernov1.TargetResourceSpec{
 							kyvernov1.TargetResourceSpec{
 								ResourceSpec: kyvernov1.ResourceSpec{
-									APIVersion: "v1",
-									Kind: "Pod",
+									APIVersion: "apps/v1",
+									Kind: "Deployment",
 								},
 							},
 						},

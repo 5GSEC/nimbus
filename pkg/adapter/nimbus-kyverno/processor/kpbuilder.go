@@ -82,7 +82,7 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov
 							kyvernov1.ResourceFilter{
 								ResourceDescription: kyvernov1.ResourceDescription{
 									Kinds: []string{
-										"v1/Pod",
+										"apps/v1/Deployment",
 									},
 									Selector: &metav1.LabelSelector{
 										MatchLabels: np.Spec.Selector.MatchLabels,
@@ -95,8 +95,8 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov
 						Targets: []kyvernov1.TargetResourceSpec{
 							kyvernov1.TargetResourceSpec{
 								ResourceSpec: kyvernov1.ResourceSpec{
-									APIVersion: "v1",
-									Kind:       "Pod",
+									APIVersion: "apps/v1",
+									Kind:       "Deployment",
 								},
 							},
 						},
