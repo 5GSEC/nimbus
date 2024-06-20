@@ -294,10 +294,6 @@ func disallowBinaries() kubearmorv1.KubeArmorPolicy { // ref: https://www.tenabl
 						Directory: "/etc/",
 						Recursive: true,
 					},
-					{
-						Directory: "/usr/lib/",
-						Recursive: true,
-					},
 				},
 				Action: kubearmorv1.ActionType("Block"),
 			},
