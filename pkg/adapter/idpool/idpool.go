@@ -17,6 +17,7 @@ const (
 	DisallowCapabilities      = "disallowCapabilities"
 	ExploitPFA                = "preventExecutionFromTempOrLogsFolders"
 	EnsureTLS                 = "ensureTLS"
+	DenyENAccess              = "denyExternalNetworkAccess"
 )
 
 // KaIds are IDs supported by KubeArmor.
@@ -36,6 +37,7 @@ var KaIDPolicies = map[string][]string{
 // NetPolIDs are IDs supported by Network Policy adapter.
 var NetPolIDs = []string{
 	DNSManipulation,
+	DenyENAccess,
 }
 
 // KyvIds are IDs supported by Kyverno.
