@@ -74,6 +74,7 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov
 	}
 	kp := kyvernov1.Policy{
 		Spec: kyvernov1.Spec{
+			MutateExistingOnPolicyUpdate: true,
 			Rules: []kyvernov1.Rule{
 				{
 					Name: "add runtime",

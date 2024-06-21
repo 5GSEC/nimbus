@@ -126,6 +126,7 @@ func clusterCocoRuntimeAddition(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1
 	}
 	return kyvernov1.ClusterPolicy{
 		Spec: kyvernov1.Spec{
+			MutateExistingOnPolicyUpdate: true,
 			Rules: []kyvernov1.Rule{
 				{
 					Name: "add-runtime-class-to-pods",
