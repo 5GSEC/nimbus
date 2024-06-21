@@ -4,12 +4,14 @@
 package processor
 
 import (
+	"encoding/json"
 	"strings"
 
 	v1alpha1 "github.com/5GSEC/nimbus/api/v1alpha1"
 	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 	"github.com/go-logr/logr"
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
+	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/pod-security-admission/api"
 )
@@ -44,12 +46,114 @@ func buildKcpFor(id string, cnp *v1alpha1.ClusterNimbusPolicy) kyvernov1.Cluster
 	switch id {
 	case idpool.EscapeToHost:
 		return clusterEscapeToHost(cnp, cnp.Spec.NimbusRules[0].Rule)
+	case idpool.CocoWorkload:
+		return clusterCocoRuntimeAddition(cnp, cnp.Spec.NimbusRules[0].Rule)
 	default:
 		return kyvernov1.ClusterPolicy{}
 	}
 }
 
 var nsBlackList = []string{"kube-system"}
+
+func clusterCocoRuntimeAddition(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1.Rule) kyvernov1.ClusterPolicy {
+	var matchFilters, excludeFilters []kyvernov1.ResourceFilter
+	var resourceFilter kyvernov1.ResourceFilter
+
+	// exclude kube-system
+	resourceFilter = kyvernov1.ResourceFilter{
+		ResourceDescription: kyvernov1.ResourceDescription{
+			Namespaces: nsBlackList,
+		},
+	}
+	excludeFilters = append(excludeFilters, resourceFilter)
+
+	if len(cnp.Spec.NsSelector.MatchNames) > 0 {
+		if len(cnp.Spec.WorkloadSelector.MatchLabels) > 0 {
+			resourceFilter = kyvernov1.ResourceFilter{
+				ResourceDescription: kyvernov1.ResourceDescription{
+					Kinds: []string{
+						"v1/Pod",
+					},
+					Namespaces: cnp.Spec.NsSelector.MatchNames,
+					Selector: &metav1.LabelSelector{
+						MatchLabels: cnp.Spec.WorkloadSelector.MatchLabels,
+					},
+				},
+			}
+
+		} else {
+			resourceFilter = kyvernov1.ResourceFilter{
+				ResourceDescription: kyvernov1.ResourceDescription{
+					Kinds: []string{
+						"apps/v1/Deployment",
+					},
+					Namespaces: cnp.Spec.NsSelector.MatchNames,
+				},
+			}
+		}
+		matchFilters = append(matchFilters, resourceFilter)
+
+	} else if len(cnp.Spec.NsSelector.ExcludeNames) > 0 {
+
+		resourceFilter = kyvernov1.ResourceFilter{
+			ResourceDescription: kyvernov1.ResourceDescription{
+				Kinds: []string{
+					"apps/v1/Deployment",
+				},
+			},
+		}
+		matchFilters = append(matchFilters, resourceFilter)
+
+		resourceFilter = kyvernov1.ResourceFilter{
+			ResourceDescription: kyvernov1.ResourceDescription{
+				Namespaces: cnp.Spec.NsSelector.ExcludeNames,
+			},
+		}
+		excludeFilters = append(excludeFilters, resourceFilter)
+	}
+	patchStrategicMerge := map[string]interface{}{
+		"spec": map[string]interface{}{
+			"template": map[string]interface{}{
+				"spec": map[string]interface{}{
+					"runtimeClassName": "kata-clh",
+				},
+			},
+		},
+	}
+	patchBytes, err := json.Marshal(patchStrategicMerge)
+	if err != nil {
+		panic(err)
+	}
+	return kyvernov1.ClusterPolicy{
+		Spec: kyvernov1.Spec{
+			MutateExistingOnPolicyUpdate: true,
+			Rules: []kyvernov1.Rule{
+				{
+					Name: "add-runtime-class-to-pods",
+					MatchResources: kyvernov1.MatchResources{
+						Any: matchFilters,
+					},
+					ExcludeResources: kyvernov1.MatchResources{
+						Any: excludeFilters,
+					},
+					Mutation: kyvernov1.Mutation{
+						Targets: []kyvernov1.TargetResourceSpec{
+							kyvernov1.TargetResourceSpec{
+								ResourceSpec: kyvernov1.ResourceSpec{
+									APIVersion: "apps/v1",
+									Kind: "Deployment",
+								},
+							},
+						},
+						RawPatchStrategicMerge: &v1.JSON{
+							Raw: patchBytes,
+						} ,
+					},
+				},
+			},
+		},
+	}
+}
 
 func clusterEscapeToHost(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1.Rule) kyvernov1.ClusterPolicy {
 	var psa_level api.Level = api.LevelBaseline

@@ -16,6 +16,7 @@ const (
 	DisallowChRoot            = "disallowChRoot"
 	DisallowCapabilities      = "disallowCapabilities"
 	ExploitPFA                = "preventExecutionFromTempOrLogsFolders"
+	CocoWorkload              = "cocoWorkload"
 	EnsureTLS                 = "ensureTLS"
 	DenyENAccess              = "denyExternalNetworkAccess"
 )
@@ -43,6 +44,7 @@ var NetPolIDs = []string{
 // KyvIds are IDs supported by Kyverno.
 var KyvIds = []string{
 	EscapeToHost,
+	CocoWorkload,
 }
 
 // k8tlsIds are IDs supported by k8tls.
