@@ -2,12 +2,7 @@
 
 ## Prerequisites
 
-- **Nimbus operator**: Follow [this](../deployments/nimbus/Readme.md) guide to install `nimbus` operator.
-- Nimbus adapters: To generate multiple security engines policies
-    - `nimbus-kubearmor`: Follow [this](../deployments/nimbus-kubearmor/Readme.md) guide to install `nimbus-kubearmor`
-      adapter.
-    - `nimbus-netpol`: Follow [this](../deployments/nimbus-netpol/Readme.md) guide to install `nimbus-netpol` adapter.
-    - `nimbus-kyverno`: Follow [this](../deployments/nimbus-kyverno/Readme.md) guide to install `nimbus-kyverno` adapter.
+- **Nimbus suite**: Follow [this](../deployments/nimbus/Readme.md) guide to install `nimbus` operator and its adapters.
 
 ## Create a sample deployment
 
@@ -38,6 +33,7 @@ dns-manipulation   Created   9s
 ```
 
 Output in `-o wide` for detailed info:
+
 ```shell
 $ kubectl get securityintent dns-manipulation -o wide
 NAME               STATUS    AGE   ID                ACTION
@@ -102,6 +98,7 @@ Events:                        <none>
 ```
 
 ## Verify the Security Engines policies
+
 Review the policies that are successfully generated as part of `DNSManipulation` SecurityIntent and
 SecurityIntentBinding:
 

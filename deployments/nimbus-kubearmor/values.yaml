@@ -1,5 +1,7 @@
 # Default values for nimbus-kubearmor.
 
+autoDeploy: true
+
 image:
   repository: 5gsec/nimbus-kubearmor
   pullPolicy: Always
@@ -21,3 +23,6 @@ serviceAccount:
 securityContext:
   runAsNonRoot: true
   runAsUser: 65533
+
+kubearmor-operator:
+  autoDeploy: true
