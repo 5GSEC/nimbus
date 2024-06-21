@@ -164,9 +164,6 @@ func clusterEscapeToHost(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1.Rule) 
 		case "restricted":
 			psa_level = api.LevelRestricted
 
-		case "privileged":
-			psa_level = api.LevelPrivileged
-
 		default:
 			psa_level = api.LevelBaseline
 		}
@@ -235,7 +232,7 @@ func clusterEscapeToHost(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1.Rule) 
 			Background: &background,
 			Rules: []kyvernov1.Rule{
 				{
-					Name: "restricted",
+					Name: "pod-security-standard",
 					MatchResources: kyvernov1.MatchResources{
 						Any: matchFilters,
 					},

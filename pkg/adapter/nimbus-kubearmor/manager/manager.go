@@ -5,12 +5,12 @@ package manager
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/go-logr/logr"
 	kubearmorv1 "github.com/kubearmor/KubeArmor/pkg/KubeArmorController/api/security.kubearmor.com/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -18,7 +18,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	v1alpha1 "github.com/5GSEC/nimbus/api/v1alpha1"
+	"github.com/5GSEC/nimbus/api/v1alpha1"
 	"github.com/5GSEC/nimbus/pkg/adapter/common"
 	"github.com/5GSEC/nimbus/pkg/adapter/k8s"
 	adapterutil "github.com/5GSEC/nimbus/pkg/adapter/util"
@@ -41,12 +41,8 @@ func init() {
 
 func Run(ctx context.Context) {
 	npCh := make(chan common.Request)
-	deletedNpCh := make(chan common.Request)
+	deletedNpCh := make(chan *unstructured.Unstructured)
 	go globalwatcher.WatchNimbusPolicies(ctx, npCh, deletedNpCh, "SecurityIntentBinding", "ClusterSecurityIntentBinding")
-
-	clusterNpChan := make(chan string)
-	deletedClusterNpChan := make(chan string)
-	go globalwatcher.WatchClusterNimbusPolicies(ctx, clusterNpChan, deletedClusterNpChan)
 
 	updatedKspCh := make(chan common.Request)
 	deletedKspCh := make(chan common.Request)
@@ -57,32 +53,24 @@ func Run(ctx context.Context) {
 		case <-ctx.Done():
 			close(npCh)
 			close(deletedNpCh)
-			close(clusterNpChan)
-			close(deletedClusterNpChan)
 			close(updatedKspCh)
 			close(deletedKspCh)
 			return
 		case createdNp := <-npCh:
 			createOrUpdateKsp(ctx, createdNp.Name, createdNp.Namespace)
 		case deletedNp := <-deletedNpCh:
-			deleteKsp(ctx, deletedNp.Name, deletedNp.Namespace)
+			logKspToDelete(ctx, deletedNp)
 		case updatedKsp := <-updatedKspCh:
 			reconcileKsp(ctx, updatedKsp.Name, updatedKsp.Namespace, false)
 		case deletedKsp := <-deletedKspCh:
 			reconcileKsp(ctx, deletedKsp.Name, deletedKsp.Namespace, true)
-		case <-clusterNpChan: // Fixme: CreateKSP based on ClusterNP
-			// From ClusterNP, KubeArmor can create HostSecurityPolicies
-			// The NodeSelector in ClusterNP should be set for such cases
-			fmt.Println("No-op for ClusterNimbusPolicy")
-		case <-deletedClusterNpChan: // Fixme: DeleteKSP based on ClusterNP
-			fmt.Println("No-op for ClusterNimbusPolicy")
 		}
 	}
 }
 
 func reconcileKsp(ctx context.Context, kspName, namespace string, deleted bool) {
 	logger := log.FromContext(ctx)
-	npName := adapterutil.ExtractNpName(kspName)
+	npName := adapterutil.ExtractAnyNimbusPolicyName(kspName)
 	var np v1alpha1.NimbusPolicy
 	err := k8sClient.Get(ctx, types.NamespacedName{Name: npName, Namespace: namespace}, &np)
 	if err != nil {
@@ -154,23 +142,23 @@ func createOrUpdateKsp(ctx context.Context, npName, npNamespace string) {
 	}
 }
 
-func deleteKsp(ctx context.Context, npName, npNamespace string) {
+func logKspToDelete(ctx context.Context, deletedNp *unstructured.Unstructured) {
 	logger := log.FromContext(ctx)
 	var ksps kubearmorv1.KubeArmorPolicyList
 
-	if err := k8sClient.List(ctx, &ksps, &client.ListOptions{Namespace: npNamespace}); err != nil {
+	if err := k8sClient.List(ctx, &ksps, &client.ListOptions{Namespace: deletedNp.GetNamespace()}); err != nil {
 		logger.Error(err, "failed to list KubeArmorPolicies")
 		return
 	}
 
 	// Kubernetes GC automatically deletes the child when the parent/owner is
-	// deleted. So, we don't need to do anything in this case since NimbusPolicy is
-	// the owner and when it gets deleted corresponding KSPs will be automatically
-	// deleted.
+	// deleted. So, we don't need to delete the policy because NimbusPolicy is the
+	// owner and when it gets deleted all the corresponding policies will be
+	// automatically deleted.
 	for _, ksp := range ksps.Items {
 		logger.Info("KubeArmorPolicy already deleted due to NimbusPolicy deletion",
 			"KubeArmorPolicy.Name", ksp.Name, "KubeArmorPolicy.Namespace", ksp.Namespace,
-			"NimbusPolicy.Name", npName, "NimbusPolicy.Namespace", npNamespace,
+			"NimbusPolicy.Name", deletedNp.GetName(), "NimbusPolicy.Namespace", deletedNp.GetNamespace(),
 		)
 	}
 }

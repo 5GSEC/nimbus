@@ -1,0 +1,9 @@
+apiVersion: v2
+type: application
+name: nimbus-k8tls
+version: 0.1.0
+appVersion: "0.1.0"
+description: Nimbus adapter for k8tls
+sources:
+  - https://github.com/5GSEC/nimbus
+kubeVersion: ">=1.25.0-0"

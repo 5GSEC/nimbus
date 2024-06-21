@@ -115,7 +115,7 @@ jobs:
     if: ${{ needs.files-changed.outputs.adapters == 'true' }}
     strategy:
       matrix:
-        adapters: [ "nimbus-kubearmor", "nimbus-netpol", "nimbus-kyverno" ]
+        adapters: [ "nimbus-kubearmor", "nimbus-netpol", "nimbus-kyverno", "nimbus-k8tls" ]
     name: Build ${{ matrix.adapters }} adapter's image
     runs-on: ubuntu-latest
     timeout-minutes: 20

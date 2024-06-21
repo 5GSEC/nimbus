@@ -11,16 +11,14 @@ import (
 const (
 	SwDeploymentTools         = "swDeploymentTools"
 	UnAuthorizedSaTokenAccess = "unAuthorizedSaTokenAccess"
-	UnAuthorizedNEFAccess     = "unAuthorizedNEFAccess"
-	NFServiceDiscovery        = "nfServiceDiscovery"
 	DNSManipulation           = "dnsManipulation"
-	NetPortExec               = "netPortExec"
-	SysPathExec               = "sysPathExec"
 	EscapeToHost              = "escapeToHost"
 	DisallowChRoot            = "disallowChRoot"
 	DisallowCapabilities      = "disallowCapabilities"
 	ExploitPFA                = "preventExecutionFromTempOrLogsFolders"
 	CocoWorkload              = "cocoWorkload"
+	EnsureTLS                 = "ensureTLS"
+	DenyENAccess              = "denyExternalNetworkAccess"
 )
 
 // KaIds are IDs supported by KubeArmor.
@@ -40,12 +38,18 @@ var KaIDPolicies = map[string][]string{
 // NetPolIDs are IDs supported by Network Policy adapter.
 var NetPolIDs = []string{
 	DNSManipulation,
+	DenyENAccess,
 }
 
 // KyvIds are IDs supported by Kyverno.
 var KyvIds = []string{
 	EscapeToHost,
 	CocoWorkload,
+}
+
+// k8tlsIds are IDs supported by k8tls.
+var k8tlsIds = []string{
+	EnsureTLS,
 }
 
 // IsIdSupportedBy determines whether a given ID is supported by a security engine.
@@ -57,6 +61,8 @@ func IsIdSupportedBy(id, securityEngine string) bool {
 		return in(id, NetPolIDs)
 	case "kyverno":
 		return in(id, KyvIds)
+	case "k8tls":
+		return in(id, k8tlsIds)
 	default:
 		return false
 	}
