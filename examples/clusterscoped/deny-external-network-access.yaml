@@ -20,7 +20,7 @@ spec:
   selector:
     nsSelector:
       matchNames:
-        - prod
+        - default
     workloadSelector:
       matchLabels:
-        app: foo
+        app: nginx

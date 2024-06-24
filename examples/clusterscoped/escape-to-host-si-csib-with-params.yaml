@@ -23,8 +23,8 @@ spec:
   selector:
     nsSelector:
       matchNames:
-        - prod
+        - default
     workloadSelector:
       matchLabels:
-        app: db
+        app: nginx
         env: dev
