@@ -45,101 +45,85 @@ Follow [this](../deployments/nimbus/Readme.md) guide to install `nimbus` operato
 
 Just like Nimbus, there are various ways of installing Security engine adapters.
 
-## nimbus-kubearmor
+- ## nimbus-kubearmor
+  ### From source
 
-> [!Note]
-> The `nimbus-kubearmor` adapter leverages the [KubeArmor](https://kubearmor.io) security engine for its functionality.
-> To use this adapter, you'll need KubeArmor installed. Please
-> follow [this](https://github.com/kubearmor/KubeArmor/blob/main/getting-started/deployment_guide.md) guide for
-> installation.
-> Creating a KubeArmorPolicy resource without KubeArmor will have no effect.
+  Clone the repository:
 
-### From source
+    ```shell
+    git clone https://github.com/5GSEC/nimbus.git
+    ```
 
-Clone the repository:
+  Go to nimbus-kubearmor directory:
 
-```shell
-git clone https://github.com/5GSEC/nimbus.git
-```
+    ```shell
+    cd nimbus/pkg/adapter/nimbus-kubearmor
+    ```
 
-Go to nimbus-kubearmor directory:
+  Run `nimbus-kubearmor` adapter:
 
-```shell
-cd nimbus/pkg/adapter/nimbus-kubearmor
-```
+    ```shell
+    make run
+    ```
 
-Run `nimbus-kubearmor` adapter:
+  ### From Helm Chart
 
-```shell
-make run
-```
+  Follow [this](../deployments/nimbus-kubearmor/Readme.md) guide to install `nimbus-kubearmor` adapter.
 
-### From Helm Chart
+- ## nimbus-netpol
 
-Follow [this](../deployments/nimbus-kubearmor/Readme.md) guide to install `nimbus-kubearmor` adapter.
+  > [!Note]
+  > The `nimbus-netpol` adapter leverages
+  > the [network plugin](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/).
+  > To use network policies, you must be using a networking solution which supports NetworkPolicy. Creating a
+  > NetworkPolicy resource without a controller that implements it will have no effect.
 
-## nimbus-netpol
+  ### From source
 
-> [!Note]
-> The `nimbus-netpol` adapter leverages
-> the [network plugin](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/).
-> To use network policies, you must be using a networking solution which supports NetworkPolicy. Creating a
-> NetworkPolicy resource without a controller that implements it will have no effect.
+  Clone the repository:
 
-### From source
+  ```shell
+  git clone https://github.com/5GSEC/nimbus.git
+  ```
 
-Clone the repository:
+  Go to nimbus-netpol directory:
 
-```shell
-git clone https://github.com/5GSEC/nimbus.git
-```
+  ```shell
+  cd nimbus/pkg/adapter/nimbus-netpol
+  ```
 
-Go to nimbus-netpol directory:
+  Run `nimbus-netpol` adapter:
 
-```shell
-cd nimbus/pkg/adapter/nimbus-netpol
-```
+  ```shell
+  make run
+  ```
 
-Run `nimbus-netpol` adapter:
+  ### From Helm Chart
 
-```shell
-make run
-```
+  Follow [this](../deployments/nimbus-netpol/Readme.md) guide to install `nimbus-netpol` adapter.
 
-### From Helm Chart
+- ## nimbus-kyverno
 
-Follow [this](../deployments/nimbus-netpol/Readme.md) guide to install `nimbus-netpol` adapter.
+  ### From source
 
-## nimbus-kyverno
+  Clone the repository:
 
-> [!Note]
-> The `nimbus-kyverno` adapter leverages the [Kyverno](https://kyverno.io/) security engine for its functionality.
-> To use this adapter, you'll need Kyverno installed. Please
-> follow [this](https://kyverno.io/docs/installation/methods/) guide for
-> installation.
-> Creating a KyvernoPolicy resource without Kyverno will have no effect.
+  ```shell
+  git clone https://github.com/5GSEC/nimbus.git
+  ```
 
-### From source
+  Go to nimbus-kyverno directory:
 
-Clone the repository:
+  ```shell
+  cd nimbus/pkg/adapter/nimbus-kyverno
+  ```
 
-```shell
-git clone https://github.com/5GSEC/nimbus.git
-```
+  Run `nimbus-kyverno` adapter:
 
-Go to nimbus-kyverno directory:
+  ```shell
+  make run
+  ```
 
-```shell
-cd nimbus/pkg/adapter/nimbus-kyverno
-```
+  ### From Helm Chart
 
-Run `nimbus-kyverno` adapter:
-
-```shell
-make run
-```
-
-### From Helm Chart
-
-Follow [this](../deployments/nimbus-kyverno/Readme.md) guide to install `nimbus-kyverno` adapter.
-
+  Follow [this](../deployments/nimbus-kyverno/Readme.md) guide to install `nimbus-kyverno` adapter.
