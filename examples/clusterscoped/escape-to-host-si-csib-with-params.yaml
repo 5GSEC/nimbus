@@ -25,6 +25,3 @@ spec:
       matchNames:
         - default
     workloadSelector:
-      matchLabels:
-        app: nginx
-        env: dev
