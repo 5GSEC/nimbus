@@ -153,13 +153,18 @@ jobs:
             kind load docker-image 5gsec/nimbus:latest --name=testing
 
         - name: Install Nimbus
+          working-directory: ./deployments/nimbus
           run: |
-            helm upgrade --install nimbus-operator deployments/nimbus -n nimbus --create-namespace --set image.pullPolicy=Never
+            helm upgrade --dependency-update --install nimbus-operator . -n nimbus --create-namespace \
+            --set image.pullPolicy=Never \
+            --set autoDeploy.kubearmor=false \
+            --set autoDeploy.kyverno=false \
+            --set autoDeploy.netpol=false
 
         - name: Wait for Nimbus to start
           run: |
             kubectl wait --for=condition=ready --timeout=5m -n nimbus pod -l app.kubernetes.io/name=nimbus
-            kubectl get pods -A
+            kubectl get pods -n nimbus
 
         - name: Run Tests
           run: make integration-test
@@ -183,7 +188,7 @@ jobs:
           uses: helm/kind-action@v1
           with:
             cluster_name: testing
-        
+
         - name: Build nimbus image and load in the kind cluster
           run: |
             make docker-build
@@ -200,30 +205,26 @@ jobs:
           run: |
             make docker-build
             kind load docker-image 5gsec/nimbus-kubearmor:latest --name=testing 
-            
+
         - name: Build nimbus-kyverno image and load in the kind cluster
           working-directory: ./pkg/adapter/nimbus-kyverno
           run: |
             make docker-build
             kind load docker-image 5gsec/nimbus-kyverno:latest --name=testing 
-          
-        - name: Install Kubearmor CRDs
-          run: |
-            kubectl create -f https://raw.githubusercontent.com/kubearmor/KubeArmor/main/deployments/CRD/KubeArmorPolicy.yaml
-
-        - name: Install Kyverno CRDs
-          run: |
-            kubectl create -f https://raw.githubusercontent.com/kyverno/kyverno/main/config/crds/kyverno/kyverno.io_clusterpolicies.yaml 
-            kubectl create -f https://raw.githubusercontent.com/kyverno/kyverno/main/config/crds/kyverno/kyverno.io_policies.yaml
 
         - name: Install Nimbus
+          working-directory: ./deployments/nimbus
           run: |
-            helm upgrade --install nimbus-operator deployments/nimbus -n nimbus --create-namespace --set image.pullPolicy=Never
+            helm upgrade --dependency-update --install nimbus-operator . -n nimbus --create-namespace \
+            --set image.pullPolicy=Never \
+            --set autoDeploy.kubearmor=false \
+            --set autoDeploy.kyverno=false \
+            --set autoDeploy.netpol=false
 
         - name: Wait for Nimbus to start
           run: |
             kubectl wait --for=condition=ready --timeout=5m -n nimbus pod -l app.kubernetes.io/name=nimbus
-            kubectl get pods -A
+            kubectl get pods -n nimbus
 
         - name: Install nimbus-netpol
           working-directory: deployments/nimbus-netpol/
@@ -233,27 +234,27 @@ jobs:
         - name: Wait for nimbus-netpol to start
           run: |
             kubectl wait --for=condition=ready --timeout=5m -n nimbus pod -l app.kubernetes.io/name=nimbus-netpol
-            kubectl get pods -A
+            kubectl get pods -n nimbus
 
         - name: Install nimbus-kubearmor
           working-directory: deployments/nimbus-kubearmor/
           run: |
-            helm upgrade --install nimbus-kubearmor . -n nimbus --set image.pullPolicy=Never
+            helm upgrade --dependency-update --install nimbus-kubearmor . -n nimbus --set image.pullPolicy=Never
 
         - name: Wait for nimbus-kubearmor to start
           run: |
             kubectl wait --for=condition=ready --timeout=5m -n nimbus pod -l app.kubernetes.io/name=nimbus-kubearmor
-            kubectl get pods -A
+            kubectl get pods -n nimbus
 
         - name: Install nimbus-kyverno
           working-directory: deployments/nimbus-kyverno/
           run: |
-            helm upgrade --install nimbus-kyverno . -n nimbus --set image.pullPolicy=Never
-  
+            helm upgrade --dependency-update --install nimbus-kyverno . -n nimbus --set image.pullPolicy=Never
+
         - name: Wait for nimbus-kyverno to start
           run: |
             kubectl wait --for=condition=ready --timeout=5m -n nimbus pod -l app.kubernetes.io/name=nimbus-kyverno
-            kubectl get pods -A
-            
+            kubectl get pods -n nimbus
+
         - name: Run Tests
           run: make e2e-test
