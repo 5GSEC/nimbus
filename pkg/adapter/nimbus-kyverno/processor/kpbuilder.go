@@ -98,6 +98,7 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov
 								ResourceSpec: kyvernov1.ResourceSpec{
 									APIVersion: "apps/v1",
 									Kind:       "Deployment",
+									Namespace:  np.Namespace,
 								},
 							},
 						},
@@ -125,7 +126,7 @@ func escapeToHost(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov1.Polic
 		switch rule.Params["psa_level"][0] {
 		case "restricted":
 			psa_level = api.LevelRestricted
-		
+
 		default:
 			psa_level = api.LevelBaseline
 		}

@@ -72,7 +72,7 @@ func clusterCocoRuntimeAddition(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1
 			resourceFilter = kyvernov1.ResourceFilter{
 				ResourceDescription: kyvernov1.ResourceDescription{
 					Kinds: []string{
-						"v1/Pod",
+						"apps/v1/Deployment",
 					},
 					Namespaces: cnp.Spec.NsSelector.MatchNames,
 					Selector: &metav1.LabelSelector{
