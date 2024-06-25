@@ -54,7 +54,7 @@ func createOrUpdateCj(ctx context.Context, logger logr.Logger, cwnp v1alpha1.Clu
 		logger.Info("configured Kubernetes CronJob", "CronJob.Name", cronJob.Name, "CronJob.Namespace", cronJob.Namespace)
 	}
 
-	if err = adapterutil.UpdateCwnpStatus(ctx, k8sClient, "CronJob/"+cronJob.Name, cwnp.Name, false); err != nil {
+	if err = adapterutil.UpdateCwnpStatus(ctx, k8sClient, cronJob.Namespace+"/CronJob/"+cronJob.Name, cwnp.Name, false); err != nil {
 		logger.Error(err, "failed to update ClusterNimbusPolicy status")
 	}
 }
@@ -67,7 +67,7 @@ func deleteCronJobs(ctx context.Context, logger logr.Logger, cwnpName string, cr
 			continue
 		}
 
-		if err := adapterutil.UpdateCwnpStatus(ctx, k8sClient, "CronJob/"+cronJob.Name, cwnpName, true); err != nil {
+		if err := adapterutil.UpdateCwnpStatus(ctx, k8sClient, cronJob.Namespace+"/CronJob/"+cronJob.Name, cwnpName, true); err != nil {
 			logger.Error(err, "failed to update ClusterNimbusPolicy status")
 		}
 		logger.Info("Dangling Kubernetes CronJob deleted", "CronJobJob.Name", cronJob.Name, "CronJob.Namespace", cronJob.Namespace)
