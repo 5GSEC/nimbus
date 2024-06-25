@@ -202,8 +202,16 @@ func setupK8tlsEnv(ctx context.Context, cwnp v1alpha1.ClusterNimbusPolicy, schem
 	objs := []client.Object{ns, cm, sa, clusterRole, clusterRoleBinding}
 	for idx := range objs {
 		objToCreate := objs[idx]
-		if err := ctrl.SetControllerReference(&cwnp, objToCreate, scheme); err != nil {
-			return err
+
+		// Don't set owner ref on namespace. In environments with configured Pod Security
+		// Standards labelling namespaces becomes a requirement. However, on deletion of
+		// CWNP a namespace with ownerReferences set also gets deleted. Since we need to
+		// keep the nimbus-k8tls-env namespace labeled, removing the ownerReferences
+		// prevents this deletion.
+		if idx != 0 {
+			if err := ctrl.SetControllerReference(&cwnp, objToCreate, scheme); err != nil {
+				return err
+			}
 		}
 
 		var existingObj client.Object
