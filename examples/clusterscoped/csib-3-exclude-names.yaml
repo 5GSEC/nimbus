@@ -20,6 +20,8 @@ spec:
     - name: escape-to-host
   selector:
     nsSelector:
+      matchNames:
+        - "*"
       excludeNames:
         - ns-2
         - ns-3
