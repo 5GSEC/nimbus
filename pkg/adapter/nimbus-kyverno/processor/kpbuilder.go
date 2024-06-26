@@ -226,6 +226,7 @@ func escapeToHost(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov1.Polic
 		case "restricted":
 			psa_level = api.LevelRestricted
 
+
 		default:
 			psa_level = api.LevelBaseline
 		}
