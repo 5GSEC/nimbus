@@ -195,15 +195,15 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) ([]kyver
 		},
 	}
 
-	kps = append(kps, mutateExistingKp)
-
 	if len(labels) > 0 {
 		mutateNonExistingKp.Spec.Rules[0].MatchResources.Any[0].ResourceDescription.Selector = &metav1.LabelSelector{MatchLabels: labels}
 	}
 	mutateNonExistingKp.Name = np.Name + "-mutateoncreate"
 
+	if len(deployNames) > 0 {  // if labels are present but no deploy exists with matching label
+		kps = append(kps, mutateExistingKp)
+	}
 	kps = append(kps, mutateNonExistingKp)
-	kps = append(kps, mutateExistingKp)
 
 	if len(errs) != 0 {
 		return kps, nil
