@@ -18,3 +18,5 @@ spec:
   selector:
     workloadSelector:
       matchLabels:
+        app: nginx
+        app1: test
