@@ -4,57 +4,90 @@
 package processor
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 
 	v1alpha1 "github.com/5GSEC/nimbus/api/v1alpha1"
 	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
+	"github.com/5GSEC/nimbus/pkg/adapter/k8s"
 	"github.com/go-logr/logr"
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
+	"go.uber.org/multierr"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/pod-security-admission/api"
 )
 
+var (
+	client dynamic.Interface
+)
+
+func init() {
+	client = k8s.NewDynamicClient()
+}
+
 func BuildKpsFrom(logger logr.Logger, np *v1alpha1.NimbusPolicy) []kyvernov1.Policy {
 	// Build KPs based on given IDs
-	var kps []kyvernov1.Policy
+	var allkps []kyvernov1.Policy
+	var cocopoltags = []string{"mutateexisting", "mutatenoncreate"}
+	var counter int = 0
 	for _, nimbusRule := range np.Spec.NimbusRules {
 		id := nimbusRule.ID
 		if idpool.IsIdSupportedBy(id, "kyverno") {
-			kp := buildKpFor(id, np)
-			kp.Name = np.Name + "-" + strings.ToLower(id)
-			kp.Namespace = np.Namespace
-			kp.Annotations = make(map[string]string)
-			kp.Annotations["policies.kyverno.io/description"] = nimbusRule.Description
-			if nimbusRule.Rule.RuleAction == "Block" {
-				kp.Spec.ValidationFailureAction = kyvernov1.ValidationFailureAction("Enforce")
-			} else {
-				kp.Spec.ValidationFailureAction = kyvernov1.ValidationFailureAction("Audit")
+			kps, err := buildKpFor(id, np)
+			if err != nil {
+				logger.Error(err, "error while building kyverno policies")
 			}
-			addManagedByAnnotation(&kp)
-			kps = append(kps, kp)
+			for _, kp := range kps {
+				if id == "cocoWorkload" {
+					kp.Name = np.Name + "-" + strings.ToLower(id) + "-" + cocopoltags[counter]
+				} else {
+					kp.Name = np.Name + "-" + strings.ToLower(id)
+				}
+				kp.Namespace = np.Namespace
+				kp.Annotations = make(map[string]string)
+				kp.Annotations["policies.kyverno.io/description"] = nimbusRule.Description
+				if nimbusRule.Rule.RuleAction == "Block" {
+					kp.Spec.ValidationFailureAction = kyvernov1.ValidationFailureAction("Enforce")
+				} else {
+					kp.Spec.ValidationFailureAction = kyvernov1.ValidationFailureAction("Audit")
+				}
+				addManagedByAnnotation(&kp)
+				allkps = append(allkps, kp)
+				counter += 1
+			}
 		} else {
 			logger.Info("Kyverno does not support this ID", "ID", id,
 				"NimbusPolicy", np.Name, "NimbusPolicy.Namespace", np.Namespace)
 		}
 	}
-	return kps
+	return allkps
 }
 
 // buildKpFor builds a KyvernoPolicy based on intent ID supported by Kyverno Policy Engine.
-func buildKpFor(id string, np *v1alpha1.NimbusPolicy) kyvernov1.Policy {
+func buildKpFor(id string, np *v1alpha1.NimbusPolicy) ([]kyvernov1.Policy, error) {
+	var kps []kyvernov1.Policy
 	switch id {
 	case idpool.EscapeToHost:
-		return escapeToHost(np, np.Spec.NimbusRules[0].Rule)
+		kps = append(kps, escapeToHost(np, np.Spec.NimbusRules[0].Rule))
 	case idpool.CocoWorkload:
-		return cocoRuntimeAddition(np, np.Spec.NimbusRules[0].Rule)
-	default:
-		return kyvernov1.Policy{}
+		kpols, err := cocoRuntimeAddition(np, np.Spec.NimbusRules[0].Rule)
+		if err != nil {
+			return kps, err
+		}
+		kps = append(kps, kpols...)
 	}
+	return kps, nil
 }
 
-func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov1.Policy {
+func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) ([]kyvernov1.Policy, error) {
+	var kps []kyvernov1.Policy
+	var errs []error
+	var deployNames []string
+	var mutateTargetResourceSpecs []kyvernov1.TargetResourceSpec
 	labels := np.Spec.Selector.MatchLabels
 	patchStrategicMerge := map[string]interface{}{
 		"spec": map[string]interface{}{
@@ -67,12 +100,50 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov
 	}
 	patchBytes, err := json.Marshal(patchStrategicMerge)
 	if err != nil {
-		panic(err)
+		errs = append(errs, err)
 	}
 	if err != nil {
-		panic(err)
+		errs = append(errs, err)
 	}
-	kp := kyvernov1.Policy{
+
+	deploymentsGVR := schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
+	deployments, err := client.Resource(deploymentsGVR).Namespace(np.Namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	for _, d := range deployments.Items {
+		for key1, value1 := range d.GetLabels() {
+			for key2, value2 := range np.Spec.Selector.MatchLabels {
+				if key1 == key2 && value1 == value2 {
+					deployNames = append(deployNames, d.GetName())
+				}
+			}
+		}
+	}
+
+	for _, deployName := range deployNames {
+		mutateResourceSpec := kyvernov1.TargetResourceSpec{
+			ResourceSpec: kyvernov1.ResourceSpec{
+				APIVersion: "apps/v1",
+				Kind:       "Deployment",
+				Name:       deployName,
+			},
+		}
+		mutateTargetResourceSpecs = append(mutateTargetResourceSpecs, mutateResourceSpec)
+	}
+
+	if len(labels) == 0 {
+		mutateResourceSpec := kyvernov1.TargetResourceSpec{
+			ResourceSpec: kyvernov1.ResourceSpec{
+				APIVersion: "apps/v1",
+				Kind:       "Deployment",
+			},
+		}
+		mutateTargetResourceSpecs = append(mutateTargetResourceSpecs, mutateResourceSpec)
+	}
+
+	mutateExistingKp := kyvernov1.Policy{
 		Spec: kyvernov1.Spec{
 			MutateExistingOnPolicyUpdate: true,
 			Rules: []kyvernov1.Rule{
@@ -83,24 +154,19 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov
 							kyvernov1.ResourceFilter{
 								ResourceDescription: kyvernov1.ResourceDescription{
 									Kinds: []string{
-										"apps/v1/Deployment",
+										"v1/ConfigMap",
 									},
 									Selector: &metav1.LabelSelector{
-										MatchLabels: np.Spec.Selector.MatchLabels,
+										MatchLabels: map[string]string{
+											"trigger": "mutate",
+										},
 									},
 								},
 							},
 						},
 					},
 					Mutation: kyvernov1.Mutation{
-						Targets: []kyvernov1.TargetResourceSpec{
-							kyvernov1.TargetResourceSpec{
-								ResourceSpec: kyvernov1.ResourceSpec{
-									APIVersion: "apps/v1",
-									Kind:       "Deployment",
-								},
-							},
-						},
+						Targets: mutateTargetResourceSpecs,
 						RawPatchStrategicMerge: &v1.JSON{
 							Raw: patchBytes,
 						},
@@ -110,10 +176,44 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov
 		},
 	}
 
-	if len(labels) > 0 {
-		kp.Spec.Rules[0].MatchResources.Any[0].ResourceDescription.Selector.MatchLabels = labels
+	mutateNonExistingKp := kyvernov1.Policy{
+		Spec: kyvernov1.Spec{
+
+			Rules: []kyvernov1.Rule{
+				{
+					Name: "add runtime",
+					MatchResources: kyvernov1.MatchResources{
+						Any: kyvernov1.ResourceFilters{
+							kyvernov1.ResourceFilter{
+								ResourceDescription: kyvernov1.ResourceDescription{
+									Kinds: []string{
+										"apps/v1/Deployment",
+									},
+								},
+							},
+						},
+					},
+					Mutation: kyvernov1.Mutation{
+						RawPatchStrategicMerge: &v1.JSON{
+							Raw: patchBytes,
+						},
+					},
+				},
+			},
+		},
 	}
-	return kp
+
+	kps = append(kps, mutateExistingKp)
+
+	if len(labels) > 0 {
+		mutateNonExistingKp.Spec.Rules[0].MatchResources.Any[0].ResourceDescription.Selector = &metav1.LabelSelector{MatchLabels: labels}
+	}
+
+	kps = append(kps, mutateNonExistingKp)
+	if len(errs) != 0 {
+		return kps, nil
+	}
+	return kps, multierr.Combine(errs...)
 }
 
 func escapeToHost(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov1.Policy {
@@ -125,7 +225,7 @@ func escapeToHost(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov1.Polic
 		switch rule.Params["psa_level"][0] {
 		case "restricted":
 			psa_level = api.LevelRestricted
-		
+
 		default:
 			psa_level = api.LevelBaseline
 		}
@@ -147,9 +247,6 @@ func escapeToHost(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov1.Polic
 									Kinds: []string{
 										"v1/Pod",
 									},
-									Selector: &metav1.LabelSelector{
-										MatchLabels: np.Spec.Selector.MatchLabels,
-									},
 								},
 							},
 						},
@@ -166,7 +263,7 @@ func escapeToHost(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov1.Polic
 	}
 
 	if len(labels) > 0 {
-		kp.Spec.Rules[0].MatchResources.Any[0].ResourceDescription.Selector.MatchLabels = labels
+		kp.Spec.Rules[0].MatchResources.Any[0].ResourceDescription.Selector = &metav1.LabelSelector{MatchLabels: labels}
 	}
 
 	return kp

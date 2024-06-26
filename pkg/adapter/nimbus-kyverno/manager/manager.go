@@ -9,7 +9,9 @@ import (
 
 	"github.com/go-logr/logr"
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -35,6 +37,7 @@ var (
 func init() {
 	utilruntime.Must(v1alpha1.AddToScheme(scheme))
 	utilruntime.Must(kyvernov1.AddToScheme(scheme))
+	utilruntime.Must(corev1.AddToScheme(scheme))
 	k8sClient = k8s.NewOrDie(scheme)
 }
 
@@ -51,9 +54,10 @@ func Run(ctx context.Context) {
 	deletedKcpCh := make(chan string)
 	go watcher.WatchKcps(ctx, updatedKcpCh, deletedKcpCh)
 
+	addKpCh := make(chan common.Request)
 	updatedKpCh := make(chan common.Request)
 	deletedKpCh := make(chan common.Request)
-	go watcher.WatchKps(ctx, updatedKpCh, deletedKpCh)
+	go watcher.WatchKps(ctx, addKpCh, updatedKpCh, deletedKpCh)
 
 	for {
 		select {
@@ -78,6 +82,8 @@ func Run(ctx context.Context) {
 			logKpToDelete(ctx, deletedNp)
 		case deletedCnp := <-deletedClusterNpChan:
 			logKcpToDelete(ctx, deletedCnp)
+		case addedKp := <-addKpCh:
+			createTriggerForKp(ctx, addedKp.Namespace)
 		case updatedKp := <-updatedKpCh:
 			reconcileKp(ctx, updatedKp.Name, updatedKp.Namespace, true)
 		case updatedKcp := <-updatedKcpCh:
@@ -251,6 +257,31 @@ func logKpToDelete(ctx context.Context, deletedNp *unstructured.Unstructured) {
 	// owner and when it gets deleted all the corresponding policies will be
 	// automatically deleted.
 	for _, kp := range kps.Items {
+		if kp.Name == "coco-workload-binding-cocoworkload-mutateexisting" {
+			configMapKey := client.ObjectKey{
+				Namespace: deletedNp.GetNamespace(),
+				Name:      "kyverno-trigger-mutate-existing-configmap",
+			}
+
+			// Get the ConfigMap
+			configMap := &corev1.ConfigMap{}
+			err := k8sClient.Get(context.TODO(), configMapKey, configMap)
+			if err != nil {
+				logger.Error(err, "failed to get ConfigMap  kyverno-trigger-mutate-existing-configmap")
+				return
+			}
+
+			logger.Info("ConfigMap kyverno-trigger-mutate-existing-configmap found in namespace ", deletedNp.GetNamespace())
+
+			// Delete the ConfigMap
+			err = k8sClient.Delete(context.TODO(), configMap)
+			if err != nil {
+				logger.Error(err, "failed to delete ConfigMap  kyverno-trigger-mutate-existing-configmap")
+				return
+			}
+
+			logger.Info("deleted ConfigMap  kyverno-trigger-mutate-existing-configmap from namespace", deletedNp.GetNamespace())
+		}
 		for _, ownerRef := range kp.OwnerReferences {
 			if ownerRef.Name == deletedNp.GetName() && ownerRef.UID == deletedNp.GetUID() {
 				logger.Info("KyvernoPolicy deleted due to NimbusPolicy deletion",
@@ -380,5 +411,30 @@ func deleteDanglingkcps(ctx context.Context, cnp v1alpha1.ClusterNimbusPolicy, l
 			logger.Error(err, "failed to update KyvernoClusterPolicy statis in ClusterNimbusPolicy")
 		}
 
+	}
+}
+
+func createTriggerForKp(ctx context.Context, namespace string) {
+	logger := log.FromContext(ctx)
+	configMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "kyverno-trigger-mutate-existing-configmap",
+			Namespace: namespace,
+			Labels: map[string]string{
+				"trigger": "mutate",
+			},
+		},
+		Data: map[string]string{
+			"data": "dummy",
+		},
+	}
+
+	// Create the ConfigMap
+	err := k8sClient.Create(context.TODO(), configMap)
+
+	if err != nil {
+		logger.Error(err, "failed to create trigger ConfigMap in namespace", namespace)
+	} else {
+		logger.Info("Created trigger ConfigMap in namespace", namespace)
 	}
 }
