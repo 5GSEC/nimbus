@@ -83,6 +83,7 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) ([]kyver
 	var errs []error
 	var deployNames []string
 	var mutateTargetResourceSpecs []kyvernov1.TargetResourceSpec
+	var matchResourceFilters []kyvernov1.ResourceFilter
 	labels := np.Spec.Selector.MatchLabels
 	patchStrategicMerge := map[string]interface{}{
 		"spec": map[string]interface{}{
@@ -127,8 +128,23 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) ([]kyver
 		}
 		mutateTargetResourceSpecs = append(mutateTargetResourceSpecs, mutateResourceSpec)
 	}
-
-	if len(labels) == 0 {
+	if len(labels) > 0 {
+		for key, value := range labels {
+			resourceFilter := kyvernov1.ResourceFilter {
+				ResourceDescription: kyvernov1.ResourceDescription{
+					Kinds: []string{
+						"apps/v1/Deployment",
+					},
+					Selector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							key: value,
+						},
+					},
+				},
+			}
+			matchResourceFilters = append(matchResourceFilters, resourceFilter)
+		}
+	} else if len(labels) == 0 {
 		mutateResourceSpec := kyvernov1.TargetResourceSpec{
 			ResourceSpec: kyvernov1.ResourceSpec{
 				APIVersion: "apps/v1",
@@ -136,7 +152,18 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) ([]kyver
 			},
 		}
 		mutateTargetResourceSpecs = append(mutateTargetResourceSpecs, mutateResourceSpec)
+		
+		resourceFilter := kyvernov1.ResourceFilter {
+			ResourceDescription: kyvernov1.ResourceDescription{
+				Kinds: []string{
+					"apps/v1/Deployment",
+				},
+			},
+		}
+
+		matchResourceFilters = append(matchResourceFilters, resourceFilter)
 	}
+
 
 	mutateExistingKp := kyvernov1.Policy{
 		Spec: kyvernov1.Spec{
@@ -175,15 +202,7 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) ([]kyver
 				{
 					Name: "add runtime",
 					MatchResources: kyvernov1.MatchResources{
-						Any: kyvernov1.ResourceFilters{
-							kyvernov1.ResourceFilter{
-								ResourceDescription: kyvernov1.ResourceDescription{
-									Kinds: []string{
-										"apps/v1/Deployment",
-									},
-								},
-							},
-						},
+						Any: matchResourceFilters,
 					},
 					Mutation: kyvernov1.Mutation{
 						RawPatchStrategicMerge: &v1.JSON{
@@ -195,12 +214,9 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) ([]kyver
 		},
 	}
 
-	if len(labels) > 0 {
-		mutateNonExistingKp.Spec.Rules[0].MatchResources.Any[0].ResourceDescription.Selector = &metav1.LabelSelector{MatchLabels: labels}
-	}
 	mutateNonExistingKp.Name = np.Name + "-mutateoncreate"
 
-	if len(deployNames) > 0 {  // if labels are present but no deploy exists with matching label
+	if (len(deployNames) > 0) || (len(labels) == 0 && len(deployments.Items) > 0)  {  // if labels are present but no deploy exists with matching label or labels are not present but deployments exists
 		kps = append(kps, mutateExistingKp)
 	}
 	kps = append(kps, mutateNonExistingKp)
@@ -214,6 +230,7 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) ([]kyver
 func escapeToHost(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov1.Policy {
 
 	var psa_level api.Level = api.LevelBaseline
+	var matchResourceFilters []kyvernov1.ResourceFilter
 
 	if rule.Params["psa_level"] != nil {
 
@@ -228,6 +245,33 @@ func escapeToHost(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov1.Polic
 
 	labels := np.Spec.Selector.MatchLabels
 
+	if len(labels) > 0 {
+		for key, value := range labels {
+			resourceFilter := kyvernov1.ResourceFilter {
+				ResourceDescription: kyvernov1.ResourceDescription{
+					Kinds: []string{
+						"v1/Pod",
+					},
+					Selector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							key: value,
+						},
+					},
+				},
+			}
+			matchResourceFilters = append(matchResourceFilters, resourceFilter)
+		}
+	} else {
+		resourceFilter := kyvernov1.ResourceFilter {
+			ResourceDescription: kyvernov1.ResourceDescription{
+				Kinds: []string{
+					"v1/Pod",
+				},
+			},
+		}
+		matchResourceFilters = append(matchResourceFilters, resourceFilter)
+	}
+
 	background := true
 	kp := kyvernov1.Policy{
 		Spec: kyvernov1.Spec{
@@ -236,15 +280,7 @@ func escapeToHost(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov1.Polic
 				{
 					Name: "pod-security-standard",
 					MatchResources: kyvernov1.MatchResources{
-						Any: kyvernov1.ResourceFilters{
-							kyvernov1.ResourceFilter{
-								ResourceDescription: kyvernov1.ResourceDescription{
-									Kinds: []string{
-										"v1/Pod",
-									},
-								},
-							},
-						},
+						Any: matchResourceFilters,
 					},
 					Validation: kyvernov1.Validation{
 						PodSecurity: &kyvernov1.PodSecurity{
@@ -255,10 +291,6 @@ func escapeToHost(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov1.Polic
 				},
 			},
 		},
-	}
-
-	if len(labels) > 0 {
-		kp.Spec.Rules[0].MatchResources.Any[0].ResourceDescription.Selector = &metav1.LabelSelector{MatchLabels: labels}
 	}
 
 	return kp
