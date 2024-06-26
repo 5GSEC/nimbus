@@ -32,8 +32,6 @@ func init() {
 func BuildKpsFrom(logger logr.Logger, np *v1alpha1.NimbusPolicy) []kyvernov1.Policy {
 	// Build KPs based on given IDs
 	var allkps []kyvernov1.Policy
-	var cocopoltags = []string{"mutateexisting", "mutatenoncreate"}
-	var counter int = 0
 	for _, nimbusRule := range np.Spec.NimbusRules {
 		id := nimbusRule.ID
 		if idpool.IsIdSupportedBy(id, "kyverno") {
@@ -42,9 +40,7 @@ func BuildKpsFrom(logger logr.Logger, np *v1alpha1.NimbusPolicy) []kyvernov1.Pol
 				logger.Error(err, "error while building kyverno policies")
 			}
 			for _, kp := range kps {
-				if id == "cocoWorkload" {
-					kp.Name = np.Name + "-" + strings.ToLower(id) + "-" + cocopoltags[counter]
-				} else {
+				if id != "cocoWorkload" {
 					kp.Name = np.Name + "-" + strings.ToLower(id)
 				}
 				kp.Namespace = np.Namespace
@@ -57,7 +53,6 @@ func BuildKpsFrom(logger logr.Logger, np *v1alpha1.NimbusPolicy) []kyvernov1.Pol
 				}
 				addManagedByAnnotation(&kp)
 				allkps = append(allkps, kp)
-				counter += 1
 			}
 		} else {
 			logger.Info("Kyverno does not support this ID", "ID", id,
@@ -156,11 +151,7 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) ([]kyver
 									Kinds: []string{
 										"v1/ConfigMap",
 									},
-									Selector: &metav1.LabelSelector{
-										MatchLabels: map[string]string{
-											"trigger": "mutate",
-										},
-									},
+									Name: np.Name+"-mutateexisting-trigger-configmap",
 								},
 							},
 						},
@@ -175,6 +166,7 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) ([]kyver
 			},
 		},
 	}
+	mutateExistingKp.Name = np.Name + "-mutateexisting"
 
 	mutateNonExistingKp := kyvernov1.Policy{
 		Spec: kyvernov1.Spec{
@@ -208,8 +200,11 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) ([]kyver
 	if len(labels) > 0 {
 		mutateNonExistingKp.Spec.Rules[0].MatchResources.Any[0].ResourceDescription.Selector = &metav1.LabelSelector{MatchLabels: labels}
 	}
+	mutateNonExistingKp.Name = np.Name + "-mutateoncreate"
 
 	kps = append(kps, mutateNonExistingKp)
+	kps = append(kps, mutateExistingKp)
+
 	if len(errs) != 0 {
 		return kps, nil
 	}
@@ -225,7 +220,6 @@ func escapeToHost(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov1.Polic
 		switch rule.Params["psa_level"][0] {
 		case "restricted":
 			psa_level = api.LevelRestricted
-
 
 		default:
 			psa_level = api.LevelBaseline

@@ -5,6 +5,7 @@ package watcher
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/5GSEC/nimbus/pkg/adapter/common"
@@ -52,7 +53,7 @@ func WatchKps(ctx context.Context, addKpch, updatedKpCh, deletedKpCh chan common
 				Name:      u.GetName(),
 				Namespace: u.GetNamespace(),
 			}
-			if kpNamespacedName.Name == "coco-workload-binding-cocoworkload-mutateexisting" {
+			if strings.Contains(kpNamespacedName.Name, "mutateexisting") {
 				addKpch <- kpNamespacedName
 			}
 		},
