@@ -69,7 +69,7 @@ func buildKpFor(id string, np *v1alpha1.NimbusPolicy) ([]kyvernov1.Policy, error
 	case idpool.EscapeToHost:
 		kps = append(kps, escapeToHost(np, np.Spec.NimbusRules[0].Rule))
 	case idpool.CocoWorkload:
-		kpols, err := cocoRuntimeAddition(np, np.Spec.NimbusRules[0].Rule)
+		kpols, err := cocoRuntimeAddition(np)
 		if err != nil {
 			return kps, err
 		}
@@ -78,7 +78,7 @@ func buildKpFor(id string, np *v1alpha1.NimbusPolicy) ([]kyvernov1.Policy, error
 	return kps, nil
 }
 
-func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) ([]kyvernov1.Policy, error) {
+func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy) ([]kyvernov1.Policy, error) {
 	var kps []kyvernov1.Policy
 	var errs []error
 	var deployNames []string
@@ -103,18 +103,25 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) ([]kyver
 	}
 
 	deploymentsGVR := schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
+	// labelSelector := metav1.LabelSelector{MatchLabels: labels}
+	// listOptions := metav1.ListOptions{
+	// 	LabelSelector: apiLabels.Set(labelSelector.MatchLabels).String(),
+	// }
 	deployments, err := client.Resource(deploymentsGVR).Namespace(np.Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		errs = append(errs, err)
 	}
-
+	var markLabels = make(map[string]string)
 	for _, d := range deployments.Items {
-		for key1, value1 := range d.GetLabels() {
-			for key2, value2 := range np.Spec.Selector.MatchLabels {
-				if key1 == key2 && value1 == value2 {
-					deployNames = append(deployNames, d.GetName())
-				}
-			}
+		for k, v := range d.GetLabels() {
+			key := k + ":" + v
+			markLabels[key] = d.GetName()
+		}
+	}
+	for k, v := range labels {
+		key := k + ":" + v
+		if markLabels[key] != "" {
+			deployNames = append(deployNames, markLabels[key])
 		}
 	}
 
@@ -130,7 +137,7 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) ([]kyver
 	}
 	if len(labels) > 0 {
 		for key, value := range labels {
-			resourceFilter := kyvernov1.ResourceFilter {
+			resourceFilter := kyvernov1.ResourceFilter{
 				ResourceDescription: kyvernov1.ResourceDescription{
 					Kinds: []string{
 						"apps/v1/Deployment",
@@ -152,8 +159,8 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) ([]kyver
 			},
 		}
 		mutateTargetResourceSpecs = append(mutateTargetResourceSpecs, mutateResourceSpec)
-		
-		resourceFilter := kyvernov1.ResourceFilter {
+
+		resourceFilter := kyvernov1.ResourceFilter{
 			ResourceDescription: kyvernov1.ResourceDescription{
 				Kinds: []string{
 					"apps/v1/Deployment",
@@ -163,7 +170,6 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) ([]kyver
 
 		matchResourceFilters = append(matchResourceFilters, resourceFilter)
 	}
-
 
 	mutateExistingKp := kyvernov1.Policy{
 		Spec: kyvernov1.Spec{
@@ -178,7 +184,7 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) ([]kyver
 									Kinds: []string{
 										"v1/ConfigMap",
 									},
-									Name: np.Name+"-mutateexisting-trigger-configmap",
+									Name: np.Name + "-mutateexisting-trigger-configmap",
 								},
 							},
 						},
@@ -195,7 +201,7 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) ([]kyver
 	}
 	mutateExistingKp.Name = np.Name + "-mutateexisting"
 
-	mutateNonExistingKp := kyvernov1.Policy{
+	mutateNewKp := kyvernov1.Policy{
 		Spec: kyvernov1.Spec{
 
 			Rules: []kyvernov1.Rule{
@@ -214,12 +220,12 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) ([]kyver
 		},
 	}
 
-	mutateNonExistingKp.Name = np.Name + "-mutateoncreate"
+	mutateNewKp.Name = np.Name + "-mutateoncreate"
 
-	if (len(deployNames) > 0) || (len(labels) == 0 && len(deployments.Items) > 0)  {  // if labels are present but no deploy exists with matching label or labels are not present but deployments exists
+	if (len(deployNames) > 0) || (len(labels) == 0 && len(deployments.Items) > 0) { // if labels are present but no deploy exists with matching label or labels are not present but deployments exists
 		kps = append(kps, mutateExistingKp)
 	}
-	kps = append(kps, mutateNonExistingKp)
+	kps = append(kps, mutateNewKp)
 
 	if len(errs) != 0 {
 		return kps, nil
@@ -262,7 +268,7 @@ func escapeToHost(np *v1alpha1.NimbusPolicy, rule v1alpha1.Rule) kyvernov1.Polic
 			matchResourceFilters = append(matchResourceFilters, resourceFilter)
 		}
 	} else {
-		resourceFilter := kyvernov1.ResourceFilter {
+		resourceFilter := kyvernov1.ResourceFilter{
 			ResourceDescription: kyvernov1.ResourceDescription{
 				Kinds: []string{
 					"v1/Pod",

@@ -33,8 +33,6 @@ spec:
       - resources:
           kinds:
           - v1/Pod
-          namespaces:
-          - '*'
           selector:
             matchLabels:
               app: nginx

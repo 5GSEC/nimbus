@@ -97,6 +97,15 @@ func clusterCocoRuntimeAddition(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1
 		matchFilters = append(matchFilters, resourceFilter)
 	} else if namespaces[0] == "*" && len(labels) > 0 {
 
+		if len(excludeNamespaces) > 0 {
+			resourceFilter = kyvernov1.ResourceFilter{
+				ResourceDescription: kyvernov1.ResourceDescription{
+					Namespaces: excludeNamespaces,
+				},
+			}
+			excludeFilters = append(excludeFilters, resourceFilter)
+		}
+
 		for key, value := range labels {
 			resourceFilter = kyvernov1.ResourceFilter{
 				ResourceDescription: kyvernov1.ResourceDescription{
@@ -112,14 +121,15 @@ func clusterCocoRuntimeAddition(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1
 			}
 			matchFilters = append(matchFilters, resourceFilter)
 		}
-	} else if namespaces[0] == "*" && len(labels) == 0 && len(excludeNamespaces) > 0 {
-		resourceFilter = kyvernov1.ResourceFilter{
-			ResourceDescription: kyvernov1.ResourceDescription{
-				Namespaces: excludeNamespaces,
-			},
+	} else if namespaces[0] == "*" && len(labels) == 0  {
+		if len(excludeNamespaces) > 0 {
+			resourceFilter = kyvernov1.ResourceFilter{
+				ResourceDescription: kyvernov1.ResourceDescription{
+					Namespaces: excludeNamespaces,
+				},
+			}
+			excludeFilters = append(excludeFilters, resourceFilter)
 		}
-		excludeFilters = append(excludeFilters, resourceFilter)
-
 		resourceFilter = kyvernov1.ResourceFilter{
 			ResourceDescription: kyvernov1.ResourceDescription{
 				Kinds: []string{
@@ -229,7 +239,14 @@ func clusterEscapeToHost(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1.Rule) 
 		}
 		matchFilters = append(matchFilters, resourceFilter)
 	} else if namespaces[0] == "*" && len(labels) > 0 {
-
+		if len(excludeNamespaces) > 0 {
+			resourceFilter = kyvernov1.ResourceFilter{
+				ResourceDescription: kyvernov1.ResourceDescription {
+					Namespaces: excludeNamespaces,
+				},
+			}
+			excludeFilters = append(excludeFilters, resourceFilter)
+		}
 		for key, value := range labels {
 			resourceFilter = kyvernov1.ResourceFilter{
 				ResourceDescription: kyvernov1.ResourceDescription{
