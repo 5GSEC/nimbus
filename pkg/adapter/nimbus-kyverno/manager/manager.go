@@ -437,9 +437,9 @@ func createTriggerForKp(ctx context.Context, nameNamespace common.Request) {
 	err = k8sClient.Create(context.TODO(), configMap)
 
 	if err != nil {
-		logger.Error(err, "failed to create trigger ConfigMap in namespace", "Namespace", nameNamespace.Namespace)
+		logger.Error(err, "failed to create trigger ConfigMap in namespace", "Namespace", configMap.Namespace)
 	} else {
 		fmt.Println(nameNamespace)
-		logger.Info("Created trigger ConfigMap in namespace ", nameNamespace.Namespace)
+		logger.Info("Created trigger ConfigMap in namespace ", "Namespace" ,configMap.Namespace)
 	}
 }
