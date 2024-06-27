@@ -13,6 +13,23 @@ rules:
       - list
       - watch
   - apiGroups:
+      - "apps"
+    resources:
+      - deployments
+    verbs:
+      - get
+      - list
+      - watch 
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - create
+      - delete
+      - get
+      - list 
+  - apiGroups:
       - intent.security.nimbus.com
     resources:
       - nimbuspolicies/status

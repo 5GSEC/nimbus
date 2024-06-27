@@ -3,9 +3,9 @@ kind: ClusterRole
 metadata:
   labels:
     app.kubernetes.io/component: background-controller
-    app.kubernetes.io/instance: kyverno
-    app.kubernetes.io/part-of: kyverno
-  name: kyverno:update-resources
+    app.kubernetes.io/instance: nimbus-kyverno
+    app.kubernetes.io/part-of: nimbus-kyverno
+  name: nimbus-kyverno:update-resources
 rules:
 - apiGroups:
   - '*'
