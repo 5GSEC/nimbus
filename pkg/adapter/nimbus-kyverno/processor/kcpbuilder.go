@@ -57,44 +57,79 @@ var nsBlackList = []string{"kube-system"}
 
 func clusterCocoRuntimeAddition(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1.Rule) kyvernov1.ClusterPolicy {
 	var matchFilters, excludeFilters []kyvernov1.ResourceFilter
-	var resourceFilter kyvernov1.ResourceFilter
-
+	labels := cnp.Spec.WorkloadSelector.MatchLabels
+	excludeNamespaces := cnp.Spec.NsSelector.ExcludeNames
+	namespaces := cnp.Spec.NsSelector.MatchNames
 	// exclude kube-system
-	resourceFilter = kyvernov1.ResourceFilter{
+	resourceFilter := kyvernov1.ResourceFilter{
 		ResourceDescription: kyvernov1.ResourceDescription{
 			Namespaces: nsBlackList,
 		},
 	}
 	excludeFilters = append(excludeFilters, resourceFilter)
 
-	if len(cnp.Spec.NsSelector.MatchNames) > 0 {
-		if len(cnp.Spec.WorkloadSelector.MatchLabels) > 0 {
+	if namespaces[0] != "*" && len(labels) > 0 {
+		for key, value := range labels {
 			resourceFilter = kyvernov1.ResourceFilter{
 				ResourceDescription: kyvernov1.ResourceDescription{
 					Kinds: []string{
 						"apps/v1/Deployment",
 					},
-					Namespaces: cnp.Spec.NsSelector.MatchNames,
+					Namespaces: namespaces,
 					Selector: &metav1.LabelSelector{
-						MatchLabels: cnp.Spec.WorkloadSelector.MatchLabels,
+						MatchLabels: map[string]string{
+							key: value,
+						},
 					},
 				},
 			}
-
-		} else {
-			resourceFilter = kyvernov1.ResourceFilter{
-				ResourceDescription: kyvernov1.ResourceDescription{
-					Kinds: []string{
-						"apps/v1/Deployment",
-					},
-					Namespaces: cnp.Spec.NsSelector.MatchNames,
+			matchFilters = append(matchFilters, resourceFilter)
+		}
+	} else if namespaces[0] != "*" && len(labels) == 0 {
+		resourceFilter = kyvernov1.ResourceFilter{
+			ResourceDescription: kyvernov1.ResourceDescription{
+				Kinds: []string{
+					"apps/v1/Deployment",
 				},
-			}
+				Namespaces: cnp.Spec.NsSelector.MatchNames,
+			},
 		}
 		matchFilters = append(matchFilters, resourceFilter)
+	} else if namespaces[0] == "*" && len(labels) > 0 {
 
-	} else if len(cnp.Spec.NsSelector.ExcludeNames) > 0 {
+		if len(excludeNamespaces) > 0 {
+			resourceFilter = kyvernov1.ResourceFilter{
+				ResourceDescription: kyvernov1.ResourceDescription{
+					Namespaces: excludeNamespaces,
+				},
+			}
+			excludeFilters = append(excludeFilters, resourceFilter)
+		}
 
+		for key, value := range labels {
+			resourceFilter = kyvernov1.ResourceFilter{
+				ResourceDescription: kyvernov1.ResourceDescription{
+					Kinds: []string{
+						"apps/v1/Deployment",
+					},
+					Selector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							key: value,
+						},
+					},
+				},
+			}
+			matchFilters = append(matchFilters, resourceFilter)
+		}
+	} else if namespaces[0] == "*" && len(labels) == 0  {
+		if len(excludeNamespaces) > 0 {
+			resourceFilter = kyvernov1.ResourceFilter{
+				ResourceDescription: kyvernov1.ResourceDescription{
+					Namespaces: excludeNamespaces,
+				},
+			}
+			excludeFilters = append(excludeFilters, resourceFilter)
+		}
 		resourceFilter = kyvernov1.ResourceFilter{
 			ResourceDescription: kyvernov1.ResourceDescription{
 				Kinds: []string{
@@ -103,14 +138,8 @@ func clusterCocoRuntimeAddition(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1
 			},
 		}
 		matchFilters = append(matchFilters, resourceFilter)
-
-		resourceFilter = kyvernov1.ResourceFilter{
-			ResourceDescription: kyvernov1.ResourceDescription{
-				Namespaces: cnp.Spec.NsSelector.ExcludeNames,
-			},
-		}
-		excludeFilters = append(excludeFilters, resourceFilter)
 	}
+
 	patchStrategicMerge := map[string]interface{}{
 		"spec": map[string]interface{}{
 			"template": map[string]interface{}{
@@ -141,13 +170,13 @@ func clusterCocoRuntimeAddition(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1
 							kyvernov1.TargetResourceSpec{
 								ResourceSpec: kyvernov1.ResourceSpec{
 									APIVersion: "apps/v1",
-									Kind: "Deployment",
+									Kind:       "Deployment",
 								},
 							},
 						},
 						RawPatchStrategicMerge: &v1.JSON{
 							Raw: patchBytes,
-						} ,
+						},
 					},
 				},
 			},
@@ -171,44 +200,78 @@ func clusterEscapeToHost(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1.Rule) 
 	}
 
 	var matchFilters, excludeFilters []kyvernov1.ResourceFilter
-	var resourceFilter kyvernov1.ResourceFilter
-
+	labels := cnp.Spec.WorkloadSelector.MatchLabels
+	excludeNamespaces := cnp.Spec.NsSelector.ExcludeNames
+	namespaces := cnp.Spec.NsSelector.MatchNames
 	// exclude kube-system
-	resourceFilter = kyvernov1.ResourceFilter{
+	resourceFilter := kyvernov1.ResourceFilter{
 		ResourceDescription: kyvernov1.ResourceDescription{
 			Namespaces: nsBlackList,
 		},
 	}
 	excludeFilters = append(excludeFilters, resourceFilter)
 
-	if len(cnp.Spec.NsSelector.MatchNames) > 0 {
-		if len(cnp.Spec.WorkloadSelector.MatchLabels) > 0 {
+	if namespaces[0] != "*" && len(labels) > 0 {
+		for key, value := range labels {
 			resourceFilter = kyvernov1.ResourceFilter{
 				ResourceDescription: kyvernov1.ResourceDescription{
 					Kinds: []string{
 						"v1/Pod",
 					},
-					Namespaces: cnp.Spec.NsSelector.MatchNames,
+					Namespaces: namespaces,
 					Selector: &metav1.LabelSelector{
-						MatchLabels: cnp.Spec.WorkloadSelector.MatchLabels,
+						MatchLabels: map[string]string{
+							key: value,
+						},
 					},
 				},
 			}
-
-		} else {
-			resourceFilter = kyvernov1.ResourceFilter{
-				ResourceDescription: kyvernov1.ResourceDescription{
-					Kinds: []string{
-						"v1/Pod",
-					},
-					Namespaces: cnp.Spec.NsSelector.MatchNames,
+			matchFilters = append(matchFilters, resourceFilter)
+		}
+	} else if namespaces[0] != "*" && len(labels) == 0 {
+		resourceFilter = kyvernov1.ResourceFilter{
+			ResourceDescription: kyvernov1.ResourceDescription{
+				Kinds: []string{
+					"v1/Pod",
 				},
-			}
+				Namespaces: cnp.Spec.NsSelector.MatchNames,
+			},
 		}
 		matchFilters = append(matchFilters, resourceFilter)
+	} else if namespaces[0] == "*" && len(labels) > 0 {
+		if len(excludeNamespaces) > 0 {
+			resourceFilter = kyvernov1.ResourceFilter{
+				ResourceDescription: kyvernov1.ResourceDescription {
+					Namespaces: excludeNamespaces,
+				},
+			}
+			excludeFilters = append(excludeFilters, resourceFilter)
+		}
+		for key, value := range labels {
+			resourceFilter = kyvernov1.ResourceFilter{
+				ResourceDescription: kyvernov1.ResourceDescription{
+					Kinds: []string{
+						"v1/Pod",
+					},
+					Selector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							key: value,
+						},
+					},
+				},
+			}
+			matchFilters = append(matchFilters, resourceFilter)
+		}
+	} else if namespaces[0] == "*" && len(labels) == 0 {
 
-	} else if len(cnp.Spec.NsSelector.ExcludeNames) > 0 {
-
+		if len(excludeNamespaces) > 0 {
+			resourceFilter = kyvernov1.ResourceFilter{
+				ResourceDescription: kyvernov1.ResourceDescription{
+					Namespaces: excludeNamespaces,
+				},
+			}
+			excludeFilters = append(excludeFilters, resourceFilter)
+		}
 		resourceFilter = kyvernov1.ResourceFilter{
 			ResourceDescription: kyvernov1.ResourceDescription{
 				Kinds: []string{
@@ -217,15 +280,7 @@ func clusterEscapeToHost(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1.Rule) 
 			},
 		}
 		matchFilters = append(matchFilters, resourceFilter)
-
-		resourceFilter = kyvernov1.ResourceFilter{
-			ResourceDescription: kyvernov1.ResourceDescription{
-				Namespaces: cnp.Spec.NsSelector.ExcludeNames,
-			},
-		}
-		excludeFilters = append(excludeFilters, resourceFilter)
 	}
-
 	background := true
 	return kyvernov1.ClusterPolicy{
 		Spec: kyvernov1.Spec{

@@ -9,16 +9,14 @@ spec:
     action: Block
 ---
 apiVersion: intent.security.nimbus.com/v1alpha1
-kind: ClusterSecurityIntentBinding
+kind: SecurityIntentBinding
 metadata:
   name: coco-workload-binding
 spec:
   intents:
     - name: coco-workload
   selector:
-    nsSelector:
-      matchNames:
-        - "*"
     workloadSelector:
       matchLabels:
         app: nginx
+        app1: test

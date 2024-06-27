@@ -5,6 +5,7 @@ package watcher
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/5GSEC/nimbus/pkg/adapter/common"
@@ -38,10 +39,24 @@ func kpInformer() cache.SharedIndexInformer {
 
 // WatchKps watches update and delete event for KyvernoPolicies owned by
 // NimbusPolicy or ClusterNimbusPolicy and put their info on respective channels.
-func WatchKps(ctx context.Context, updatedKpCh, deletedKpCh chan common.Request) {
+func WatchKps(ctx context.Context, addKpch, updatedKpCh, deletedKpCh chan common.Request) {
 	logger := log.FromContext(ctx)
 	informer := kpInformer()
 	handlers := cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			u := obj.(*unstructured.Unstructured)
+			if adapterutil.IsOrphan(u.GetOwnerReferences(), "NimbusPolicy") {
+				logger.V(4).Info("Ignoring orphan KyvernoPolicy", "KyvernoPolicy.Name", u.GetName(), "KyvernoPolicy.Namespace", u.GetNamespace(), "Operation", "Delete")
+				return
+			}
+			kpNamespacedName := common.Request{
+				Name:      u.GetName(),
+				Namespace: u.GetNamespace(),
+			}
+			if strings.Contains(kpNamespacedName.Name, "mutateexisting") {
+				addKpch <- kpNamespacedName
+			}
+		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			oldU := oldObj.(*unstructured.Unstructured)
 			newU := newObj.(*unstructured.Unstructured)

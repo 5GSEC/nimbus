@@ -5,11 +5,14 @@ package manager
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/go-logr/logr"
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -35,6 +38,7 @@ var (
 func init() {
 	utilruntime.Must(v1alpha1.AddToScheme(scheme))
 	utilruntime.Must(kyvernov1.AddToScheme(scheme))
+	utilruntime.Must(corev1.AddToScheme(scheme))
 	k8sClient = k8s.NewOrDie(scheme)
 }
 
@@ -51,9 +55,10 @@ func Run(ctx context.Context) {
 	deletedKcpCh := make(chan string)
 	go watcher.WatchKcps(ctx, updatedKcpCh, deletedKcpCh)
 
+	addKpCh := make(chan common.Request)
 	updatedKpCh := make(chan common.Request)
 	deletedKpCh := make(chan common.Request)
-	go watcher.WatchKps(ctx, updatedKpCh, deletedKpCh)
+	go watcher.WatchKps(ctx, addKpCh, updatedKpCh, deletedKpCh)
 
 	for {
 		select {
@@ -67,6 +72,7 @@ func Run(ctx context.Context) {
 			close(updatedKcpCh)
 			close(deletedKcpCh)
 
+			close(addKpCh)
 			close(updatedKpCh)
 			close(deletedKpCh)
 			return
@@ -78,6 +84,8 @@ func Run(ctx context.Context) {
 			logKpToDelete(ctx, deletedNp)
 		case deletedCnp := <-deletedClusterNpChan:
 			logKcpToDelete(ctx, deletedCnp)
+		case addedKp := <-addKpCh:
+			createTriggerForKp(ctx, addedKp)
 		case updatedKp := <-updatedKpCh:
 			reconcileKp(ctx, updatedKp.Name, updatedKp.Namespace, true)
 		case updatedKcp := <-updatedKcpCh:
@@ -259,6 +267,23 @@ func logKpToDelete(ctx context.Context, deletedNp *unstructured.Unstructured) {
 				)
 			}
 		}
+		if strings.Contains(deletedNp.GetName(), "coco-workload") {
+			var cms corev1.ConfigMapList
+			if err := k8sClient.List(ctx, &cms, &client.ListOptions{Namespace: deletedNp.GetNamespace()}); err != nil {
+				logger.Error(err, "failed to list ConfigMaps")
+				return
+			}
+			for _, cm := range cms.Items {
+				for _, cmOwnerRef := range cm.OwnerReferences {
+					if cmOwnerRef.Name == kp.GetName() && cmOwnerRef.UID == kp.GetUID() {
+						logger.Info("ConfigMap deleted due to KyvernoPolicy deletion",
+							"ConfigMap.Name", cm.GetName(), "ConfigMap.Namespace", cm.GetNamespace(),
+							"KyvernoPolicy.Name", kp.Name, "KyvernoPolicy.Namespace", kp.Namespace,
+						)
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -380,5 +405,41 @@ func deleteDanglingkcps(ctx context.Context, cnp v1alpha1.ClusterNimbusPolicy, l
 			logger.Error(err, "failed to update KyvernoClusterPolicy statis in ClusterNimbusPolicy")
 		}
 
+	}
+}
+
+func createTriggerForKp(ctx context.Context, nameNamespace common.Request) {
+	logger := log.FromContext(ctx)
+	configMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      nameNamespace.Name + "-trigger-configmap",
+			Namespace: nameNamespace.Namespace,
+		},
+		Data: map[string]string{
+			"data": "dummy",
+		},
+	}
+
+	var existingKp kyvernov1.Policy
+	err := k8sClient.Get(ctx, types.NamespacedName{Name: nameNamespace.Name, Namespace: nameNamespace.Namespace}, &existingKp)
+	if err != nil && !errors.IsNotFound(err) {
+		logger.Error(err, "failed to get existing KyvernoPolicy", "KyvernoPolicy.Name", existingKp.Name, "KyvernoPolicy.Namespace", nameNamespace.Namespace)
+		return
+	}
+
+	// Set MutateExistingKyvernoPolicy as the owner of the zConfigMap
+	if err := ctrl.SetControllerReference(&existingKp, &configMap.ObjectMeta, scheme); err != nil {
+		logger.Error(err, "failed to set OwnerReference on ConfigMap", "Name", configMap.Name)
+		return
+	}
+
+	// Create the ConfigMap
+	err = k8sClient.Create(context.TODO(), configMap)
+
+	if err != nil {
+		logger.Error(err, "failed to create trigger ConfigMap in namespace", nameNamespace.Namespace)
+	} else {
+		fmt.Println(nameNamespace)
+		logger.Info("Created trigger ConfigMap in namespace ", nameNamespace.Namespace)
 	}
 }
