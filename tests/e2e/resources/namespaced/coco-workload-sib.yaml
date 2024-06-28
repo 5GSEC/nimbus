@@ -1,0 +1,11 @@
+apiVersion: intent.security.nimbus.com/v1alpha1
+kind: SecurityIntentBinding
+metadata:
+  name: coco-workload-binding
+spec:
+  intents:
+    - name: coco-workload
+  selector:
+    workloadSelector:
+      matchLabels:
+        app: nginx

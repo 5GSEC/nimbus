@@ -1,0 +1,68 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: kyverno-adapter-policy-creation
+spec:
+  description: >
+   This test validates that creating a `coco-workload` SecurityIntent with SecurityIntentBinding generates the expected Kyverno Policy and its effect.
+  steps:
+    - name: "Create a sample deployment"
+      try:
+      - script:
+          content: kubectl create deployment nginx --image=nginx
+          check: 
+            (contains($stdout, 'deployment.apps/nginx created')): true
+
+    - name: "Create a sample runtimeclass"
+      try:
+      - script:
+          content: kubectl apply -f ../runtime.yaml
+          check: 
+            (contains($stdout, 'deployment.apps/nginx created')): true  
+
+    - name: "Create a SecurityIntent"
+      try:
+        - apply:
+            file: ../../resources/namespaced/coco-workload-si.yaml
+
+    - name: "Create a SecurityIntentBinding"
+      try:
+        - apply:
+            file: ../../resources/namespaced/coco-workload-sib.yaml
+
+    - name: "Verify NimbusPolicy creation"
+      try:
+        - assert:
+            file: ../nimbus-policy-assert.yaml
+
+    - name: "Verify KyvernoPolicies creation"
+      try:
+        - assert:
+            file: ../kyverno-mutateexisting-policy.yaml
+        - assert:
+            file: ../kyverno-mutateoncreate-policy.yaml
+    
+    - name: "Verify status of created SecurityIntentBinding"
+      description: >
+        Verify the created SecurityIntentBinding status subresource includes the number and names of bound intents, 
+        along with the generated NimbusPolicy name.
+      try:
+        - assert:
+            file: ../sib-status-assert.yaml
+
+    - name: "Verify status of created NimbusPolicy"
+      try:
+        - assert:
+            file: ../np-status-assert.yaml
+
+    
+    - name: "Verify that the existing deployment is being mutated"
+      try:
+      - script:
+          content: kubectl get deploy -n $NAMESPACE nginx -o=jsonpath='{.spec.template.spec.runtimeClassName}'
+          check: 
+            (contains($stdout, 'kata-clh')): true
+    

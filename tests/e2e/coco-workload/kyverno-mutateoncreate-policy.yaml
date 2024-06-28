@@ -1,0 +1,49 @@
+apiVersion: kyverno.io/v1
+kind: Policy
+metadata:
+  annotations:
+    app.kubernetes.io/managed-by: nimbus-kyverno
+    policies.kyverno.io/description: Ensure workload is encryted by running the specified
+      workload in a Confidential VM
+  name: coco-workload-binding-mutateoncreate
+  ownerReferences:
+  - apiVersion: intent.security.nimbus.com/v1alpha1
+    blockOwnerDeletion: true
+    controller: true
+    kind: NimbusPolicy
+    name: coco-workload-binding
+spec:
+  admission: true
+  background: true
+  rules:
+  - exclude:
+      resources: {}
+    generate:
+      clone: {}
+      cloneList: {}
+    match:
+      any:
+      - resources:
+          kinds:
+          - apps/v1/Deployment
+          selector:
+            matchLabels:
+              app: nginx
+      - resources:
+          kinds:
+          - apps/v1/Deployment
+          selector:
+            matchLabels:
+              app1: test
+      resources: {}
+    mutate:
+      patchStrategicMerge:
+        spec:
+          template:
+            spec:
+              runtimeClassName: kata-clh
+    name: add runtime
+    skipBackgroundRequests: true
+    validate: {}
+  validationFailureAction: Enforce
+
