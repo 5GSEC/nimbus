@@ -21,7 +21,7 @@ spec:
       - script:
           content: kubectl apply -f ../runtime.yaml
           check: 
-            (contains($stdout, 'deployment.apps/nginx created')): true  
+            (contains($stdout, 'runtimeclass.node.k8s.io/kata-clh created')): true  
 
     - name: "Create a SecurityIntent"
       try:
