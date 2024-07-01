@@ -16,12 +16,23 @@ spec:
           check: 
             (contains($stdout, 'deployment.apps/nginx created')): true
 
+    - name: "Verify deployment creation"
+      try:
+        - assert:
+            file: ../deploy-assert.yaml
+
     - name: "Create a sample runtimeclass"
       try:
       - script:
-          content: kubectl apply -f ../runtime.yaml-n $NAMESPACE
+          content: kubectl apply -f ../runtime.yaml -n $NAMESPACE
           check: 
             (contains($stdout, 'runtimeclass.node.k8s.io/kata-clh created')): true  
+
+    - name: "Verify runtime creation"
+      try:
+        - assert:
+            file: ../runtime.yaml
+
 
     - name: "Create a SecurityIntent"
       try:
