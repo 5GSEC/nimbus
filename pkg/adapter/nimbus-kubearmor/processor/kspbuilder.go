@@ -227,9 +227,6 @@ func disallowCapabilities() kubearmorv1.KubeArmorPolicy {
 			Capabilities: kubearmorv1.CapabilitiesType{
 				MatchCapabilities: []kubearmorv1.MatchCapabilitiesType{
 					{
-						Capability: "sys_admin",
-					},
-					{
 						Capability: "sys_ptrace",
 					},
 					{
