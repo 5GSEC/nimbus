@@ -3,10 +3,7 @@
 
 name: Stable release
 
-on:
-  create:
-    tags:
-      - "v*"
+on: workflow_dispatch
 
 permissions: read-all
 
@@ -48,11 +45,18 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v4
 
+      - name: Generate a token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.ACTIONS_APP_ID }}
+          private-key: ${{ secrets.ACTIONS_APP_PRIVATE_KEY }}
+
       - name: Publish Helm chart
         uses: stefanprodan/helm-gh-pages@master
         with:
           # Access token which can push to a different repo in the same org
-          token: ${{ secrets.GH_ACCESS_TOKEN }}
+          token: ${{ steps.generate-token.outputs.token }}
           charts_dir: deployments/
           # repo where charts would be published
           owner: 5GSEC
