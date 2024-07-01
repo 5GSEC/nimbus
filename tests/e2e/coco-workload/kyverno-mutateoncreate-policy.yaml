@@ -29,12 +29,6 @@ spec:
           selector:
             matchLabels:
               app: nginx
-      - resources:
-          kinds:
-          - apps/v1/Deployment
-          selector:
-            matchLabels:
-              app1: test
       resources: {}
     mutate:
       patchStrategicMerge:
