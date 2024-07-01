@@ -12,14 +12,14 @@ spec:
     - name: "Create a sample deployment"
       try:
       - script:
-          content: kubectl create deployment nginx --image=nginx
+          content: kubectl create deployment -n $NAMESPACE nginx --image=nginx
           check: 
             (contains($stdout, 'deployment.apps/nginx created')): true
 
     - name: "Create a sample runtimeclass"
       try:
       - script:
-          content: kubectl apply -f ../runtime.yaml
+          content: kubectl apply -f ../runtime.yaml-n $NAMESPACE
           check: 
             (contains($stdout, 'runtimeclass.node.k8s.io/kata-clh created')): true  
 
