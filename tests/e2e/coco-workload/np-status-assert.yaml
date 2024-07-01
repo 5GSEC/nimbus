@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: intent.security.nimbus.com/v1alpha1
+kind: NimbusPolicy
+metadata:
+  name: coco-workload-binding
+  ownerReferences:
+    - apiVersion: intent.security.nimbus.com/v1alpha1
+      blockOwnerDeletion: true
+      controller: true
+      kind: SecurityIntentBinding
+      name: coco-workload-binding
+status:
+  numberOfAdapterPolicies: 2
+  status: Created
