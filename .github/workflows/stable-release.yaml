@@ -3,7 +3,10 @@
 
 name: Stable release
 
-on: workflow_dispatch
+on:
+  create:
+    tags:
+      - "v*"
 
 permissions: read-all
 
