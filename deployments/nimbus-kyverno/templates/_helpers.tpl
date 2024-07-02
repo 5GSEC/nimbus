@@ -54,7 +54,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 ClusterRoleSelector labels
 */}}
 {{- define "nimbus-kyverno.clusterRoleSelectorLabels" -}}
-app.kubernetes.io/name: background-controller
+app.kubernetes.io/component: background-controller
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/part-of: {{ .Release.Name }}-kyverno
 {{- end }}
