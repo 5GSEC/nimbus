@@ -51,6 +51,15 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
+ClusterRoleSelector labels
+*/}}
+{{- define "nimbus-kyverno.clusterRoleSelectorLabels" -}}
+app.kubernetes.io/component: background-controller
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/part-of: {{ .Release.Name }}-kyverno
+{{- end }}
+
+{{/*
 Create the name of the service account to use
 */}}
 {{- define "nimbus-kyverno.serviceAccountName" -}}

@@ -2,9 +2,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
-    app.kubernetes.io/component: background-controller
-    app.kubernetes.io/instance: nimbus-kyverno
-    app.kubernetes.io/part-of: nimbus-kyverno
+    {{- include "nimbus-kyverno.clusterRoleSelectorLabels" . | nindent 4 }}
   name: nimbus-kyverno:update-resources
 rules:
 - apiGroups:
