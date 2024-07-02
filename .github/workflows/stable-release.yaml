@@ -51,7 +51,7 @@ jobs:
         with:
           app-id: ${{ vars.ACTIONS_APP_ID }}
           private-key: ${{ secrets.ACTIONS_APP_PRIVATE_KEY }}
-          repositories: ["charts"]
+          repositories: charts
 
       - name: Publish Helm chart
         uses: stefanprodan/helm-gh-pages@master
