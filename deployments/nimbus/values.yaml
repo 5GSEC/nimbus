@@ -4,6 +4,7 @@ autoDeploy:
   kubearmor: true
   netpol: true
   kyverno: true
+  k8tls: true
 
 replicaCount: 1
 

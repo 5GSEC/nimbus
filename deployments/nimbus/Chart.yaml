@@ -30,3 +30,8 @@ dependencies:
     version: ">= 0.1.0"
     repository: https://5gsec.github.io/charts
     condition: autoDeploy.kyverno
+
+  - name: nimbus-k8tls
+    version: ">= 0.1.0"
+    repository: https://5gsec.github.io/charts
+    condition: autoDeploy.k8tls
