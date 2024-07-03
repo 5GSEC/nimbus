@@ -72,7 +72,6 @@ func WatchKps(ctx context.Context, updatedKpCh, deletedKpCh chan common.Request)
 			newConditionsSize := len(newConditions)
 
 			if !strings.Contains(newKp.GetName(), "mutateexisting") {
-				logger.Info("name", "for newKp:", newKp.Name, "for oldKp: ", oldKp.Name)
 				if oldU.GetGeneration() == newU.GetGeneration() {
 					return
 				}
