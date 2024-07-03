@@ -5,6 +5,7 @@ package watcher
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/5GSEC/nimbus/pkg/adapter/common"
@@ -70,14 +71,31 @@ func WatchKps(ctx context.Context, updatedKpCh, deletedKpCh chan common.Request)
 			oldConditionsSize := len(oldConditions)
 			newConditionsSize := len(newConditions)
 
-			if oldU.GetGeneration() == newU.GetGeneration() && oldConditionsSize == newConditionsSize {
-				if oldConditionsSize > 0 && newConditionsSize > 0 && oldConditions[0].Reason != newConditions[0].Reason {
-					kpNamespacedName := common.Request{
-						Name:      newU.GetName(),
-						Namespace: newU.GetNamespace(),
-					}
-					updatedKpCh <- kpNamespacedName
+			if !strings.Contains(newKp.GetName(), "mutateexisting") {
+				logger.Info("name", "for newKp:", newKp.Name, "for oldKp: ", oldKp.Name)
+				if oldU.GetGeneration() == newU.GetGeneration() {
 					return
+				}
+				kpNamespacedName := common.Request{
+					Name:      newU.GetName(),
+					Namespace: newU.GetNamespace(),
+				}
+				updatedKpCh <- kpNamespacedName
+				return
+			}
+
+			if oldU.GetGeneration() == newU.GetGeneration() && oldConditionsSize == newConditionsSize && strings.Contains(newKp.GetName(), "mutateexisting") && strings.Contains(oldKp.GetName(), "mutateexisting") {
+				if oldConditionsSize > 0 && newConditionsSize > 0 {
+					for i := 0; i < len(newConditions); i++ {
+						if oldConditions[i].Type == "Ready" && newConditions[i].Type == "Ready" && oldConditions[i].Reason != newConditions[i].Reason {
+							kpNamespacedName := common.Request{
+								Name:      newU.GetName(),
+								Namespace: newU.GetNamespace(),
+							}
+							updatedKpCh <- kpNamespacedName
+							return
+						}
+					}
 				}
 				return
 			}

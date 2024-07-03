@@ -30,9 +30,8 @@ import (
 )
 
 var (
-	scheme        = runtime.NewScheme()
-	k8sClient     client.Client
-	currentNs     string
+	scheme    = runtime.NewScheme()
+	k8sClient client.Client
 )
 
 func init() {
@@ -413,6 +412,7 @@ func deleteDanglingkcps(ctx context.Context, cnp v1alpha1.ClusterNimbusPolicy, l
 func createTriggerForKp(ctx context.Context, nameNamespace common.Request) {
 	logger := log.FromContext(ctx)
 	var existingKp kyvernov1.Policy
+	var existingConfigMap corev1.ConfigMap
 	err := k8sClient.Get(ctx, types.NamespacedName{Name: nameNamespace.Name, Namespace: nameNamespace.Namespace}, &existingKp)
 	if err != nil && !errors.IsNotFound(err) {
 		logger.Error(err, "failed to get existing KyvernoPolicy", "KyvernoPolicy.Name", existingKp.Name, "KyvernoPolicy.Namespace", nameNamespace.Namespace)
@@ -434,19 +434,25 @@ func createTriggerForKp(ctx context.Context, nameNamespace common.Request) {
 		return
 	}
 
+	isPolReady := false
 
-	if len(existingKp.Status.Conditions) != 0 && existingKp.Status.Conditions[0].Reason == "Succeeded" && strings.Contains(existingKp.Name, "mutateexisting") {
-		if currentNs != configMap.Namespace {
+	for i := 0; i < len(existingKp.Status.Conditions); i++ {
+		if existingKp.Status.Conditions[i].Type == "Ready" && existingKp.Status.Conditions[i].Reason == "Succeeded" {
+			isPolReady = true
+		}
+	}
+
+	err = k8sClient.Get(ctx, types.NamespacedName{Name: nameNamespace.Name + "-trigger-configmap", Namespace: nameNamespace.Namespace}, &existingConfigMap)
+	if err != nil && errors.IsNotFound(err) {
+		if isPolReady  && strings.Contains(existingKp.GetName(), "mutateexisting") {
 			// Create the ConfigMap
 			err = k8sClient.Create(context.TODO(), configMap)
 
 			if err != nil {
-				logger.Error(err, "failed to create trigger ConfigMap in namespace", "Namespace", configMap.Namespace)
+				logger.Error(err, "Failed to create trigger ConfigMap", "Namespace", configMap.Namespace)
 			} else {
-				currentNs = configMap.Namespace
-				logger.Info("Created trigger ConfigMap in namespace ", "Namespace", configMap.Namespace)
+				logger.Info("Created trigger ConfigMap", "Namespace", configMap.Namespace)
 			}
-			currentNs = configMap.Namespace
 		}
 	}
 }
