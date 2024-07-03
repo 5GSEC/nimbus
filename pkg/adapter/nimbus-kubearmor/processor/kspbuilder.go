@@ -269,24 +269,30 @@ func disallowBinaries() kubearmorv1.KubeArmorPolicy { // ref: https://www.tenabl
 	return kubearmorv1.KubeArmorPolicy{
 		Spec: kubearmorv1.KubeArmorPolicySpec{
 			Process: kubearmorv1.ProcessType{
-				MatchPaths: []kubearmorv1.ProcessPathType{
+				MatchDirectories: []kubearmorv1.ProcessDirectoryType{
 					{
-						Path: "/var/tmp/",
+						Directory: "/var/tmp/",
+						Recursive: true,
 					},
 					{
-						Path: "/tmp/",
+						Directory: "/tmp/",
+						Recursive: true,
 					},
 					{
-						Path: "/var/log/",
+						Directory: "/var/log/",
+						Recursive: true,
 					},
 					{
-						Path: "/app/logs/",
+						Directory: "/app/logs/",
+						Recursive: true,
 					},
 					{
-						Path: "/logs/",
+						Directory: "/logs/",
+						Recursive: true,
 					},
 					{
-						Path: "/etc/",
+						Directory: "/etc/",
+						Recursive: true,
 					},
 				},
 				Action: kubearmorv1.ActionType("Block"),
