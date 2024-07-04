@@ -172,6 +172,9 @@ func createOrUpdateKp(ctx context.Context, npName, npNamespace string) {
 					logger.Error(err, "failed to create KyvernoPolicy", "KyvernoPolicy.Name", kp.Name, "KyvernoPolicy.Namespace", kp.Namespace)
 					return
 				}
+				if err = adapterutil.UpdateNpStatus(ctx, k8sClient, "KyvernoPolicy/"+kp.Name, np.Name, np.Namespace, false); err != nil {
+					logger.Error(err, "failed to update KyvernoPolicies status in NimbusPolicy")
+				}
 				logger.Info("KyvernoPolicy created", "KyvernoPolicy.Name", kp.Name, "KyvernoPolicy.Namespace", kp.Namespace)
 			}
 		} else {
@@ -182,13 +185,15 @@ func createOrUpdateKp(ctx context.Context, npName, npNamespace string) {
 					logger.Error(err, "failed to configure existing KyvernoPolicy", "KyvernoPolicy.Name", existingKp.Name, "KyvernoPolicy.Namespace", existingKp.Namespace)
 					return
 				}
+				if err = adapterutil.UpdateNpStatus(ctx, k8sClient, "KyvernoPolicy/"+kp.Name, np.Name, np.Namespace, false); err != nil {
+					logger.Error(err, "failed to update KyvernoPolicies status in NimbusPolicy")
+				}
 				logger.Info("KyvernoPolicy configured", "KyvernoPolicy.Name", existingKp.Name, "KyvernoPolicy.Namespace", existingKp.Namespace, "Reason", reason)
+			} else {
+				continue
 			}
 		}
 
-		if err = adapterutil.UpdateNpStatus(ctx, k8sClient, "KyvernoPolicy/"+kp.Name, np.Name, np.Namespace, false); err != nil {
-			logger.Error(err, "failed to update KyvernoPolicies status in NimbusPolicy")
-		}
 	}
 }
 

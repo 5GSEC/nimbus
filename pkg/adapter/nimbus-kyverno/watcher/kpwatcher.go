@@ -67,10 +67,8 @@ func WatchKps(ctx context.Context, updatedKpCh, deletedKpCh chan common.Request)
 				return
 			}
 
-			// oldConditions := oldKp.Status.Conditions
+			oldConditions := oldKp.Status.Conditions
 			newConditions := newKp.Status.Conditions
-			// oldConditionsSize := len(oldConditions)
-			// newConditionsSize := len(newConditions)
 
 			if !strings.Contains(newKp.GetName(), "mutateexisting") {
 				if oldU.GetGeneration() == newU.GetGeneration() {
@@ -86,7 +84,7 @@ func WatchKps(ctx context.Context, updatedKpCh, deletedKpCh chan common.Request)
 
 			// for mutate existing policy
 			if oldU.GetGeneration() == newU.GetGeneration() {
-				if checkIfReady(newConditions) {
+				if checkIfReady(newConditions) && !checkIfReady(oldConditions) {
 					kpNamespacedName := common.Request{
 						Name:      newU.GetName(),
 						Namespace: newU.GetNamespace(),
@@ -134,5 +132,3 @@ func checkIfReady(conditions []metav1.Condition) bool {
 	return false
 }
 
-// update the reconcile func pn updation of kp
-// update the condition in the kp watcher.
