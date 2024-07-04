@@ -12,6 +12,7 @@ import (
 	"github.com/5GSEC/nimbus/pkg/adapter/k8s"
 	adapterutil "github.com/5GSEC/nimbus/pkg/adapter/util"
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -66,10 +67,10 @@ func WatchKps(ctx context.Context, updatedKpCh, deletedKpCh chan common.Request)
 				return
 			}
 
-			oldConditions := oldKp.Status.Conditions
+			// oldConditions := oldKp.Status.Conditions
 			newConditions := newKp.Status.Conditions
-			oldConditionsSize := len(oldConditions)
-			newConditionsSize := len(newConditions)
+			// oldConditionsSize := len(oldConditions)
+			// newConditionsSize := len(newConditions)
 
 			if !strings.Contains(newKp.GetName(), "mutateexisting") {
 				if oldU.GetGeneration() == newU.GetGeneration() {
@@ -83,27 +84,24 @@ func WatchKps(ctx context.Context, updatedKpCh, deletedKpCh chan common.Request)
 				return
 			}
 
-			if oldU.GetGeneration() == newU.GetGeneration() && oldConditionsSize == newConditionsSize && strings.Contains(newKp.GetName(), "mutateexisting") && strings.Contains(oldKp.GetName(), "mutateexisting") {
-				if oldConditionsSize > 0 && newConditionsSize > 0 {
-					for i := 0; i < len(newConditions); i++ {
-						if oldConditions[i].Type == "Ready" && newConditions[i].Type == "Ready" && oldConditions[i].Reason != newConditions[i].Reason {
-							kpNamespacedName := common.Request{
-								Name:      newU.GetName(),
-								Namespace: newU.GetNamespace(),
-							}
-							updatedKpCh <- kpNamespacedName
-							return
-						}
+			// for mutate existing policy
+			if oldU.GetGeneration() == newU.GetGeneration() {
+				if checkIfReady(newConditions) {
+					kpNamespacedName := common.Request{
+						Name:      newU.GetName(),
+						Namespace: newU.GetNamespace(),
 					}
+					updatedKpCh <- kpNamespacedName
+					return
 				}
 				return
+			} else {
+				kpNamespacedName := common.Request{
+					Name:      newU.GetName(),
+					Namespace: newU.GetNamespace(),
+				}
+				updatedKpCh <- kpNamespacedName
 			}
-
-			kpNamespacedName := common.Request{
-				Name:      newU.GetName(),
-				Namespace: newU.GetNamespace(),
-			}
-			updatedKpCh <- kpNamespacedName
 		},
 		DeleteFunc: func(obj interface{}) {
 			u := obj.(*unstructured.Unstructured)
@@ -126,3 +124,15 @@ func WatchKps(ctx context.Context, updatedKpCh, deletedKpCh chan common.Request)
 	logger.Info("KyvernoPolicy watcher started")
 	informer.Run(ctx.Done())
 }
+
+func checkIfReady(conditions []metav1.Condition) bool {
+	for _, condition := range conditions {
+		if condition.Type == "Ready" && condition.Reason == "Succeeded" {
+			return true
+		}
+	}
+	return false
+}
+
+// update the reconcile func pn updation of kp
+// update the condition in the kp watcher.

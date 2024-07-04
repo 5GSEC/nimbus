@@ -5,8 +5,10 @@ package utils
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
+	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
@@ -43,6 +45,28 @@ func GetGVK(kind string) string {
 
 	// Combine API version and kind to form the GroupVersionKind string
 	return fmt.Sprintf("%s/%s", apiVersion, Title(kind))
+}
+
+func PolEqual(a, b kyvernov1.Policy) (string, bool) {
+	if a.ObjectMeta.Name != b.ObjectMeta.Name {
+		return "diff: name", false
+	}
+	if a.ObjectMeta.Namespace != b.ObjectMeta.Namespace {
+		return "diff: Namespace", false
+	}
+
+	if !reflect.DeepEqual(a.ObjectMeta.Labels, b.ObjectMeta.Labels) {
+		return "diff: Labels", false
+	}
+
+	if !reflect.DeepEqual(a.ObjectMeta.OwnerReferences, b.ObjectMeta.OwnerReferences) {
+		return "diff: OwnerReferences", false
+	}
+
+	if !reflect.DeepEqual(a.Spec, b.Spec) && !reflect.DeepEqual(a.Spec.Rules[0], b.Spec.Rules[0]){
+		return "diff: Spec", false
+	}
+	return "", true
 }
 
 func Title(input string) string {
