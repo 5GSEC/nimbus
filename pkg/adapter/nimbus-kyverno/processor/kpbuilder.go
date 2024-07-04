@@ -110,10 +110,6 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy) ([]kyvernov1.Policy, error) 
 	}
 
 	deploymentsGVR := schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
-	// labelSelector := metav1.LabelSelector{MatchLabels: labels}
-	// listOptions := metav1.ListOptions{
-	// 	LabelSelector: apiLabels.Set(labelSelector.MatchLabels).String(),
-	// }
 	deployments, err := client.Resource(deploymentsGVR).Namespace(np.Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		errs = append(errs, err)

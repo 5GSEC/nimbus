@@ -10,9 +10,9 @@ import (
 
 	"github.com/5GSEC/nimbus/pkg/adapter/common"
 	"github.com/5GSEC/nimbus/pkg/adapter/k8s"
+	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kyverno/utils"
 	adapterutil "github.com/5GSEC/nimbus/pkg/adapter/util"
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -84,7 +84,7 @@ func WatchKps(ctx context.Context, updatedKpCh, deletedKpCh chan common.Request)
 
 			// for mutate existing policy
 			if oldU.GetGeneration() == newU.GetGeneration() {
-				if checkIfReady(newConditions) && !checkIfReady(oldConditions) {
+				if utils.CheckIfReady(newConditions) && !utils.CheckIfReady(oldConditions) {
 					kpNamespacedName := common.Request{
 						Name:      newU.GetName(),
 						Namespace: newU.GetNamespace(),
@@ -123,12 +123,4 @@ func WatchKps(ctx context.Context, updatedKpCh, deletedKpCh chan common.Request)
 	informer.Run(ctx.Done())
 }
 
-func checkIfReady(conditions []metav1.Condition) bool {
-	for _, condition := range conditions {
-		if condition.Type == "Ready" && condition.Reason == "Succeeded" {
-			return true
-		}
-	}
-	return false
-}
 

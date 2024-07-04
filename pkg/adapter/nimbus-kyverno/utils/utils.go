@@ -11,6 +11,7 @@ import (
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func GetGVK(kind string) string {
@@ -47,7 +48,14 @@ func GetGVK(kind string) string {
 	return fmt.Sprintf("%s/%s", apiVersion, Title(kind))
 }
 
+// sort.Slice(planets, func(i, j int) bool {
+// 	return planets[i].Axis < planets[j].Axis
+//   })
+
 func PolEqual(a, b kyvernov1.Policy) (string, bool) {
+	if len(a.Spec.Rules[0].MatchResources.Any) != len(b.Spec.Rules[0].MatchResources.Any) {
+		return "diff: labels not equal", false
+	}
 	if a.ObjectMeta.Name != b.ObjectMeta.Name {
 		return "diff: name", false
 	}
@@ -63,12 +71,52 @@ func PolEqual(a, b kyvernov1.Policy) (string, bool) {
 		return "diff: OwnerReferences", false
 	}
 
-	if !reflect.DeepEqual(a.Spec, b.Spec) && !reflect.DeepEqual(a.Spec.Rules[0], b.Spec.Rules[0]){
+	if !checkLabels(a, b) {
+		return "diff: labels", false
+	}
+
+	if !reflect.DeepEqual(a.Spec, b.Spec) {
 		return "diff: Spec", false
 	}
 	return "", true
 }
 
+func CheckIfReady(conditions []metav1.Condition) bool {
+	for _, condition := range conditions {
+		if condition.Type == "Ready" && condition.Reason == "Succeeded" {
+			return true
+		}
+	}
+	return false
+}
+func checkLabels(a, b kyvernov1.Policy) bool {
+	resourceFiltersA := a.Spec.Rules[0].MatchResources.Any
+	resourceFiltersB := b.Spec.Rules[0].MatchResources.Any
+	if len(resourceFiltersA) != len(resourceFiltersB) {
+		return false
+	}
+	mp := make(map[string]bool)
+	for _, filter := range resourceFiltersA {
+		if filter.Selector != nil {
+			for k,v := range filter.Selector.MatchLabels {
+				key := k+v
+				mp[key] = true
+			}
+		}
+	}
+
+	for _, filter := range resourceFiltersB {
+		if filter.Selector != nil {
+			for k,v := range filter.Selector.MatchLabels {
+				key := k+v
+				if !mp[key] {
+					return false
+				}
+			}
+		}
+	}
+	return true
+}
 func Title(input string) string {
     toTitle := cases.Title(language.Und)
 

@@ -423,6 +423,10 @@ func createTriggerForKp(ctx context.Context, nameNamespace common.Request) {
 		logger.Error(err, "failed to get existing KyvernoPolicy", "KyvernoPolicy.Name", existingKp.Name, "KyvernoPolicy.Namespace", nameNamespace.Namespace)
 		return
 	}
+	if !strings.Contains(existingKp.GetName(), "mutateexisting") || !utils.CheckIfReady(existingKp.Status.Conditions) {  // check if the policy is ready and the policy is the mutateexisting one
+		return
+	}
+	 
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      nameNamespace.Name + "-trigger-configmap",
@@ -439,25 +443,15 @@ func createTriggerForKp(ctx context.Context, nameNamespace common.Request) {
 		return
 	}
 
-	isPolReady := false
-
-	for i := 0; i < len(existingKp.Status.Conditions); i++ {
-		if existingKp.Status.Conditions[i].Type == "Ready" && existingKp.Status.Conditions[i].Reason == "Succeeded" {
-			isPolReady = true
-		}
-	}
-
 	err = k8sClient.Get(ctx, types.NamespacedName{Name: nameNamespace.Name + "-trigger-configmap", Namespace: nameNamespace.Namespace}, &existingConfigMap)
 	if err != nil && errors.IsNotFound(err) {
-		if isPolReady && strings.Contains(existingKp.GetName(), "mutateexisting") {
-			// Create the ConfigMap
-			err = k8sClient.Create(context.TODO(), configMap)
+		// Create the ConfigMap
+		err = k8sClient.Create(context.TODO(), configMap)
 
-			if err != nil {
-				logger.Error(err, "Failed to create trigger ConfigMap", "Namespace", configMap.Namespace)
-			} else {
-				logger.Info("Created trigger ConfigMap", "Namespace", configMap.Namespace)
-			}
+		if err != nil {
+			logger.Error(err, "Failed to create trigger ConfigMap", "Namespace", configMap.Namespace)
+		} else {
+			logger.Info("Created trigger ConfigMap", "Namespace", configMap.Namespace)
 		}
 	}
 }
