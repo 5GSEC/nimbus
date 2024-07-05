@@ -42,7 +42,7 @@ type ClusterSecurityIntentBindingStatus struct {
 //+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status"
 //+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 //+kubebuilder:printcolumn:name="Intents",type="integer",JSONPath=".status.numberOfBoundIntents"
-//+kubebuilder:printcolumn:name="NimbusPolicies",type="integer",JSONPath=".status.numberofNimbusPolicies"
+//+kubebuilder:printcolumn:name="NimbusPolicies",type="integer",JSONPath=".status.numberOfNimbusPolicies"
 //+kubebuilder:printcolumn:name="ClusterNimbusPolicy",type="string",JSONPath=".status.clusterNimbusPolicy"
 //+k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
