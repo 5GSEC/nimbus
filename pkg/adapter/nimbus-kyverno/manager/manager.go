@@ -5,7 +5,6 @@ package manager
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/go-logr/logr"
@@ -25,6 +24,7 @@ import (
 	"github.com/5GSEC/nimbus/pkg/adapter/common"
 	"github.com/5GSEC/nimbus/pkg/adapter/k8s"
 	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kyverno/processor"
+	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kyverno/utils"
 	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kyverno/watcher"
 	adapterutil "github.com/5GSEC/nimbus/pkg/adapter/util"
 	globalwatcher "github.com/5GSEC/nimbus/pkg/adapter/watcher"
@@ -55,10 +55,9 @@ func Run(ctx context.Context) {
 	deletedKcpCh := make(chan string)
 	go watcher.WatchKcps(ctx, updatedKcpCh, deletedKcpCh)
 
-	addKpCh := make(chan common.Request)
 	updatedKpCh := make(chan common.Request)
 	deletedKpCh := make(chan common.Request)
-	go watcher.WatchKps(ctx, addKpCh, updatedKpCh, deletedKpCh)
+	go watcher.WatchKps(ctx, updatedKpCh, deletedKpCh)
 
 	for {
 		select {
@@ -72,7 +71,6 @@ func Run(ctx context.Context) {
 			close(updatedKcpCh)
 			close(deletedKcpCh)
 
-			close(addKpCh)
 			close(updatedKpCh)
 			close(deletedKpCh)
 			return
@@ -84,10 +82,9 @@ func Run(ctx context.Context) {
 			logKpToDelete(ctx, deletedNp)
 		case deletedCnp := <-deletedClusterNpChan:
 			logKcpToDelete(ctx, deletedCnp)
-		case addedKp := <-addKpCh:
-			createTriggerForKp(ctx, addedKp)
 		case updatedKp := <-updatedKpCh:
-			reconcileKp(ctx, updatedKp.Name, updatedKp.Namespace, true)
+			createTriggerForKp(ctx, updatedKp)
+			reconcileKp(ctx, updatedKp.Name, updatedKp.Namespace, false)
 		case updatedKcp := <-updatedKcpCh:
 			reconcileKcp(ctx, updatedKcp, false)
 		case deletedKcp := <-deletedKcpCh:
@@ -112,7 +109,7 @@ func reconcileKp(ctx context.Context, kpName, namespace string, deleted bool) {
 	if deleted {
 		logger.V(2).Info("Reconciling deleted KyvernoPolicy", "KyvernoPolicy.Name", kpName, "KyvernoPolicy.Namespace", namespace)
 	} else {
-		logger.V(2).Info("Reconciling modified KyvernoPolicy", "KyvernoPolicy.Name", kpName, "KyvernoPolicy.Namespace", namespace)
+		logger.V(2).Info("Reconciling modified or added KyvernoPolicy", "KyvernoPolicy.Name", kpName, "KyvernoPolicy.Namespace", namespace)
 	}
 	createOrUpdateKp(ctx, npName, namespace)
 }
@@ -168,26 +165,35 @@ func createOrUpdateKp(ctx context.Context, npName, npNamespace string) {
 			logger.Error(err, "failed to get existing KyvernoPolicy", "KyvernoPolicy.Name", kp.Name, "KyvernoPolicy.Namespace", kp.Namespace)
 			return
 		}
+
 		if err != nil {
 			if errors.IsNotFound(err) {
 				if err = k8sClient.Create(ctx, &kp); err != nil {
 					logger.Error(err, "failed to create KyvernoPolicy", "KyvernoPolicy.Name", kp.Name, "KyvernoPolicy.Namespace", kp.Namespace)
 					return
 				}
+				if err = adapterutil.UpdateNpStatus(ctx, k8sClient, "KyvernoPolicy/"+kp.Name, np.Name, np.Namespace, false); err != nil {
+					logger.Error(err, "failed to update KyvernoPolicies status in NimbusPolicy")
+				}
 				logger.Info("KyvernoPolicy created", "KyvernoPolicy.Name", kp.Name, "KyvernoPolicy.Namespace", kp.Namespace)
 			}
 		} else {
-			kp.ObjectMeta.ResourceVersion = existingKp.ObjectMeta.ResourceVersion
-			if err = k8sClient.Update(ctx, &kp); err != nil {
-				logger.Error(err, "failed to configure existing KyvernoPolicy", "KyvernoPolicy.Name", existingKp.Name, "KyvernoPolicy.Namespace", existingKp.Namespace)
-				return
+			reason, isEqual := utils.PolEqual(existingKp, kp)
+			if !isEqual {
+				kp.ObjectMeta.ResourceVersion = existingKp.ObjectMeta.ResourceVersion
+				if err = k8sClient.Update(ctx, &kp); err != nil {
+					logger.Error(err, "failed to configure existing KyvernoPolicy", "KyvernoPolicy.Name", existingKp.Name, "KyvernoPolicy.Namespace", existingKp.Namespace)
+					return
+				}
+				if err = adapterutil.UpdateNpStatus(ctx, k8sClient, "KyvernoPolicy/"+kp.Name, np.Name, np.Namespace, false); err != nil {
+					logger.Error(err, "failed to update KyvernoPolicies status in NimbusPolicy")
+				}
+				logger.Info("KyvernoPolicy configured", "KyvernoPolicy.Name", existingKp.Name, "KyvernoPolicy.Namespace", existingKp.Namespace, "Reason", reason)
+			} else {
+				continue
 			}
-			logger.Info("KyvernoPolicy configured", "KyvernoPolicy.Name", existingKp.Name, "KyvernoPolicy.Namespace", existingKp.Namespace)
 		}
 
-		if err = adapterutil.UpdateNpStatus(ctx, k8sClient, "KyvernoPolicy/"+kp.Name, np.Name, np.Namespace, false); err != nil {
-			logger.Error(err, "failed to update KyvernoPolicies status in NimbusPolicy")
-		}
 	}
 }
 
@@ -314,8 +320,8 @@ func deleteDanglingkps(ctx context.Context, np v1alpha1.NimbusPolicy, logger log
 		kpsToDelete[kpOwnedByNp.Name] = kpOwnedByNp
 	}
 
-	for _, nimbusRule := range np.Spec.NimbusRules {
-		kpName := np.Name + "-" + strings.ToLower(nimbusRule.ID)
+	for _, pol := range np.Status.Policies {
+		kpName := strings.ToLower(pol)[14:]
 		delete(kpsToDelete, kpName)
 	}
 
@@ -410,6 +416,17 @@ func deleteDanglingkcps(ctx context.Context, cnp v1alpha1.ClusterNimbusPolicy, l
 
 func createTriggerForKp(ctx context.Context, nameNamespace common.Request) {
 	logger := log.FromContext(ctx)
+	var existingKp kyvernov1.Policy
+	var existingConfigMap corev1.ConfigMap
+	err := k8sClient.Get(ctx, types.NamespacedName{Name: nameNamespace.Name, Namespace: nameNamespace.Namespace}, &existingKp)
+	if err != nil && !errors.IsNotFound(err) {
+		logger.Error(err, "failed to get existing KyvernoPolicy", "KyvernoPolicy.Name", existingKp.Name, "KyvernoPolicy.Namespace", nameNamespace.Namespace)
+		return
+	}
+	if !strings.Contains(existingKp.GetName(), "mutateexisting") || !utils.CheckIfReady(existingKp.Status.Conditions) {  // check if the policy is ready and the policy is the mutateexisting one
+		return
+	}
+	 
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      nameNamespace.Name + "-trigger-configmap",
@@ -420,26 +437,21 @@ func createTriggerForKp(ctx context.Context, nameNamespace common.Request) {
 		},
 	}
 
-	var existingKp kyvernov1.Policy
-	err := k8sClient.Get(ctx, types.NamespacedName{Name: nameNamespace.Name, Namespace: nameNamespace.Namespace}, &existingKp)
-	if err != nil && !errors.IsNotFound(err) {
-		logger.Error(err, "failed to get existing KyvernoPolicy", "KyvernoPolicy.Name", existingKp.Name, "KyvernoPolicy.Namespace", nameNamespace.Namespace)
-		return
-	}
-
-	// Set MutateExistingKyvernoPolicy as the owner of the zConfigMap
+	// Set MutateExistingKyvernoPolicy as the owner of the ConfigMap
 	if err := ctrl.SetControllerReference(&existingKp, &configMap.ObjectMeta, scheme); err != nil {
 		logger.Error(err, "failed to set OwnerReference on ConfigMap", "Name", configMap.Name)
 		return
 	}
 
-	// Create the ConfigMap
-	err = k8sClient.Create(context.TODO(), configMap)
+	err = k8sClient.Get(ctx, types.NamespacedName{Name: nameNamespace.Name + "-trigger-configmap", Namespace: nameNamespace.Namespace}, &existingConfigMap)
+	if err != nil && errors.IsNotFound(err) {
+		// Create the ConfigMap
+		err = k8sClient.Create(context.TODO(), configMap)
 
-	if err != nil {
-		logger.Error(err, "failed to create trigger ConfigMap in namespace", "Namespace", configMap.Namespace)
-	} else {
-		fmt.Println(nameNamespace)
-		logger.Info("Created trigger ConfigMap in namespace ", "Namespace" ,configMap.Namespace)
+		if err != nil {
+			logger.Error(err, "Failed to create trigger ConfigMap", "Namespace", configMap.Namespace)
+		} else {
+			logger.Info("Created trigger ConfigMap", "Namespace", configMap.Namespace)
+		}
 	}
 }
