@@ -32,6 +32,9 @@ func init() {
 func BuildKpsFrom(logger logr.Logger, np *v1alpha1.NimbusPolicy) []kyvernov1.Policy {
 	// Build KPs based on given IDs
 	var allkps []kyvernov1.Policy
+	admission := true
+	background := true
+	skipBackgroundAdmissionReq := true
 	for _, nimbusRule := range np.Spec.NimbusRules {
 		id := nimbusRule.ID
 		if idpool.IsIdSupportedBy(id, "kyverno") {
@@ -46,6 +49,10 @@ func BuildKpsFrom(logger logr.Logger, np *v1alpha1.NimbusPolicy) []kyvernov1.Pol
 				kp.Namespace = np.Namespace
 				kp.Annotations = make(map[string]string)
 				kp.Annotations["policies.kyverno.io/description"] = nimbusRule.Description
+				kp.Spec.Admission = &admission
+				kp.Spec.Background = &background
+				kp.Spec.Rules[0].SkipBackgroundRequests = skipBackgroundAdmissionReq
+
 				if nimbusRule.Rule.RuleAction == "Block" {
 					kp.Spec.ValidationFailureAction = kyvernov1.ValidationFailureAction("Enforce")
 				} else {
@@ -103,10 +110,6 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy) ([]kyvernov1.Policy, error) 
 	}
 
 	deploymentsGVR := schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
-	// labelSelector := metav1.LabelSelector{MatchLabels: labels}
-	// listOptions := metav1.ListOptions{
-	// 	LabelSelector: apiLabels.Set(labelSelector.MatchLabels).String(),
-	// }
 	deployments, err := client.Resource(deploymentsGVR).Namespace(np.Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		errs = append(errs, err)
