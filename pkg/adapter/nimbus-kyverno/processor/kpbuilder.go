@@ -185,9 +185,9 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy) ([]kyvernov1.Policy, error) 
 							kyvernov1.ResourceFilter{
 								ResourceDescription: kyvernov1.ResourceDescription{
 									Kinds: []string{
-										"v1/ConfigMap",
+										"intent.security.nimbus.com/v1alpha1/NimbusPolicy",
 									},
-									Name: np.Name + "-mutateexisting-trigger-configmap",
+									Name: np.Name,
 								},
 							},
 						},
