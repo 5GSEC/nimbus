@@ -9,6 +9,8 @@ Before you begin, set up the following:
 
 - [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) version 1.26 or later.
 - A Kubernetes cluster running version 1.26 or later.
+  - In case of kind clusters, please check if bpf-lsm module is installed [bpf-lsm](https://docs.kubearmor.io/kubearmor/documentation/faq#how-to-enable-kubearmorhostpolicy-for-k8s-cluster).
+  - The k8s cluster nodes need to have nested virtualization enabled for the confidential containers intent. Additionally kvm needs to be installed [ubuntu-kvm](https://help.ubuntu.com/community/KVM/Installation)
 
 # Nimbus
 
