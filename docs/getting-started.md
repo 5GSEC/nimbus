@@ -10,7 +10,8 @@ Before you begin, set up the following:
 - [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) version 1.26 or later.
 - A Kubernetes cluster running version 1.26 or later.
 - In case of kind clusters, bpf-lsm module needs to be installed ([bpf-lsm](https://docs.kubearmor.io/kubearmor/documentation/faq#how-to-enable-kubearmorhostpolicy-for-k8s-cluster)).
-- K8s cluster nodes need to have nested virtualization enabled for the confidential containers intent. Additionally kvm needs to be installed ([ubuntu-kvm](https://help.ubuntu.com/community/KVM/Installation)). For GCP, nested virtualization can be enabled on n2 VMs.
+- K8s cluster nodes need to have nested virtualization enabled for the confidential containers intent. Additionally kvm needs to be installed ([ubuntu-kvm](https://help.ubuntu.com/community/KVM/Installation)). 
+  - For GCP, nested virtualization can be enabled on n2 VMs using below command.
 ```
 export VM_NAME=nephio-demo-5
 export VM_ZONE=us-central1-b
@@ -19,6 +20,7 @@ export VM_IMAGE=ubuntu-2204-jammy-v20240614
 export VM_IM_PROJ=ubuntu-os-cloud
 gcloud compute instances create $VM_NAME --zone=$VM_ZONE --machine-type=$VM_MACHINE --image=$VM_IMAGE --image-project=$VM_IM_PROJ --boot-disk-size="200GB" --enable-nested-virtualization
 ```
+  - For AWS, we need to used bare metals instances as worker nodes in EKS, as we cannot enable nested virtualization on standard EC2 instances ([aws-kata](https://aws.amazon.com/blogs/containers/enhancing-kubernetes-workload-isolation-and-security-using-kata-containers/)).
 
 
 # Nimbus
