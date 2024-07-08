@@ -14,10 +14,8 @@ Before you begin, set up the following:
   - For kind clusters, this reference ([kind-calico](https://docs.tigera.io/calico/latest/getting-started/kubernetes/kind)) has the details.
   - For AWS EKS clusters, the VPC CNI supports kubernetes network policies ([vpc-cni-policy](https://aws.amazon.com/blogs/containers/amazon-vpc-cni-now-supports-kubernetes-network-policies/)).
 - K8s cluster nodes need to have nested virtualization enabled for the confidential containers intent. Additionally kvm needs to be installed ([ubuntu-kvm](https://help.ubuntu.com/community/KVM/Installation)). 
-  - For GCP, nested virtualization can be enabled using below command. The machine types which support nested virtualization are listed here ([cpu-virt](https://cloud.google.com/compute/docs/machine-resource#machine_type_comparison)).
+  - For GCP VMs, nested virtualization can be enabled at create time using below command. The machine types which support nested virtualization are listed here ([cpu-virt](https://cloud.google.com/compute/docs/machine-resource#machine_type_comparison)).
 ```
-export VM_NAME=nephio-demo-5
-export VM_ZONE=us-central1-b
 export VM_MACHINE=n2-standard-16
 export VM_IMAGE=ubuntu-2204-jammy-v20240614
 export VM_IM_PROJ=ubuntu-os-cloud
