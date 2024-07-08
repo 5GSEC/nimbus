@@ -14,7 +14,7 @@ Before you begin, set up the following:
   - For kind clusters, this reference ([kind-calico](https://docs.tigera.io/calico/latest/getting-started/kubernetes/kind)) has the details.
   - For AWS EKS clusters, the VPC CNI supports kubernetes network policies ([vpc-cni-policy](https://aws.amazon.com/blogs/containers/amazon-vpc-cni-now-supports-kubernetes-network-policies/)).
 - K8s cluster nodes need to have nested virtualization enabled for the confidential containers intent. Additionally kvm needs to be installed ([ubuntu-kvm](https://help.ubuntu.com/community/KVM/Installation)). 
-  - For GCP, nested virtualization can be enabled using below command. The machine types which support nested virtualization is provided here ([cpu-virt](https://cloud.google.com/compute/docs/machine-resource#machine_type_comparison))
+  - For GCP, nested virtualization can be enabled using below command. The machine types which support nested virtualization are listed here ([cpu-virt](https://cloud.google.com/compute/docs/machine-resource#machine_type_comparison)).
 ```
 export VM_NAME=nephio-demo-5
 export VM_ZONE=us-central1-b
@@ -55,7 +55,52 @@ make run
 
 ## From Helm Chart
 
-Follow [this](../deployments/nimbus/Readme.md) guide to install `nimbus` operator. By default the install of the `nimbus` operator installs the 
+Follow [this](../deployments/nimbus/Readme.md) guide to install `nimbus` operator. By default the install of the `nimbus` operator installs the adapters also.
+
+# Confidential Containers runtimes
+
+You need to enable Confidential Containers in the Kubernetes cluster using the Confidential Containers Operator.
+
+- Deploy the operator. 
+```
+export RELEASE_VERSION="v0.8.0"
+kubectl apply -k "github.com/confidential-containers/operator/config/release?ref=${RELEASE_VERSION}"
+```
+
+- Wait until each pod has status of running
+```
+kubectl get pods -n confidential-containers-system --watch
+```
+
+- Check that the crd is created.
+```
+$ kubectl get crd | grep ccruntime
+ccruntimes.confidentialcontainers.org                      2024-06-28T08:04:02Z
+```
+
+- Create a custom resource
+```
+kubectl apply -k github.com/confidential-containers/operator/config/samples/ccruntime/default?ref=${RELEASE_VERSION}
+kubectl get pods -n confidential-containers-system --watch
+NAME                                              READY   STATUS    RESTARTS   AGE
+cc-operator-controller-manager-857f844f7d-9pfbp   2/2     Running   0          10d
+cc-operator-daemon-install-qd9ll                  1/1     Running   0          10d
+cc-operator-pre-install-daemon-ccngm              1/1     Running   0          10d
+```
+
+- Check that the runtimeclass is created
+```
+$ kubectl get runtimeclass
+
+NAME            HANDLER         AGE
+kata            kata-qemu       10d
+kata-clh        kata-clh        10d
+kata-clh-tdx    kata-clh-tdx    10d
+kata-qemu       kata-qemu       10d
+kata-qemu-sev   kata-qemu-sev   10d
+kata-qemu-snp   kata-qemu-snp   10d
+kata-qemu-tdx   kata-qemu-tdx   10d
+```
 
 # Adapters
 
