@@ -55,7 +55,7 @@ make run
 
 ## From Helm Chart
 
-Follow [this](../deployments/nimbus/Readme.md) guide to install `nimbus` operator. By default the install of the `nimbus` operator installs the adapters also.
+Follow [this](../deployments/nimbus/Readme.md) guide to install `nimbus` operator. By default the install of the `nimbus` operator installs the adapters also, and all the security engines - except confidential containers - too.
 
 # Confidential Containers runtimes
 
