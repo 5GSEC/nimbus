@@ -57,9 +57,19 @@ make run
 
 Follow [this](../deployments/nimbus/Readme.md) guide to install `nimbus` operator. By default the install of the `nimbus` operator installs the adapters also, and all the security engines - except confidential containers - too.
 
-# Confidential Containers runtimes
+# Confidential Containers
 
 You need to enable Confidential Containers in the Kubernetes cluster using the Confidential Containers Operator.
+
+- Set a label on atleast one node 
+```
+$ kubectl get nodes
+NAME                              STATUS   ROLES           AGE   VERSION
+regional-md-0-t5clc-kh5ks-v429s   Ready    <none>          10d   v1.26.3
+regional-tq6q6-6l6mv              Ready    control-plane   10d   v1.26.3
+
+$ kubectl label node regional-md-0-t5clc-kh5ks-v429s node.kubernetes.io/worker=
+```
 
 - Deploy the operator. 
 ```
