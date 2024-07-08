@@ -10,6 +10,9 @@ Before you begin, set up the following:
 - [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) version 1.26 or later.
 - A Kubernetes cluster running version 1.26 or later.
 - In case of kind clusters, bpf-lsm module needs to be installed ([bpf-lsm](https://docs.kubearmor.io/kubearmor/documentation/faq#how-to-enable-kubearmorhostpolicy-for-k8s-cluster)).
+- The Kubernetes clusters should be configured with a CNI that supports network policy.
+  - For kind clusters, this reference ([kind-calico](https://docs.tigera.io/calico/latest/getting-started/kubernetes/kind)) has the details.
+  - For AWS EKS clusters, the VPC CNI supports kubernetes network policies ([vpc-cni-policy](https://aws.amazon.com/blogs/containers/amazon-vpc-cni-now-supports-kubernetes-network-policies/)).
 - K8s cluster nodes need to have nested virtualization enabled for the confidential containers intent. Additionally kvm needs to be installed ([ubuntu-kvm](https://help.ubuntu.com/community/KVM/Installation)). 
   - For GCP, nested virtualization can be enabled on n2 VMs using below command.
 ```
@@ -20,7 +23,7 @@ export VM_IMAGE=ubuntu-2204-jammy-v20240614
 export VM_IM_PROJ=ubuntu-os-cloud
 gcloud compute instances create $VM_NAME --zone=$VM_ZONE --machine-type=$VM_MACHINE --image=$VM_IMAGE --image-project=$VM_IM_PROJ --boot-disk-size="200GB" --enable-nested-virtualization
 ```
-  - For AWS, we need to used bare metals instances as worker nodes in EKS, as we cannot enable nested virtualization on standard EC2 instances ([aws-kata](https://aws.amazon.com/blogs/containers/enhancing-kubernetes-workload-isolation-and-security-using-kata-containers/)).
+  - For AWS, bare metal instances should be used as worker nodes in EKS, as nested virtualization cannot be enabled on standard EC2 instances ([aws-kata](https://aws.amazon.com/blogs/containers/enhancing-kubernetes-workload-isolation-and-security-using-kata-containers/)).
 
 
 # Nimbus
@@ -52,7 +55,7 @@ make run
 
 ## From Helm Chart
 
-Follow [this](../deployments/nimbus/Readme.md) guide to install `nimbus` operator.
+Follow [this](../deployments/nimbus/Readme.md) guide to install `nimbus` operator. By default the install of the `nimbus` operator installs the 
 
 # Adapters
 
