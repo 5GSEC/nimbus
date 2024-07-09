@@ -30,6 +30,7 @@ best implementation method available given the deployment.
 
 * [Getting Started](docs/getting-started.md)
 * [Quick Tutorials](docs/quick-tutorials.md)
+* [Contribution guide](CONTRIBUTING.md)
 
 # Credits
 

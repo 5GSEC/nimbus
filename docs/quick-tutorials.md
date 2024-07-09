@@ -2,12 +2,12 @@
 
 ## Prerequisites
 
-- **Nimbus suite**: Follow [this](../deployments/nimbus/Readme.md) guide to install `nimbus` operator and its adapters.
+- **Nimbus suite**: Follow [this](../deployments/nimbus/Readme.md) guide to install complete suite.
 
 ## Create a sample deployment
 
 ```shell
-kubectl apply -f ./examples/env/nginx-deploy.yaml
+kubectl create deploy nginx --image=nginx
 ```
 
 ## Create SecurityIntent and SecurityIntentBinding
@@ -17,9 +17,30 @@ kubectl apply -f ./examples/env/nginx-deploy.yaml
 Create SecurityIntent and SecurityIntentBinding to prevent DNS Manipulation.
 
 ```shell
-$ kubectl apply -f ./examples/namespaced/dns-manipulation-si-sib.yaml
-securityintent.intent.security.nimbus.com/dns-manipulation created
-securityintentbinding.intent.security.nimbus.com/dns-manipulation-binding created
+cat << EOF | kubectl apply -f -
+apiVersion: intent.security.nimbus.com/v1alpha1
+kind: SecurityIntent
+metadata:
+  name: dns-manipulation
+spec:
+  intent:
+    id: dnsManipulation
+    description: "An adversary can manipulate DNS requests to redirect network traffic and potentially reveal end user activity."
+    action: Block
+    severity: medium
+---
+apiVersion: intent.security.nimbus.com/v1alpha1
+kind: SecurityIntentBinding
+metadata:
+  name: dns-manipulation-binding
+spec:
+  intents:
+    - name: dns-manipulation
+  selector:
+    workloadSelector:
+      matchLabels:
+        app: nginx
+EOF
 ```
 
 ## Verify Resources
@@ -64,20 +85,20 @@ Name:         dns-manipulation-binding
 Namespace:    default
 Labels:       <none>
 Annotations:  <none>
-API Version:  intent.security.nimbus.com/v1
+API Version:  intent.security.nimbus.com/v1alpha1
 Kind:         NimbusPolicy
 Metadata:
-  Creation Timestamp:  2024-02-20T06:04:32Z
+  Creation Timestamp:  2024-07-09T08:03:40Z
   Generation:          1
   Owner References:
-    API Version:           intent.security.nimbus.com/v1
+    API Version:           intent.security.nimbus.com/v1alpha1
     Block Owner Deletion:  true
     Controller:            true
     Kind:                  SecurityIntentBinding
     Name:                  dns-manipulation-binding
-    UID:                   c3b7046f-26c7-4edb-ad82-de243e9ee378
-  Resource Version:        56960
-  UID:                     109a7b54-8643-487e-9454-6a79c5f4cacc
+    UID:                   58ca4f82-c930-42ad-b3d3-7486805abeb9
+  Resource Version:        4307
+  UID:                     e942a5dc-397b-4ea5-ae59-54521ca520de
 Spec:
   Rules:
     Description:  An adversary can manipulate DNS requests to redirect network traffic and potentially reveal end user activity.
@@ -91,7 +112,7 @@ Status:
   Adapter Policies:
     KubeArmorPolicy/dns-manipulation-binding-dnsmanipulation
     NetworkPolicy/dns-manipulation-binding-dnsmanipulation
-  Last Updated:                2024-02-20T06:04:32Z
+  Last Updated:                2024-07-09T08:03:40Z
   Number Of Adapter Policies:  2
   Status:                      Created
 Events:                        <none>
@@ -122,19 +143,19 @@ kind: KubeArmorPolicy
 metadata:
   annotations:
     app.kubernetes.io/managed-by: nimbus-kubearmor
-  creationTimestamp: "2024-02-20T06:04:32Z"
+  creationTimestamp: "2024-07-09T08:03:40Z"
   generation: 1
   name: dns-manipulation-binding-dnsmanipulation
   namespace: default
   ownerReferences:
-    - apiVersion: intent.security.nimbus.com/v1
+    - apiVersion: intent.security.nimbus.com/v1alpha1
       blockOwnerDeletion: true
       controller: true
       kind: NimbusPolicy
       name: dns-manipulation-binding
-      uid: 109a7b54-8643-487e-9454-6a79c5f4cacc
-  resourceVersion: "56955"
-  uid: 03afa2ec-ea86-4248-9f63-243493aa1db9
+      uid: e942a5dc-397b-4ea5-ae59-54521ca520de
+  resourceVersion: "4303"
+  uid: 7644a152-ca15-45be-8659-3bd7a28fa40d
 spec:
   action: Block
   capabilities: { }
@@ -155,7 +176,7 @@ spec:
 ### NetworkPolicy
 
 ```shell
-$  kubectl get networkpolicy
+$ kubectl get networkpolicy
 NAME                                       POD-SELECTOR   AGE
 dns-manipulation-binding-dnsmanipulation   app=nginx      6m43s
 ```
@@ -172,19 +193,19 @@ kind: NetworkPolicy
 metadata:
   annotations:
     app.kubernetes.io/managed-by: nimbus-netpol
-  creationTimestamp: "2024-02-20T06:04:32Z"
+  creationTimestamp: "2024-07-09T08:03:40Z"
   generation: 1
   name: dns-manipulation-binding-dnsmanipulation
   namespace: default
   ownerReferences:
-    - apiVersion: intent.security.nimbus.com/v1
+    - apiVersion: intent.security.nimbus.com/v1alpha1
       blockOwnerDeletion: true
       controller: true
       kind: NimbusPolicy
       name: dns-manipulation-binding
-      uid: 109a7b54-8643-487e-9454-6a79c5f4cacc
-  resourceVersion: "56956"
-  uid: 473c293e-3006-4843-9eb3-2a21f142d6e3
+      uid: e942a5dc-397b-4ea5-ae59-54521ca520de
+  resourceVersion: "4304"
+  uid: 61a3f401-6725-4791-84cc-3ec701e90a62
 spec:
   egress:
     - ports:
@@ -216,12 +237,14 @@ From the `DNSManipulation` SecurityIntent two security policies were generated:
   `kube-dns` pods within the `kube-system` namespace. This restricts access to the DNS server, enhancing security while
   enabling pods to resolve DNS names.
 
+**Enforcement is handled by the relevant security engines. Here, KubeArmor and a NetworkPolicy-enforcing CNI solution.**
+
 ## Cleanup
 
 * The SecurityIntent and SecurityIntentBinding created earlier are no longer needed and can be deleted:
 
 ```shell
-$ kubectl delete -f ./examples/namespaced/dns-manipulation-si-sib.yaml
+$ kubectl delete securityintent,securityintentbinding --all
 securityintent.intent.security.nimbus.com "dns-manipulation" deleted
 securityintentbinding.intent.security.nimbus.com "dns-manipulation-binding" deleted
 ```
@@ -229,18 +252,18 @@ securityintentbinding.intent.security.nimbus.com "dns-manipulation-binding" dele
 * Delete deployment
 
 ```shell
-$ kubectl delete -f ./examples/env/nginx-deploy.yaml
+$ kubectl delete deploy nginx
 deployment.apps "nginx" deleted
 ```
 
 * Confirm all resources have been deleted (Optional)
 
 ```shell
-$ kubectl get securityintent,securityintentbinding,nimbuspolicy,kubearmorpolicy,netpol -A
+$ kubectl get securityintent,securityintentbinding,nimbuspolicy,kubearmorpolicy,netpol
 No resources found
 ```
 
 ## Next steps
 
-- Try out other sample [SecurityIntents](../examples/namespaced) and review the policy generation.
+- Try out other [SecurityIntents](../examples/namespaced) and review the policy generation.
 - Checkout [Security Intents](https://github.com/5GSEC/security-intents).
