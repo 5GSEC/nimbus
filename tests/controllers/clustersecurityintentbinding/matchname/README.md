@@ -1,6 +1,12 @@
-# Test: `match-names-add-csib`
+# Test: `csib-match-names-add-update-csib`
 
-1. Adds a csib for matchNames with dev, staging 2. Delete staging ns 3. Update csib for matchNames with dev, prod
+Multiple scenarios are tested here 1. First we create the dev and staging namespaces. Then we add a csib with matchNames with 
+   dev, staging. This should result in creation of nimbus policies in dev, and staging namespaces
+   only, and not in other namespaces. 
+2. Then we delete the staging ns, and the nimbus policy in dev should not be affected. Also, no
+   nimbus policy should be present in prod.
+3. Then we update csib for matchNames with dev, prod. This should result in creation of nimbus
+  policy in prod ns. Also, nimbus policy in dev should also be present.
 
 
 ## Steps
