@@ -175,7 +175,7 @@ jobs:
     needs: files-changed
     if: ${{ needs.files-changed.outputs.nimbus == 'true' || needs.files-changed.outputs.adapters == 'true' || needs.files-changed.outputs.tests == 'true'}}
     name: E2E-Test
-    runs-on: ubuntu-latest
+    runs-on: bpflsm
     steps:
         - name: Checkout source code
           uses: actions/checkout@v4
