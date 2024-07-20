@@ -22,7 +22,7 @@ helm upgrade --dependency-update --install nimbus-kubearmor . -n nimbus
 | image.repository | string | 5gsec/nimbus-kubearmor | Image repository from which to pull the `nimbus-kubearmor` adapter's image |
 | image.pullPolicy | string | Always                 | `nimbus-kubearmor` adapter image pull policy                               |
 | image.tag        | string | latest                 | `nimbus-kubearmor` adapter image tag                                       |
-| autoDeploy       | bool   | true                   | Auto deploy [KubeArmor]() with default configurations                      |
+| autoDeploy       | bool   | true                   | Auto deploy [KubeArmor](https://kubearmor.io/) with default configurations |
 
 ## Uninstall the KubeArmor adapter
 
