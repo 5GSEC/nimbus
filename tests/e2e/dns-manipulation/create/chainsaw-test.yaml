@@ -9,6 +9,24 @@ spec:
   description: >
    This test validates that creating a `dns-manipulation` SecurityIntent with SecurityIntentBinding generates the expected Network Policy and KubeArmor policy and verifies its effect on a sample test workload.
   steps:
+
+    - name: "create nginx pod"
+      try:
+        - script:
+            content: kubectl run nginx --image=nginx --labels="app=nginx"
+      
+    - name: "verify creation of nginx pod"
+      try:
+      - script:
+          content: kubectl get pods -l app=nginx -o name
+          check:
+            (contains($stdout, 'pod/nginx')): true
+
+    - name: "install nslookup utility"
+      try:
+      - script:
+          content: kubectl exec nginx -- bash  -c "apt-get update && apt-get install dnsutils -y"
+
     - name: "Create a SecurityIntent"
       try:
         - apply:
@@ -61,17 +79,6 @@ spec:
           check: 
             (contains($stdout, 'KubeArmorPolicy/dns-manipulation-binding-dnsmanipulation')): true
 
-    - name: "create nginx pod"
-      try:
-        - script:
-            content: kubectl run nginx --image=nginx --labels="app=nginx"
-      
-    - name: "verify creation of nginx pod"
-      try:
-      - script:
-          content: kubectl get pods -l app=nginx -o name
-          check:
-            (contains($stdout, 'pod/nginx')): true
     
     - name: "Verify the failure of alter of resolv.conf in nginx pod"
       try:
@@ -80,6 +87,13 @@ spec:
           check:
             ($error != null): true
             (contains($stderr, 'Permission denied')): true
+    
+    - name: "Verify that failure of nslookup to example.com through public DNS due to netpol"
+      try:
+      - script:
+          content: kubectl exec nginx -- bash  -c "nslookup example.com  8.8.8.8"
+          check:
+          ($error != null): true
             
    
 

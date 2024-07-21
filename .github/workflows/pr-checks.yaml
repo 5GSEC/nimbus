@@ -190,6 +190,21 @@ jobs:
           uses: helm/kind-action@v1
           with:
             cluster_name: testing
+            config: ../kind-config.yaml
+        
+        - name: Install Calico Operator
+          run: | 
+            kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/tigera-operator.yaml
+
+
+        - name: Install Calico CNI
+          run: | 
+            kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/custom-resources.yaml        
+
+
+        - name: Wait for the Calico to be ready
+          run: |
+            kubectl wait --for=condition=ready --timeout=6m -n calico-system pod -l k8s-app=calico-node 
 
         - name: Build nimbus image and load in the kind cluster
           run: |
