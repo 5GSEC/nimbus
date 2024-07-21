@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: intent.security.nimbus.com/v1alpha1
+kind: SecurityIntentBinding
+metadata:
+  name: exploit-pfa-binding
+spec:
+  intents:
+    - name: exploit-pfa
+  selector:
+    workloadSelector:
+      matchLabels:
+        app: nginx

@@ -1,7 +1,13 @@
-# Test: `exclude-names-add-csib`
+# Test: `csib-exclude-names-add-update-csib`
 
-1. Add dev, staging, prod ns 2. Adds a csib for excludeNames with dev, staging 3. Update csib for excludeNames with dev, prod, regional 4. Add a ns with name management - this ns is not part of the excludeNames
-   Add a ns with name regional - this is part of the excludeNames
+This test case tests out multiple scenarios.  1. First we add namespaces dev, staging, and prod. Then we create a csib with excludeNames for
+   dev and staging. This should result in creation of Nimbus policies for all namespaces 
+   except "dev", "staging".
+2. Then we update csib for excludeNames with dev, prod, regional. This should result in the
+   deletion of the the prod nimbus policy
+3. Finally, we add a ns with names management, regional. management ns is not part of the excludeNames
+   while regional is part of the excludeNames. This step should result in creation of nimbus 
+   policy for management ns, and nimbus policy for regional should not be created
 
 
 ## Steps
@@ -24,6 +30,7 @@
 | 14 | [Verify NimbusPolicy absence in dev namespace](#step-Verify NimbusPolicy absence in dev namespace) | 0 | 1 | 0 | 0 |
 | 15 | [Verify NimbusPolicy absence in prod namespace](#step-Verify NimbusPolicy absence in prod namespace) | 0 | 1 | 0 | 0 |
 | 16 | [Verify NimbusPolicy absence in regional namespace](#step-Verify NimbusPolicy absence in regional namespace) | 0 | 1 | 0 | 0 |
+| 17 | [Verify NimbusPolicy presence in management](#step-Verify NimbusPolicy presence in management) | 0 | 1 | 0 | 0 |
 
 ### Step: `1. Create prod, dev, staging Namespaces`
 
@@ -176,6 +183,16 @@
 | 1 | `script` | 0 | 0 | *No description* |
 
 ### Step: `Verify NimbusPolicy absence in regional namespace`
+
+*No description*
+
+#### Try
+
+| # | Operation | Bindings | Outputs | Description |
+|:-:|---|:-:|:-:|---|
+| 1 | `script` | 0 | 0 | *No description* |
+
+### Step: `Verify NimbusPolicy presence in management`
 
 *No description*
 
