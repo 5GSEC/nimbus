@@ -161,7 +161,7 @@ spec:
     - jsonPath: .status.numberOfBoundIntents
       name: Intents
       type: integer
-    - jsonPath: .status.numberofNimbusPolicies
+    - jsonPath: .status.numberOfNimbusPolicies
       name: NimbusPolicies
       type: integer
     - jsonPath: .status.clusterNimbusPolicy
