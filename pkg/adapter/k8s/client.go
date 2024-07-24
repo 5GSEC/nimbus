@@ -15,6 +15,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"k8s.io/client-go/metadata"
 )
 
 // NewOrDie returns a new Kubernetes client and panics if there is an error in
@@ -53,6 +54,22 @@ func NewDynamicClient() dynamic.Interface {
 		panic(err)
 	}
 	return clientSet
+}
+
+func NewMetadataClient()  metadata.Interface {
+	config, err := rest.InClusterConfig()
+	if err != nil && errors.Is(err, rest.ErrNotInCluster) {
+		kubeconfig := filepath.Join(os.Getenv("HOME"), ".kube", "config")
+		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
+		if err != nil {
+			panic(err)
+		}
+	}
+	metadataClient, err := metadata.NewForConfig(config)
+	if err != nil {
+		panic(err)
+	}
+	return metadataClient
 }
 
 // NewOrDieStaticClient returns a new Kubernetes Clientset and panics if there is
