@@ -1,0 +1,18 @@
+# Default values for nimbus-k8tls.
+
+image:
+  repository: 5gsec/nimbus-k8tls
+  pullPolicy: Always
+  tag: "latest"
+
+nameOverride: ""
+fullnameOverride: "nimbus-k8tls"
+
+serviceAccount:
+  create: true
+  automount: true
+  name: "nimbus-k8tls"
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 65533

@@ -1,0 +1,14 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    {{- include "nimbus-kyverno.clusterRoleSelectorLabels" . | nindent 4 }}
+  name: nimbus-kyverno:update-resources
+rules:
+- apiGroups:
+  - '*'
+  resources:
+  - '*'
+  verbs:
+  - update
+  - patch

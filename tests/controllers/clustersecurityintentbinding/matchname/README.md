@@ -15,14 +15,13 @@
 | 6 | [Verify NimbusPolicy creation in staging namespace](#step-Verify NimbusPolicy creation in staging namespace) | 0 | 1 | 0 | 0 |
 | 7 | [Verify NimbusPolicy absence in prod](#step-Verify NimbusPolicy absence in prod) | 0 | 1 | 0 | 0 |
 | 8 | [Delete staging namespace](#step-Delete staging namespace) | 0 | 1 | 0 | 0 |
-| 9 | [Verify the NimbusPolicy deletion in staging](#step-Verify the NimbusPolicy deletion in staging) | 0 | 1 | 0 | 0 |
-| 10 | [Verify ClusterNimbusPolicy presence](#step-Verify ClusterNimbusPolicy presence) | 0 | 1 | 0 | 0 |
-| 11 | [Verify NimbusPolicy presence in dev namespace](#step-Verify NimbusPolicy presence in dev namespace) | 0 | 1 | 0 | 0 |
-| 12 | [Verify NimbusPolicy absence in prod](#step-Verify NimbusPolicy absence in prod) | 0 | 1 | 0 | 0 |
-| 13 | [Update the ClusterSecurityIntentBinding to add prod](#step-Update the ClusterSecurityIntentBinding to add prod) | 0 | 1 | 0 | 0 |
-| 14 | [Verify ClusterNimbusPolicy presence](#step-Verify ClusterNimbusPolicy presence) | 0 | 1 | 0 | 0 |
-| 15 | [Verify NimbusPolicy presence in dev namespace](#step-Verify NimbusPolicy presence in dev namespace) | 0 | 1 | 0 | 0 |
-| 16 | [Verify NimbusPolicy presence in prod namespace](#step-Verify NimbusPolicy presence in prod namespace) | 0 | 1 | 0 | 0 |
+| 9 | [Verify ClusterNimbusPolicy presence](#step-Verify ClusterNimbusPolicy presence) | 0 | 1 | 0 | 0 |
+| 10 | [Verify NimbusPolicy presence in dev namespace](#step-Verify NimbusPolicy presence in dev namespace) | 0 | 1 | 0 | 0 |
+| 11 | [Verify NimbusPolicy absence in prod](#step-Verify NimbusPolicy absence in prod) | 0 | 1 | 0 | 0 |
+| 12 | [Update the ClusterSecurityIntentBinding to add prod](#step-Update the ClusterSecurityIntentBinding to add prod) | 0 | 1 | 0 | 0 |
+| 13 | [Verify ClusterNimbusPolicy presence](#step-Verify ClusterNimbusPolicy presence) | 0 | 1 | 0 | 0 |
+| 14 | [Verify NimbusPolicy presence in dev namespace](#step-Verify NimbusPolicy presence in dev namespace) | 0 | 1 | 0 | 0 |
+| 15 | [Verify NimbusPolicy presence in prod namespace](#step-Verify NimbusPolicy presence in prod namespace) | 0 | 1 | 0 | 0 |
 
 ### Step: `Create prod, dev, staging Namespaces`
 
@@ -103,16 +102,6 @@
 | # | Operation | Bindings | Outputs | Description |
 |:-:|---|:-:|:-:|---|
 | 1 | `delete` | 0 | 0 | *No description* |
-
-### Step: `Verify the NimbusPolicy deletion in staging`
-
-*No description*
-
-#### Try
-
-| # | Operation | Bindings | Outputs | Description |
-|:-:|---|:-:|:-:|---|
-| 1 | `script` | 0 | 0 | *No description* |
 
 ### Step: `Verify ClusterNimbusPolicy presence`
 

@@ -1,0 +1,26 @@
+apiVersion: intent.security.nimbus.com/v1alpha1
+kind: SecurityIntent
+metadata:
+  name: deny-ext-nw-access
+spec: 
+  intent:
+    id: denyExternalNetworkAccess
+    description: "Deny external network access to prevent data exfiltration"
+    action: Block
+
+---
+
+apiVersion: intent.security.nimbus.com/v1alpha1
+kind: ClusterSecurityIntentBinding
+metadata:
+  name: deny-ext-nw-access-foo-binding
+spec:
+  intents:
+    - name: deny-ext-nw-access
+  selector:
+    nsSelector:
+      matchNames:
+        - default
+    workloadSelector:
+      matchLabels:
+        app: nginx

@@ -5,28 +5,29 @@ package util
 
 import (
 	"context"
+	"slices"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	v1alpha1 "github.com/5GSEC/nimbus/api/v1alpha1"
+	"github.com/5GSEC/nimbus/api/v1alpha1"
 )
 
-// ExtractNpName extracts the actual NimbusPolicy name from a formatted policy
-// name.
-func ExtractNpName(policyName string) string {
+// ExtractAnyNimbusPolicyName extracts the actual
+// NimbusPolicy/ClusterNimbusPolicy name from a formatted policy name.
+func ExtractAnyNimbusPolicyName(policyName string) string {
 	words := strings.Split(policyName, "-")
 	return strings.Join(words[:len(words)-1], "-")
 }
 
-// UpdateNpStatus updates the provided NimbusPolicy status with the number and
-// names of its descendant policies that were created. Every adapter is
-// responsible for updating the status field of the corresponding NimbusPolicy
+// UpdateNpStatus updates the provided NimbusPolicy status subresource with the
+// number and names of its descendant policies that were created. Every adapter
+// is responsible for updating the status field of the corresponding NimbusPolicy
 // with the number and names of successfully created policies by calling this
 // API. This provides feedback to users about the translation and deployment of
-// their security intent
+// their security intent.
 func UpdateNpStatus(ctx context.Context, k8sClient client.Client, currPolicyFullName, npName, namespace string, decrement bool) error {
 	// Since multiple adapters may attempt to update the NimbusPolicy status
 	// concurrently, potentially leading to conflicts. To ensure data consistency,
@@ -52,7 +53,7 @@ func UpdateNpStatus(ctx context.Context, k8sClient client.Client, currPolicyFull
 }
 
 func updateCountAndPoliciesName(latestNp *v1alpha1.NimbusPolicy, currPolicyFullName string, decrement bool) {
-	if !contains(latestNp.Status.Policies, currPolicyFullName) {
+	if !slices.Contains(latestNp.Status.Policies, currPolicyFullName) {
 		latestNp.Status.NumberOfAdapterPolicies++
 		latestNp.Status.Policies = append(latestNp.Status.Policies, currPolicyFullName)
 	}
@@ -66,13 +67,4 @@ func updateCountAndPoliciesName(latestNp *v1alpha1.NimbusPolicy, currPolicyFullN
 			}
 		}
 	}
-}
-
-func contains(existingPolicies []string, policy string) bool {
-	for _, existingPolicy := range existingPolicies {
-		if existingPolicy == policy {
-			return true
-		}
-	}
-	return false
 }

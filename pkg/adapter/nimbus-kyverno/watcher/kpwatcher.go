@@ -5,17 +5,20 @@ package watcher
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/5GSEC/nimbus/pkg/adapter/common"
 	"github.com/5GSEC/nimbus/pkg/adapter/k8s"
+	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kyverno/utils"
+	adapterutil "github.com/5GSEC/nimbus/pkg/adapter/util"
+	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/tools/cache"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	adapterutil "github.com/5GSEC/nimbus/pkg/adapter/util"
 )
 
 var (
@@ -45,21 +48,58 @@ func WatchKps(ctx context.Context, updatedKpCh, deletedKpCh chan common.Request)
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			oldU := oldObj.(*unstructured.Unstructured)
 			newU := newObj.(*unstructured.Unstructured)
-
 			if adapterutil.IsOrphan(newU.GetOwnerReferences(), "NimbusPolicy") {
 				logger.V(4).Info("Ignoring orphan KyvernoPolicy", "KyvernoPolicy.Name", oldU.GetName(), "KyvernoPolicy.Namespace", oldU.GetNamespace(), "Operation", "Update")
 				return
 			}
 
-			if oldU.GetGeneration() == newU.GetGeneration() {
+			var oldKp kyvernov1.Policy
+			var newKp kyvernov1.Policy
+			err := runtime.DefaultUnstructuredConverter.FromUnstructured(oldU.Object, &oldKp)
+			if err != nil {
+				logger.Error(err, "failed to convert to kyverno policy")
 				return
 			}
 
-			kpNamespacedName := common.Request{
-				Name:      newU.GetName(),
-				Namespace: newU.GetNamespace(),
+			err = runtime.DefaultUnstructuredConverter.FromUnstructured(newU.Object, &newKp)
+			if err != nil {
+				logger.Error(err, "failed to convert to kyverno policy")
+				return
 			}
-			updatedKpCh <- kpNamespacedName
+
+			oldConditions := oldKp.Status.Conditions
+			newConditions := newKp.Status.Conditions
+
+			if !strings.Contains(newKp.GetName(), "mutateexisting") {
+				if oldU.GetGeneration() == newU.GetGeneration() {
+					return
+				}
+				kpNamespacedName := common.Request{
+					Name:      newU.GetName(),
+					Namespace: newU.GetNamespace(),
+				}
+				updatedKpCh <- kpNamespacedName
+				return
+			}
+
+			// for mutate existing policy
+			if oldU.GetGeneration() == newU.GetGeneration() {
+				if utils.CheckIfReady(newConditions) && !utils.CheckIfReady(oldConditions) {
+					kpNamespacedName := common.Request{
+						Name:      newU.GetName(),
+						Namespace: newU.GetNamespace(),
+					}
+					updatedKpCh <- kpNamespacedName
+					return
+				}
+				return
+			} else {
+				kpNamespacedName := common.Request{
+					Name:      newU.GetName(),
+					Namespace: newU.GetNamespace(),
+				}
+				updatedKpCh <- kpNamespacedName
+			}
 		},
 		DeleteFunc: func(obj interface{}) {
 			u := obj.(*unstructured.Unstructured)
@@ -82,3 +122,5 @@ func WatchKps(ctx context.Context, updatedKpCh, deletedKpCh chan common.Request)
 	logger.Info("KyvernoPolicy watcher started")
 	informer.Run(ctx.Done())
 }
+
+

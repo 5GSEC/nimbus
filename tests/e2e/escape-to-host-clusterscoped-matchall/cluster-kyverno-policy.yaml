@@ -1,0 +1,47 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2024 Authors of Nimbus
+
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  annotations:
+    app.kubernetes.io/managed-by: nimbus-kyverno
+    policies.kyverno.io/description: A attacker can breach container boundaries and
+      can gain access to the host machine
+  name: escape-to-host-binding-escapetohost
+  ownerReferences:
+  - apiVersion: intent.security.nimbus.com/v1alpha1
+    blockOwnerDeletion: true
+    controller: true
+    kind: ClusterNimbusPolicy
+    name: escape-to-host-binding
+spec:
+  admission: true
+  background: true
+  rules:
+  - exclude:
+      any:
+      - resources:
+          namespaces:
+          - kube-system
+      resources: {}
+    generate:
+      clone: {}
+      cloneList: {}
+    match:
+      any:
+      - resources:
+          kinds:
+          - v1/Pod
+          selector:
+            matchLabels:
+              app: nginx
+      resources: {}
+    mutate: {}
+    name: pod-security-standard 
+    skipBackgroundRequests: true
+    validate:
+      podSecurity:
+        level: baseline
+        version: latest
+  validationFailureAction: Enforce

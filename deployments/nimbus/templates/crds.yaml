@@ -161,6 +161,9 @@ spec:
     - jsonPath: .status.numberOfBoundIntents
       name: Intents
       type: integer
+    - jsonPath: .status.numberOfNimbusPolicies
+      name: NimbusPolicies
+      type: integer
     - jsonPath: .status.clusterNimbusPolicy
       name: ClusterNimbusPolicy
       type: string
@@ -250,7 +253,14 @@ spec:
               lastUpdated:
                 format: date-time
                 type: string
+              nimbusPolicyNamespaces:
+                items:
+                  type: string
+                type: array
               numberOfBoundIntents:
+                format: int32
+                type: integer
+              numberOfNimbusPolicies:
                 format: int32
                 type: integer
               status:
@@ -258,6 +268,7 @@ spec:
             required:
             - clusterNimbusPolicy
             - numberOfBoundIntents
+            - numberOfNimbusPolicies
             - status
             type: object
         type: object

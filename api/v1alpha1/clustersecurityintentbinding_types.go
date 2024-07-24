@@ -27,11 +27,13 @@ type ClusterSecurityIntentBindingSpec struct {
 
 // ClusterSecurityIntentBindingStatus defines the observed state of ClusterSecurityIntentBinding
 type ClusterSecurityIntentBindingStatus struct {
-	Status               string      `json:"status"`
-	LastUpdated          metav1.Time `json:"lastUpdated,omitempty"`
-	NumberOfBoundIntents int32       `json:"numberOfBoundIntents"`
-	BoundIntents         []string    `json:"boundIntents,omitempty"`
-	ClusterNimbusPolicy  string      `json:"clusterNimbusPolicy"`
+	Status                 string      `json:"status"`
+	LastUpdated            metav1.Time `json:"lastUpdated,omitempty"`
+	NumberOfBoundIntents   int32       `json:"numberOfBoundIntents"`
+	BoundIntents           []string    `json:"boundIntents,omitempty"`
+	ClusterNimbusPolicy    string      `json:"clusterNimbusPolicy"`
+	NumberOfNimbusPolicies int32       `json:"numberOfNimbusPolicies"`
+	NimbusPolicyNamespaces []string    `json:"nimbusPolicyNamespaces,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -40,6 +42,7 @@ type ClusterSecurityIntentBindingStatus struct {
 //+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status"
 //+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 //+kubebuilder:printcolumn:name="Intents",type="integer",JSONPath=".status.numberOfBoundIntents"
+//+kubebuilder:printcolumn:name="NimbusPolicies",type="integer",JSONPath=".status.numberOfNimbusPolicies"
 //+kubebuilder:printcolumn:name="ClusterNimbusPolicy",type="string",JSONPath=".status.clusterNimbusPolicy"
 //+k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 

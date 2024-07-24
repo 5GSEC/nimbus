@@ -1,17 +1,21 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2024 Authors of Nimbus
+# Copyright 2023 Authors of Nimbus
 
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: Test
 metadata:
-  name: exclude-names-add-csib
+  name: csib-exclude-names-add-update-csib
 spec:
   description: >
-    1. Add dev, staging, prod ns
-    2. Adds a csib for excludeNames with dev, staging
-    3. Update csib for excludeNames with dev, prod, regional
-    4. Add a ns with name management - this ns is not part of the excludeNames
-       Add a ns with name regional - this is part of the excludeNames
+    This test case tests out multiple scenarios. 
+    1. First we add namespaces dev, staging, and prod. Then we create a csib with excludeNames for
+       dev and staging. This should result in creation of Nimbus policies for all namespaces 
+       except "dev", "staging".
+    2. Then we update csib for excludeNames with dev, prod, regional. This should result in the
+       deletion of the the prod nimbus policy
+    3. Finally, we add a ns with names management, regional. management ns is not part of the excludeNames
+       while regional is part of the excludeNames. This step should result in creation of nimbus 
+       policy for management ns, and nimbus policy for regional should not be created
   steps:
     - name: "1. Create prod, dev, staging Namespaces"
       try:
@@ -36,14 +40,14 @@ spec:
     - name: "Verify NimbusPolicy absence in dev namespace"
       try:
         - script:
-            content: kubectl -n dev get np nimbus-ctrl-gen-escape-to-host
+            content: kubectl -n dev get np nimbus-ctlr-gen-escape-to-host
             check:
               ($error != null): true
 
     - name: "Verify NimbusPolicy absence in staging namespace"
       try:
         - script:
-            content: kubectl -n staging get np nimbus-ctrl-gen-escape-to-host
+            content: kubectl -n staging get np nimbus-ctlr-gen-escape-to-host
             check:
               ($error != null): true
 
@@ -65,14 +69,14 @@ spec:
     - name: "Verify NimbusPolicy absence in dev namespace"
       try:
         - script:
-            content: kubectl -n dev get np nimbus-ctrl-gen-escape-to-host
+            content: kubectl -n dev get np nimbus-ctlr-gen-escape-to-host
             check:
               ($error != null): true
 
     - name: "Verify NimbusPolicy absence in prod namespace"
       try:
         - script:
-            content: kubectl -n prod get np nimbus-ctrl-gen-escape-to-host
+            content: kubectl -n prod get np nimbus-ctlr-gen-escape-to-host
             check:
               ($error != null): true
 
@@ -89,27 +93,27 @@ spec:
     - name: "Verify NimbusPolicy absence in dev namespace"
       try:
         - script:
-            content: kubectl -n dev get np nimbus-ctrl-gen-escape-to-host
+            content: kubectl -n dev get np nimbus-ctlr-gen-escape-to-host
             check:
               ($error != null): true
 
     - name: "Verify NimbusPolicy absence in prod namespace"
       try:
         - script:
-            content: kubectl -n prod get np nimbus-ctrl-gen-escape-to-host
-            check:
-              ($error != null): true
-
-    - name: "Verify NimbusPolicy absence in prod namespace"
-      try:
-        - script:
-            content: kubectl -n prod get np nimbus-ctrl-gen-escape-to-host
+            content: kubectl -n prod get np nimbus-ctlr-gen-escape-to-host
             check:
               ($error != null): true
 
     - name: "Verify NimbusPolicy absence in regional namespace"
       try:
         - script:
-            content: kubectl -n regional get np nimbus-ctrl-gen-escape-to-host
+            content: kubectl -n regional get np nimbus-ctlr-gen-escape-to-host
             check:
               ($error != null): true
+
+    - name: "Verify NimbusPolicy presence in management"
+      try:
+        - script:
+            content: kubectl -n management get np nimbus-ctlr-gen-escape-to-host
+            check:
+              ($error == null): true

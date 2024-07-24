@@ -268,8 +268,8 @@ func disallowChRoot() kubearmorv1.KubeArmorPolicy {
 func disallowBinaries() kubearmorv1.KubeArmorPolicy { // ref: https://www.tenable.com/audits/items/search?q=noexec&sort=&page=1
 	return kubearmorv1.KubeArmorPolicy{
 		Spec: kubearmorv1.KubeArmorPolicySpec{
-			File: kubearmorv1.FileType{
-				MatchDirectories: []kubearmorv1.FileDirectoryType{
+			Process: kubearmorv1.ProcessType{
+				MatchDirectories: []kubearmorv1.ProcessDirectoryType{
 					{
 						Directory: "/var/tmp/",
 						Recursive: true,
@@ -292,10 +292,6 @@ func disallowBinaries() kubearmorv1.KubeArmorPolicy { // ref: https://www.tenabl
 					},
 					{
 						Directory: "/etc/",
-						Recursive: true,
-					},
-					{
-						Directory: "/usr/lib/",
 						Recursive: true,
 					},
 				},
