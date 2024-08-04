@@ -7,7 +7,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
-
+	"os"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,6 +20,7 @@ import (
 var (
 	DefaultSchedule           = "@weekly"
 	backOffLimit              = int32(5)
+	ttlSecondsAfterFinished   = int32(3600)
 	hostPathDirectoryOrCreate = corev1.HostPathDirectoryOrCreate
 )
 
@@ -66,6 +67,7 @@ func ensureTlsCronJob(rule v1alpha1.NimbusRules) (*batchv1.CronJob, *corev1.Conf
 }
 
 func cronJobForEnsureTls(schedule string, externalAddresses ...string) (*batchv1.CronJob, *corev1.ConfigMap) {
+	output := os.Getenv("OUTPUT")
 	cj := &batchv1.CronJob{
 		Spec: batchv1.CronJobSpec{
 			Schedule: schedule,
@@ -75,7 +77,7 @@ func cronJobForEnsureTls(schedule string, externalAddresses ...string) (*batchv1
 					Template: corev1.PodTemplateSpec{
 						Spec: corev1.PodSpec{
 							RestartPolicy: corev1.RestartPolicyNever,
-							Containers: []corev1.Container{
+							InitContainers: []corev1.Container{
 								{
 									Name:            "k8tls",
 									Image:           "kubearmor/k8tls:latest",
@@ -86,6 +88,24 @@ func cronJobForEnsureTls(schedule string, externalAddresses ...string) (*batchv1
 											Name:      "fips-config",
 											MountPath: "/home/k8tls/config/",
 											ReadOnly:  true,
+										},
+										{
+											Name:      "k8tls-report",
+											MountPath: "/tmp/",
+										},
+									},
+								},
+							},
+							Containers: []corev1.Container{
+								{
+									Name:            "fluent-bit",
+									Image:           "fluent/fluent-bit:latest",
+									ImagePullPolicy: corev1.PullAlways,
+									VolumeMounts: []corev1.VolumeMount{
+										{
+											Name:      "fluent-bit-config",
+											MountPath: "/fluent-bit/etc/fluent-bit.conf",
+											SubPath: "fluent-bit.conf",
 										},
 										{
 											Name:      "k8tls-report",
@@ -106,12 +126,19 @@ func cronJobForEnsureTls(schedule string, externalAddresses ...string) (*batchv1
 									},
 								},
 								{
+									Name: "fluent-bit-config",
+									VolumeSource: corev1.VolumeSource{
+										ConfigMap: &corev1.ConfigMapVolumeSource{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: "fluent-bit-config",
+											},
+										},
+									},
+								},
+								{
 									Name: "k8tls-report",
 									VolumeSource: corev1.VolumeSource{
-										HostPath: &corev1.HostPathVolumeSource{
-											Path: "/tmp/",
-											Type: &hostPathDirectoryOrCreate,
-										},
+										EmptyDir: &corev1.EmptyDirVolumeSource{},
 									},
 								},
 							},
@@ -120,6 +147,24 @@ func cronJobForEnsureTls(schedule string, externalAddresses ...string) (*batchv1
 				},
 			},
 		},
+	}
+
+	if output == "ELASTICSEARCH" {
+		// If we are sending the report to elasticsearch, then we delete the pod spawned by job after 1 hour. Else we keep the pod 
+		cj.Spec.JobTemplate.Spec.TTLSecondsAfterFinished = &ttlSecondsAfterFinished
+		cj.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Env = []corev1.EnvVar{
+			{
+				Name: "ES_PASSWORD",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: "elasticsearch-password",
+						},
+						Key: "es_password",
+					},
+				},
+			},
+		}
 	}
 
 	if len(externalAddresses) > 0 {

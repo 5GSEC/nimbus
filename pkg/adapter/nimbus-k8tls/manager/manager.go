@@ -5,8 +5,8 @@ package manager
 
 import (
 	"context"
+	"os"
 	"strings"
-
 	"github.com/go-logr/logr"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -31,7 +31,7 @@ import (
 var (
 	scheme        = runtime.NewScheme()
 	k8sClient     client.Client
-	NamespaceName = "nimbus-k8tls-env"
+	NamespaceName string
 )
 
 func init() {
@@ -55,6 +55,8 @@ func Run(ctx context.Context) {
 	deletedCronJobCh := make(chan common.Request)
 	go watcher.WatchCronJobs(ctx, updateCronJobCh, deletedCronJobCh)
 
+	// Get the namespace name within which the k8tls environment needs to be set
+	NamespaceName = os.Getenv("K8TLS_NAMESPACE")
 	for {
 		select {
 		case <-ctx.Done():
