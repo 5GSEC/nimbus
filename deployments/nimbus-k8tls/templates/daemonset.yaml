@@ -21,4 +21,11 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+          - name: K8TLS_NAMESPACE
+            value: {{ include "nimbus-k8tls.fullname" . }}-env
+          {{- if .Values.output.elasticsearch.enabled }}
+          - name: OUTPUT
+            value: "ELASTICSEARCH"
+          {{- end }}
       terminationGracePeriodSeconds: 10

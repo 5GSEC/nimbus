@@ -23,6 +23,20 @@ helm upgrade --install nimbus-k8tls . -n nimbus
 | image.pullPolicy | string | Always             | `nimbus-k8tls` adapter image pull policy                               |
 | image.tag        | string | latest             | `nimbus-k8tls` adapter image tag                                       |
 
+Set the following values accordingly to send the k8tls report to elasticsearch (By default we send report to STDOUT)
+
+##
+
+| Key                          | Type   | Default            | Description                                                     |
+|------------------------------|--------|--------------------|-----------------------------------------------------------------|
+| output.elasticsearch.enabled | bool   | false              |  Elasticsearch enabled or not                                   |
+| elasticsearch.host           | string | localhost          |  Elasticsearch host                                             |
+| elasticsearch.user           | string | elastic            |  Elastic user                                                   |
+| elasticsearch.port           | string | 9200               |  Elasticsearch port                                             |
+| elasticsearch.index          | string | findings           |  Elasticsearch index                                            |
+| output.elasticsearch.password| string |                    |  The password in base64 encoded format                          |
+
+
 ## Verify if all the resources are up and running
 
 Once done, the following resources will exist in your cluster:
