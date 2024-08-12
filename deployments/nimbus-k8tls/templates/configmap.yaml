@@ -13,7 +13,7 @@ data:
      [INPUT]
         Name           tail
         Path           /tmp/compact_report.json
-        Parser         JSON
+        Parser         json
         Tag            json.data
         DB             /tmp/compact_report.db
         Read_from_Head true

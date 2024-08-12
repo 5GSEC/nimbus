@@ -7,3 +7,10 @@ type Request struct {
 	Name      string
 	Namespace string
 }
+
+type ContextKey string
+
+const (
+	K8sClientKey     ContextKey = "k8sClient"
+	NamespaceNameKey ContextKey = "NamespaceName"
+)

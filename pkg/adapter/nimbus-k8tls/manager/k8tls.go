@@ -27,18 +27,14 @@ import (
 func setupK8tlsEnv(ctx context.Context, cwnp v1alpha1.ClusterNimbusPolicy, scheme *runtime.Scheme, k8sClient client.Client) error {
 	logger := log.FromContext(ctx)
 
-	ns := &corev1.Namespace{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: corev1.SchemeGroupVersion.String(),
-			Kind:       "Namespace",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:   NamespaceName,
-			Labels: cwnp.Labels,
-			Annotations: map[string]string{
-				"app.kubernetes.io/managed-by": "nimbus-k8tls",
-			},
-		},
+	// Retrieve the namespace
+	ns := &corev1.Namespace{}
+	err := k8sClient.Get(ctx, client.ObjectKey{Name: NamespaceName}, ns)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			logger.Error(err, "failed to fetch Namespace", "Namespace.Name", NamespaceName)
+		}
+		return err
 	}
 
 	cm := &corev1.ConfigMap{
