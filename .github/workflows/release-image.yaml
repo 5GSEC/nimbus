@@ -50,7 +50,7 @@ jobs:
         working-directory: ${{ inputs.WORKING_DIRECTORY }}
 
       - name: Scan image
-        uses: anchore/scan-action@v3
+        uses: anchore/scan-action@v4
         with:
           image: '5gsec/${{ inputs.NAME }}:${{ steps.tag.outputs.tag }}'
           severity-cutoff: critical
