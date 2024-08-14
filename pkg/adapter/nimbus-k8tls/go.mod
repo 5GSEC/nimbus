@@ -9,10 +9,10 @@ replace github.com/5GSEC/nimbus => ../../../../nimbus
 require (
 	github.com/5GSEC/nimbus v0.0.0-20240313065715-b91563b0ccd3
 	github.com/go-logr/logr v1.4.2
-	k8s.io/api v0.30.1
-	k8s.io/apimachinery v0.30.1
-	k8s.io/client-go v0.30.1
-	sigs.k8s.io/controller-runtime v0.18.2
+	k8s.io/api v0.30.3
+	k8s.io/apimachinery v0.30.3
+	k8s.io/client-go v0.30.3
+	sigs.k8s.io/controller-runtime v0.18.3
 )
 
 require (
