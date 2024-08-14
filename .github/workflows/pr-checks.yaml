@@ -34,9 +34,9 @@ jobs:
               - 'cmd/**'
               - 'internal/**'
               - 'pkg/processor/**'
-              - 'tests/controllers/**'
               - 'Dockerfile'
               - 'Makefile'
+              - 'go.mod'
             adapters:
               - 'pkg/adapter/**'
             tests:
@@ -112,6 +112,13 @@ jobs:
       - name: Build image
         run: make docker-build
 
+      - name: Scan image
+        uses: anchore/scan-action@v4
+        with:
+          image: '5gsec/nimbus:latest'
+          severity-cutoff: critical
+          output-format: sarif
+
   build-adapters-image:
     needs: files-changed
     if: ${{ needs.files-changed.outputs.adapters == 'true' }}
@@ -128,6 +135,13 @@ jobs:
       - name: Build image
         working-directory: ./pkg/adapter/${{ matrix.adapters }}
         run: make docker-build
+
+      - name: Scan image
+        uses: anchore/scan-action@v4
+        with:
+          image: '5gsec/${{ matrix.adapters }}:latest'
+          severity-cutoff: critical
+          output-format: sarif
 
   integration-tests:
     needs: files-changed
