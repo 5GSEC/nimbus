@@ -55,6 +55,7 @@ func Run(ctx context.Context) {
 	deletedCronJobCh := make(chan common.Request)
 	go watcher.WatchCronJobs(ctx, updateCronJobCh, deletedCronJobCh)
 
+	// Get the namespace name within which the k8tls environment needs to be set
 	for {
 		select {
 		case <-ctx.Done():
@@ -106,7 +107,9 @@ func createOrUpdateCronJob(ctx context.Context, cwnpName string) {
 	}
 
 	deleteDanglingCj(ctx, logger, cwnp)
-	cronJob, configMap := builder.BuildCronJob(ctx, cwnp)
+	newCtx := context.WithValue(ctx, common.K8sClientKey, k8sClient)
+	newCtx = context.WithValue(newCtx, common.NamespaceNameKey, NamespaceName)
+	cronJob, configMap := builder.BuildCronJob(newCtx, cwnp)
 
 	if cronJob != nil {
 		if err := setupK8tlsEnv(ctx, cwnp, scheme, k8sClient); err != nil {

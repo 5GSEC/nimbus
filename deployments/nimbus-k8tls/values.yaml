@@ -16,3 +16,14 @@ serviceAccount:
 securityContext:
   runAsNonRoot: true
   runAsUser: 65533
+
+output:
+  elasticsearch:
+    enabled: false  
+    host: "localhost"
+    user: elastic
+    port: 9200
+    index: "findings"
+    password: "" # Password in base64 encoded format
+    ttlsecondsafterfinished: "10" # Amount of time to keep the pod around after job has been completed
+    

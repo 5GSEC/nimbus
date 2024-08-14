@@ -6,21 +6,23 @@ package builder
 import (
 	"context"
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 
+	"github.com/5GSEC/nimbus/api/v1alpha1"
+	"github.com/5GSEC/nimbus/pkg/adapter/common"
+	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	"github.com/5GSEC/nimbus/api/v1alpha1"
-	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 )
 
 var (
-	DefaultSchedule           = "@weekly"
-	backOffLimit              = int32(5)
-	hostPathDirectoryOrCreate = corev1.HostPathDirectoryOrCreate
+	DefaultSchedule = "@weekly"
+	backOffLimit    = int32(5)	
 )
 
 func BuildCronJob(ctx context.Context, cwnp v1alpha1.ClusterNimbusPolicy) (*batchv1.CronJob, *corev1.ConfigMap) {
@@ -28,7 +30,7 @@ func BuildCronJob(ctx context.Context, cwnp v1alpha1.ClusterNimbusPolicy) (*batc
 	for _, nimbusRule := range cwnp.Spec.NimbusRules {
 		id := nimbusRule.ID
 		if idpool.IsIdSupportedBy(id, "k8tls") {
-			cronJob, configMap := cronJobFor(id, nimbusRule)
+			cronJob, configMap := cronJobFor(ctx, id, nimbusRule)
 			cronJob.SetName(cwnp.Name + "-" + strings.ToLower(id))
 			cronJob.SetAnnotations(map[string]string{
 				"app.kubernetes.io/managed-by": "nimbus-k8tls",
@@ -41,31 +43,32 @@ func BuildCronJob(ctx context.Context, cwnp v1alpha1.ClusterNimbusPolicy) (*batc
 	return nil, nil
 }
 
-func cronJobFor(id string, rule v1alpha1.NimbusRules) (*batchv1.CronJob, *corev1.ConfigMap) {
+func cronJobFor(ctx context.Context, id string, rule v1alpha1.NimbusRules) (*batchv1.CronJob, *corev1.ConfigMap) {
 	switch id {
 	case idpool.EnsureTLS:
-		return ensureTlsCronJob(rule)
+		return ensureTlsCronJob(ctx, rule)
 	default:
 		return nil, nil
 	}
 }
 
-func ensureTlsCronJob(rule v1alpha1.NimbusRules) (*batchv1.CronJob, *corev1.ConfigMap) {
+func ensureTlsCronJob(ctx context.Context, rule v1alpha1.NimbusRules) (*batchv1.CronJob, *corev1.ConfigMap) {
 	schedule, scheduleKeyExists := rule.Rule.Params["schedule"]
 	externalAddresses, addrKeyExists := rule.Rule.Params["external_addresses"]
 	if scheduleKeyExists && addrKeyExists {
-		return cronJobForEnsureTls(schedule[0], externalAddresses...)
+		return cronJobForEnsureTls(ctx, schedule[0], externalAddresses...)
 	}
 	if scheduleKeyExists {
-		return cronJobForEnsureTls(schedule[0])
+		return cronJobForEnsureTls(ctx, schedule[0])
 	}
 	if addrKeyExists {
-		return cronJobForEnsureTls(DefaultSchedule, externalAddresses...)
+		return cronJobForEnsureTls(ctx, DefaultSchedule, externalAddresses...)
 	}
-	return cronJobForEnsureTls(DefaultSchedule)
+	return cronJobForEnsureTls(ctx, DefaultSchedule)
 }
 
-func cronJobForEnsureTls(schedule string, externalAddresses ...string) (*batchv1.CronJob, *corev1.ConfigMap) {
+func cronJobForEnsureTls(ctx context.Context, schedule string, externalAddresses ...string) (*batchv1.CronJob, *corev1.ConfigMap) {
+	logger := log.FromContext(ctx)
 	cj := &batchv1.CronJob{
 		Spec: batchv1.CronJobSpec{
 			Schedule: schedule,
@@ -75,7 +78,7 @@ func cronJobForEnsureTls(schedule string, externalAddresses ...string) (*batchv1
 					Template: corev1.PodTemplateSpec{
 						Spec: corev1.PodSpec{
 							RestartPolicy: corev1.RestartPolicyNever,
-							Containers: []corev1.Container{
+							InitContainers: []corev1.Container{
 								{
 									Name:            "k8tls",
 									Image:           "kubearmor/k8tls:latest",
@@ -85,6 +88,25 @@ func cronJobForEnsureTls(schedule string, externalAddresses ...string) (*batchv1
 										{
 											Name:      "fips-config",
 											MountPath: "/home/k8tls/config/",
+											ReadOnly:  true,
+										},
+										{
+											Name:      "k8tls-report",
+											MountPath: "/tmp/",
+										},
+									},
+								},
+							},
+							Containers: []corev1.Container{
+								{
+									Name:            "fluent-bit",
+									Image:           "fluent/fluent-bit:latest",
+									ImagePullPolicy: corev1.PullAlways,
+									VolumeMounts: []corev1.VolumeMount{
+										{
+											Name:      "fluent-bit-config",
+											MountPath: "/fluent-bit/etc/fluent-bit.conf",
+											SubPath:   "fluent-bit.conf",
 											ReadOnly:  true,
 										},
 										{
@@ -106,12 +128,19 @@ func cronJobForEnsureTls(schedule string, externalAddresses ...string) (*batchv1
 									},
 								},
 								{
+									Name: "fluent-bit-config",
+									VolumeSource: corev1.VolumeSource{
+										ConfigMap: &corev1.ConfigMapVolumeSource{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: "fluent-bit-config",
+											},
+										},
+									},
+								},
+								{
 									Name: "k8tls-report",
 									VolumeSource: corev1.VolumeSource{
-										HostPath: &corev1.HostPathVolumeSource{
-											Path: "/tmp/",
-											Type: &hostPathDirectoryOrCreate,
-										},
+										EmptyDir: &corev1.EmptyDirVolumeSource{},
 									},
 								},
 							},
@@ -120,6 +149,35 @@ func cronJobForEnsureTls(schedule string, externalAddresses ...string) (*batchv1
 				},
 			},
 		},
+	}
+
+	// Fetch the elasticsearch password secret. If the secret is present, set TTLSecondsAfterFinished and reference the secret in the cronjob templateZ
+	var elasticsearchPasswordSecret corev1.Secret
+	err := ctx.Value(common.K8sClientKey).(client.Client).Get(ctx, client.ObjectKey{Namespace: ctx.Value(common.NamespaceNameKey).(string), Name: "elasticsearch-password"}, &elasticsearchPasswordSecret)
+	if err == nil {
+		// Convert string to int
+		i, err := strconv.ParseInt(os.Getenv("TTLSECONDSAFTERFINISHED"), 10, 32)
+		if err != nil {
+			logger.Error(err, "Error converting string to int", "TTLSECONDSAFTERFINISHED: ", os.Getenv("TTLSECONDSAFTERFINISHED"))
+			return nil, nil
+		}
+		// Convert int to int32
+		ttlSecondsAfterFinished := int32(i)
+		// If we are sending the report to elasticsearch, then we delete the pod spawned by job after 1 hour. Else we keep the pod
+		cj.Spec.JobTemplate.Spec.TTLSecondsAfterFinished = &ttlSecondsAfterFinished
+		cj.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Env = []corev1.EnvVar{
+			{
+				Name: "ES_PASSWORD",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: "elasticsearch-password",
+						},
+						Key: "es_password",
+					},
+				},
+			},
+		}
 	}
 
 	if len(externalAddresses) > 0 {
