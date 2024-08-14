@@ -6,16 +6,23 @@ toolchain go1.22.1
 
 require github.com/kyverno/kyverno v1.11.4
 
+require (
+	cloud.google.com/go/kms v1.15.7 // indirect
+	github.com/felixge/httpsnoop v1.0.4 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.47.0 // indirect
+)
+
 replace github.com/5GSEC/nimbus => ../../../../nimbus
 
 require (
 	github.com/5GSEC/nimbus v0.0.0-20240220040009-4cc97b1338ad
-	github.com/go-logr/logr v1.4.1
-	github.com/google/flatbuffers v2.0.8+incompatible // indirect
+	github.com/go-logr/logr v1.4.2
+	github.com/google/flatbuffers v23.5.26+incompatible // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
-	k8s.io/apimachinery v0.30.0
-	k8s.io/client-go v0.30.0
-	sigs.k8s.io/controller-runtime v0.18.2
+	k8s.io/apimachinery v0.30.3
+	k8s.io/client-go v0.30.3
+	sigs.k8s.io/controller-runtime v0.18.3
 )
 
 require (
@@ -94,7 +101,7 @@ require (
 	github.com/djherbis/times v1.5.0 // indirect
 	github.com/docker/cli v24.0.7+incompatible // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
-	github.com/docker/docker v24.0.7+incompatible // indirect
+	github.com/docker/docker v27.1.2+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.8.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/ebitengine/purego v0.6.0-alpha // indirect
@@ -235,13 +242,13 @@ require (
 	github.com/zeebo/errs v1.3.0 // indirect
 	go.mongodb.org/mongo-driver v1.12.1 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	go.opentelemetry.io/otel v1.20.0 // indirect
-	go.opentelemetry.io/otel/metric v1.20.0 // indirect
-	go.opentelemetry.io/otel/sdk v1.20.0 // indirect
-	go.opentelemetry.io/otel/trace v1.20.0 // indirect
+	go.opentelemetry.io/otel v1.22.0 // indirect
+	go.opentelemetry.io/otel/metric v1.22.0 // indirect
+	go.opentelemetry.io/otel/sdk v1.21.0 // indirect
+	go.opentelemetry.io/otel/trace v1.22.0 // indirect
 	go.step.sm/crypto v0.36.1 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
-	go.uber.org/multierr v1.11.0 // indirect
+	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.27.0 // indirect
 	go4.org/intern v0.0.0-20230525184215-6c62f75575cb // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20230525183740-e7c30c78aeb2 // indirect
@@ -257,9 +264,9 @@ require (
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.21.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
-	google.golang.org/api v0.149.0 // indirect
+	google.golang.org/api v0.162.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240513163218-0867130af1f8 // indirect
-	google.golang.org/grpc v1.59.0 // indirect
+	google.golang.org/grpc v1.63.2 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/DataDog/dd-trace-go.v1 v1.56.1 // indirect
 	gopkg.in/go-jose/go-jose.v2 v2.6.1 // indirect
@@ -269,11 +276,11 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	inet.af/netaddr v0.0.0-20230525184311-b8eac61e914a // indirect
-	k8s.io/api v0.30.0 // indirect
-	k8s.io/apiextensions-apiserver v0.30.0 // indirect
-	k8s.io/component-base v0.30.0 // indirect
+	k8s.io/api v0.30.3
+	k8s.io/apiextensions-apiserver v0.30.1
+	k8s.io/component-base v0.30.1 // indirect
 	k8s.io/klog/v2 v2.120.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20240430033511-f0e62f92d13f // indirect
+	k8s.io/kube-openapi v0.0.0-20240521193020-835d969ad83a // indirect
 	k8s.io/kubectl v0.28.4 // indirect
 	k8s.io/pod-security-admission v0.30.0
 	k8s.io/utils v0.0.0-20240502163921-fe8a2dddb1d0 // indirect
