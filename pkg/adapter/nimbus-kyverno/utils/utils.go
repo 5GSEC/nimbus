@@ -4,7 +4,10 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"reflect"
 	"strings"
 
@@ -121,4 +124,39 @@ func Title(input string) string {
     toTitle := cases.Title(language.Und)
 
     return toTitle.String(input)
+}
+
+func GetData[T any]()(T, error) {
+	var out T
+	// Open the JSON file
+	file, err := os.Open("../../../vp.json")
+	if err != nil {
+		return out, err
+		// fmt.Println(err)
+	}
+	defer file.Close()
+
+	// Read the file contents
+	bytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		return out, err
+		// fmt.Println(err)
+	}
+
+	err = json.Unmarshal(bytes, &out)
+	if err != nil {
+		return out, err
+		// fmt.Println(err)
+	}
+
+	return out, nil
+}
+
+func Contains(slice []string, value string) bool {
+	for _, item := range slice {
+		if item == value {
+			return true
+		}
+	}
+	return false
 }

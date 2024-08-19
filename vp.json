@@ -1,0 +1,96 @@
+[
+    {
+      "image": "image2",
+      "cves": [
+        {
+          "cve": "CVE-2024-4439",
+          "virtual_patch": [
+            {
+                "karmor": {
+                            "apiVersion": "security.kubearmor.com/v1",
+                            "kind": "KubeArmorPolicy",
+                            "metadata": {
+                            "name": "block-pkg-mgmt-tools-exec"
+                            },
+                            "spec": {
+                            "selector": {
+                                "matchLabels": {
+                                    "app": "nginx"
+                                }
+                            },
+                            "process": {
+                                "matchPaths": [
+                                {
+                                    "path": "/usr/bin/apt"
+                                },
+                                {
+                                    "path": "/usr/bin/apt-get"
+                                }
+                                ]
+                            },
+                            "action": "Block"
+                            }
+                        }
+            },
+            {
+                "kyverno": {
+                    "apiVersion": "kyverno.io/v1",
+                    "kind": "ClusterPolicy",
+                    "name": "CVE_NUMBER-Virtual-Patch-Kyverno",
+                    "metadata": {
+                      "name": "disallow-latest-tag"
+                    },
+                    "spec": {
+                      "validationFailureAction": "Enforce",
+                      "background": true,
+                      "rules": [
+                        {
+                          "name": "validate-image-tag",
+                          "match": {
+                            "any": [
+                              {
+                                "resources": {
+                                  "kinds": [
+                                    "Pod"
+                                  ]
+                                },
+                                "selector": {
+                                  "matchLabels": {
+                                    "app": "prod"
+                                  }
+                                }
+                              }
+                            ]
+                          },
+                          "preconditions": {
+                            "all": [
+                              {
+                                "key": "nginx",
+                                "operator": "AnyIn",
+                                "value": "{{ images.containers.*.name }}"
+                              }
+                            ]
+                          },
+                          "validate": {
+                            "message": "Using a mutable image tag e.g. 'latest' is not allowed.",
+                            "pattern": {
+                              "spec": {
+                                "containers": [
+                                  {
+                                    "image": "!*:latest"
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+            }
+          ]
+        }
+  ]
+}
+]
+

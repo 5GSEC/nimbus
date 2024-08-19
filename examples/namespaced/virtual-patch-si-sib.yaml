@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: intent.security.nimbus.com/v1alpha1
+kind: SecurityIntent
+metadata:
+  name: virtual-patch
+spec: 
+  intent:
+    id: virtualPatch
+    description: >
+      There might exist CVE's associated with certain images, adversaries might exploit these CVE and can cause potential threat,
+      to any production server. Check and apply virtual patch for a given set of CVEs as per a schedule
+    action: Block
+    params: 
+      cve_list:
+        - "CVE-2024-4439"
+        - "CVE-2024-27268"
+      schedule: ["0 23 * * SUN"]
+
+---
+
+apiVersion: intent.security.nimbus.com/v1alpha1
+kind: SecurityIntentBinding
+metadata:
+  name: virtual-patch-binding
+spec:
+  intents:
+    - name: virtual-patch
+  selector:
+    workloadSelector:
+      matchLabels:
+        app: prod

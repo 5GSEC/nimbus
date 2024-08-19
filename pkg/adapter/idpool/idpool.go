@@ -19,6 +19,7 @@ const (
 	CocoWorkload              = "cocoWorkload"
 	AssessTLS                 = "assessTLS"
 	DenyENAccess              = "denyExternalNetworkAccess"
+	VirtualPatch              = "virtualPatch"
 )
 
 // KaIds are IDs supported by KubeArmor.
@@ -45,6 +46,7 @@ var NetPolIDs = []string{
 var KyvIds = []string{
 	EscapeToHost,
 	CocoWorkload,
+	VirtualPatch,
 }
 
 // k8tlsIds are IDs supported by k8tls.
