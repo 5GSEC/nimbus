@@ -184,7 +184,7 @@ func cronJobForAssessTls(ctx context.Context, schedule string, externalAddresses
 	if len(externalAddresses) > 0 {
 		cm := buildConfigMap(externalAddresses)
 
-		cj.Spec.JobTemplate.Spec.Template.Spec.Containers[0].VolumeMounts = append(cj.Spec.JobTemplate.Spec.Template.Spec.Containers[0].VolumeMounts, corev1.VolumeMount{
+		cj.Spec.JobTemplate.Spec.Template.Spec.InitContainers[0].VolumeMounts = append(cj.Spec.JobTemplate.Spec.Template.Spec.InitContainers[0].VolumeMounts, corev1.VolumeMount{
 			Name:      cm.Name,
 			ReadOnly:  true,
 			MountPath: "/var/k8tls/",
@@ -200,10 +200,11 @@ func cronJobForAssessTls(ctx context.Context, schedule string, externalAddresses
 			},
 		})
 
-		cj.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Command[0] = "./tlsscan"
-		cj.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Command = append(cj.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Command,
+		cj.Spec.JobTemplate.Spec.Template.Spec.InitContainers[0].Command[0] = "./tlsscan"
+		cj.Spec.JobTemplate.Spec.Template.Spec.InitContainers[0].Command = append(cj.Spec.JobTemplate.Spec.Template.Spec.InitContainers[0].Command,
 			"--infile",
-			cj.Spec.JobTemplate.Spec.Template.Spec.Containers[0].VolumeMounts[2].MountPath+"addresses",
+			cj.Spec.JobTemplate.Spec.Template.Spec.InitContainers[0].VolumeMounts[2].MountPath+"addresses",
+			"--compact-json",
 		)
 		return cj, cm
 	}
