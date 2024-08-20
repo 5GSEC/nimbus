@@ -4,10 +4,10 @@
 apiVersion: intent.security.nimbus.com/v1alpha1
 kind: SecurityIntent
 metadata:
-  name: ensure-tls-default
+  name: assess-tls-default
 spec:
   intent:
-    id: ensureTLS
+    id: assessTLS
     action: Audit
     description: |
       Assess the TLS configuration to ensure compliance with the security standards. This includes verifying TLS protocol version,
@@ -17,10 +17,10 @@ spec:
 apiVersion: intent.security.nimbus.com/v1alpha1
 kind: ClusterSecurityIntentBinding
 metadata:
-  name: ensure-tls-default
+  name: assess-tls-default
 spec:
   intents:
-    - name: ensure-tls-default
+    - name: assess-tls-default
   selector:
     nsSelector:
       matchNames:
