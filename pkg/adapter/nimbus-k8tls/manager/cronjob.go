@@ -22,8 +22,8 @@ import (
 )
 
 func createOrUpdateCj(ctx context.Context, logger logr.Logger, cwnp v1alpha1.ClusterNimbusPolicy, cronJob *batchv1.CronJob) {
-	cronJob.Namespace = NamespaceName
-	cronJob.Spec.JobTemplate.Spec.Template.Spec.ServiceAccountName = NamespaceName
+	cronJob.Namespace = K8tlsNamespace
+	cronJob.Spec.JobTemplate.Spec.Template.Spec.ServiceAccountName = k8tls
 	if err := ctrl.SetControllerReference(&cwnp, cronJob, scheme); err != nil {
 		logger.Error(err, "failed to set OwnerReference on Kubernetes CronJob", "CronJob.Name", cronJob.Name)
 		return
@@ -76,7 +76,7 @@ func deleteCronJobs(ctx context.Context, logger logr.Logger, cwnpName string, cr
 
 func createCm(ctx context.Context, cwnp v1alpha1.ClusterNimbusPolicy, scheme *runtime.Scheme, k8sClient client.Client, configMap *corev1.ConfigMap) error {
 	logger := log.FromContext(ctx)
-	configMap.SetNamespace(NamespaceName)
+	configMap.SetNamespace(K8tlsNamespace)
 	if err := ctrl.SetControllerReference(&cwnp, configMap, scheme); err != nil {
 		return err
 	}

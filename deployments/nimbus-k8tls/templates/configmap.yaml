@@ -3,37 +3,140 @@ kind: ConfigMap
 metadata:
   name: fluent-bit-config
   namespace: {{ include "nimbus-k8tls.fullname" . }}-env
+  labels:
+    {{- include "nimbus-k8tls.labels" . | nindent 4 }}
 data:
   fluent-bit.conf: |
-     [SERVICE]
-        Flush        1
-        Log_Level    info
-        Parsers_File parsers.conf
+    [SERVICE]
+       Flush        1
+       Log_Level    info
+       Parsers_File parsers.conf
 
-     [INPUT]
-        Name           tail
-        Path           /tmp/compact_report.json
-        Parser         json
-        Tag            json.data
-        DB             /tmp/compact_report.db
-        Read_from_Head true
-        Exit_On_Eof    true
-    
+    [INPUT]
+       Name           tail
+       Path           /tmp/compact_report.json
+       Parser         json
+       Tag            json.data
+       DB             /tmp/compact_report.db
+       Read_from_Head true
+       Exit_On_Eof    true
+
      {{- if .Values.output.elasticsearch.enabled }}
-     [OUTPUT]
-        Name  es
-        Match *
-        Host  {{ .Values.output.elasticsearch.host }}
-        Port  {{ .Values.output.elasticsearch.port }}
-        Index {{ .Values.output.elasticsearch.index }}
-        HTTP_User  {{ .Values.output.elasticsearch.user }}
-        HTTP_Passwd ${ES_PASSWORD}
-        tls      On
-        tls.verify Off
-        Suppress_Type_Name On
-        Replace_Dots On
+    [OUTPUT]
+       Name  es
+       Match *
+       Host  {{ .Values.output.elasticsearch.host }}
+       Port  {{ .Values.output.elasticsearch.port }}
+       Index {{ .Values.output.elasticsearch.index }}
+       HTTP_User  {{ .Values.output.elasticsearch.user }}
+       HTTP_Passwd ${ES_PASSWORD}
+       tls      On
+       tls.verify Off
+       Suppress_Type_Name On
+       Replace_Dots On
       {{- end }}
 
-     [OUTPUT]
-        Name stdout
-        Match *
+    [OUTPUT]
+       Name stdout
+       Match *
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fips-config
+  namespace: {{ include "nimbus-k8tls.fullname" . }}-env
+  labels:
+    {{- include "nimbus-k8tls.labels" . | nindent 4 }}
+data:
+  fips-140-3.json: |2-
+    {
+      "TLS_versions": [
+        {
+          "TLS_version": "TLSv1.0_1.1",
+          "cipher_suites": [
+            {
+              "cipher_suite": "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA"
+            },
+            {
+              "cipher_suite": "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA"
+            },
+            {
+              "cipher_suite": "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA"
+            },
+            {
+              "cipher_suite": "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA"
+            }
+          ]
+        },
+        {
+          "TLS_version": "TLSv1.2",
+          "cipher_suites": [
+            {
+              "cipher_suite": "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA"
+            },
+            {
+              "cipher_suite": "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA"
+            },
+            {
+              "cipher_suite": "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA"
+            },
+            {
+              "cipher_suite": "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA"
+            },
+            {
+              "cipher_suite": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+            },
+            {
+              "cipher_suite": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+            },
+            {
+              "cipher_suite": "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"
+            },
+            {
+              "cipher_suite": "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"
+            },
+            {
+              "cipher_suite": "TLS_ECDHE_ECDSA_WITH_AES_256_CCM"
+            },
+            {
+              "cipher_suite": "TLS_ECDHE_ECDSA_WITH_AES_128_CCM"
+            },
+            {
+              "cipher_suite": "TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8"
+            },
+            {
+              "cipher_suite": "TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8"
+            },
+            {
+              "cipher_suite": "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384"
+            },
+            {
+              "cipher_suite": "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256"
+            },
+            {
+              "cipher_suite": "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384"
+            },
+            {
+              "cipher_suite": "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256"
+            }
+          ]
+        },
+        {
+          "TLS_version": "TLSv1.3",
+          "cipher_suites": [
+            {
+              "cipher_suite": "TLS_AES_256_GCM_SHA384"
+            },
+            {
+              "cipher_suite": "TLS_AES_128_GCM_SHA256"
+            },
+            {
+              "cipher_suite": "TLS_AES_128_CCM_SHA256"
+            },
+            {
+              "cipher_suite": "TLS_AES_128_CCM_8_SHA256"
+            }
+          ]
+        }
+      ]
+    }

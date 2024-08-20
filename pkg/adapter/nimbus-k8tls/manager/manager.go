@@ -29,9 +29,10 @@ import (
 )
 
 var (
-	scheme        = runtime.NewScheme()
-	k8sClient     client.Client
-	NamespaceName = "nimbus-k8tls-env"
+	scheme         = runtime.NewScheme()
+	k8sClient      client.Client
+	K8tlsNamespace = "nimbus-k8tls-env"
+	k8tls          = "k8tls"
 )
 
 func init() {
@@ -45,6 +46,8 @@ func init() {
 //+kubebuilder:rbac:groups=intent.security.nimbus.com,resources=clusternimbuspolicies,verbs=get;list;watch
 //+kubebuilder:rbac:groups=intent.security.nimbus.com,resources=clusternimbuspolicies/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=batch,resources=cronjobs,verbs=get;create;delete;list;watch;update
+//+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;create;delete;update
+//+kubebuilder:rbac:groups="",resources=namespaces;serviceaccounts,verbs=get
 
 func Run(ctx context.Context) {
 	cwnpCh := make(chan string)
@@ -108,14 +111,14 @@ func createOrUpdateCronJob(ctx context.Context, cwnpName string) {
 
 	deleteDanglingCj(ctx, logger, cwnp)
 	newCtx := context.WithValue(ctx, common.K8sClientKey, k8sClient)
-	newCtx = context.WithValue(newCtx, common.NamespaceNameKey, NamespaceName)
+	newCtx = context.WithValue(newCtx, common.NamespaceNameKey, K8tlsNamespace)
 	cronJob, configMap := builder.BuildCronJob(newCtx, cwnp)
 
 	if cronJob != nil {
-		if err := setupK8tlsEnv(ctx, cwnp, scheme, k8sClient); err != nil {
-			logger.Error(err, "failed to setup k8tls env")
+		if !k8tlsEnvExist(ctx, k8sClient) {
 			return
 		}
+
 		if configMap != nil {
 			if err := createCm(ctx, cwnp, scheme, k8sClient, configMap); err != nil {
 				logger.Error(err, "failed to create ConfigMap", "ConfigMap.Name", configMap.Name)
@@ -130,7 +133,7 @@ func logCronJobsToDelete(ctx context.Context, deletedCwnp *unstructured.Unstruct
 	logger := log.FromContext(ctx)
 
 	var existingCronJobs batchv1.CronJobList
-	if err := k8sClient.List(ctx, &existingCronJobs, &client.ListOptions{Namespace: NamespaceName}); err != nil {
+	if err := k8sClient.List(ctx, &existingCronJobs, &client.ListOptions{Namespace: K8tlsNamespace}); err != nil {
 		logger.Error(err, "failed to list Kubernetes CronJob")
 		return
 	}
@@ -151,7 +154,7 @@ func logCronJobsToDelete(ctx context.Context, deletedCwnp *unstructured.Unstruct
 
 func deleteDanglingCj(ctx context.Context, logger logr.Logger, cwnp v1alpha1.ClusterNimbusPolicy) {
 	var existingCronJobs batchv1.CronJobList
-	if err := k8sClient.List(ctx, &existingCronJobs, &client.ListOptions{Namespace: NamespaceName}); err != nil {
+	if err := k8sClient.List(ctx, &existingCronJobs, &client.ListOptions{Namespace: K8tlsNamespace}); err != nil {
 		logger.Error(err, "failed to list Kubernetes CronJob for cleanup")
 		return
 	}

@@ -12,5 +12,5 @@ type ContextKey string
 
 const (
 	K8sClientKey     ContextKey = "k8sClient"
-	NamespaceNameKey ContextKey = "NamespaceName"
+	NamespaceNameKey ContextKey = "K8tlsNamespace"
 )
