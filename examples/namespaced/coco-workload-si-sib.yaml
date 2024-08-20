@@ -7,6 +7,8 @@ spec:
     id: cocoWorkload
     description: "Ensure workload is encryted by running the specified workload in a Confidential VM"
     action: Block
+    params: 
+      runtimeClass: ["kata-qemu"]
 ---
 apiVersion: intent.security.nimbus.com/v1alpha1
 kind: SecurityIntentBinding
