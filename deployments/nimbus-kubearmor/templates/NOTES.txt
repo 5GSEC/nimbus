@@ -1,0 +1,3 @@
+Thank you for installing nimbus-kubearmor.
+
+Your release is named '{{ include "nimbus-kubearmor.fullname" . }}' and deployed in '{{ .Release.Namespace }}' namespace.

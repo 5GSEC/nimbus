@@ -1,7 +1,3 @@
-# Default values for nimbus-kubearmor.
-
-autoDeploy: true
-
 image:
   repository: 5gsec/nimbus-kubearmor
   pullPolicy: Always
@@ -20,9 +16,27 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: "nimbus-kubearmor"
 
+podSecurityContext:
+  fsGroup: 2000
+
 securityContext:
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
   runAsNonRoot: true
-  runAsUser: 65533
+  runAsUser: 1000
+
+resources:
+  limits:
+    cpu: 50m
+    memory: 64Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+# Deploy engine
+autoDeploy: true
 
 kubearmor-operator:
   autoDeploy: true

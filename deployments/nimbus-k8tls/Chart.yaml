@@ -1,8 +1,8 @@
 apiVersion: v2
 type: application
 name: nimbus-k8tls
-version: 0.1.0
-appVersion: "0.1.0"
+version: 0.1.1
+appVersion: "0.1.1"
 description: Nimbus adapter for k8tls
 sources:
   - https://github.com/5GSEC/nimbus

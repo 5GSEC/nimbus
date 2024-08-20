@@ -1,0 +1,23 @@
+Thank you for installing Nimbus suite.
+
+Your release is named '{{ include "nimbus.fullname" . }}' and deployed in '{{ .Release.Namespace }}' namespace.
+{{printf "" }}
+
+{{- if .Values.autoDeploy.kubearmor }}
+Deployed nimbus-kubearmor adapter along with KubeArmor security engine in '{{ .Release.Namespace }}' namespace.
+{{ printf "" }}
+{{- end}}
+
+{{- if .Values.autoDeploy.kyverno }}
+Deployed nimbus-kyverno adapter along with Kyverno security engine in '{{ .Release.Namespace }}' namespace.
+{{ printf "" }}
+{{- end}}
+
+{{- if .Values.autoDeploy.k8tls }}
+Deployed nimbus-k8tls adapter in '{{ .Release.Namespace }}' namespace.
+{{ printf "" }}
+{{- end}}
+
+{{- if .Values.autoDeploy.netpol }}
+Deployed nimbus-netpol adapter in '{{ .Release.Namespace }}' namespace.
+{{- end}}

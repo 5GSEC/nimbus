@@ -1,5 +1,4 @@
-# Default values for nimbus.
-
+# Deploy adapters
 autoDeploy:
   kubearmor: true
   netpol: true
@@ -26,9 +25,24 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: "nimbus-operator"
 
+podSecurityContext:
+  fsGroup: 2000
+
 securityContext:
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
   runAsNonRoot: true
-  runAsUser: 65534
+  runAsUser: 1000
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
 
 livenessProbe:
   httpGet:
