@@ -93,9 +93,9 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy) ([]kyvernov1.Policy, error) 
 	var matchResourceFilters []kyvernov1.ResourceFilter
 	labels := np.Spec.Selector.MatchLabels
 	runtimeClass := "kata-clh"
-	params := np.Spec.NimbusRules[0].Rule.Params
-	if len(params) != 0 {
-		runtimeClass = np.Spec.NimbusRules[0].Rule.Params["runtimeClass"][0]
+	params := np.Spec.NimbusRules[0].Rule.Params["runtimeClass"]
+	if params != nil {
+		runtimeClass = params[0] 
 	}
 	patchStrategicMerge := map[string]interface{}{
 		"spec": map[string]interface{}{
