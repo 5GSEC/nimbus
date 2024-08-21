@@ -18,6 +18,21 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: "nimbus-netpol"
 
+podSecurityContext:
+  fsGroup: 2000
+
 securityContext:
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
   runAsNonRoot: true
-  runAsUser: 65532
+  runAsUser: 1000
+
+resources:
+  limits:
+    cpu: 50m
+    memory: 64Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi

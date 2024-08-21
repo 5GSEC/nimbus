@@ -1,5 +1,3 @@
-# Default values for nimbus-k8tls.
-
 image:
   repository: 5gsec/nimbus-k8tls
   pullPolicy: Always
@@ -13,9 +11,24 @@ serviceAccount:
   automount: true
   name: "nimbus-k8tls"
 
+podSecurityContext:
+  fsGroup: 2000
+
 securityContext:
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
   runAsNonRoot: true
-  runAsUser: 65533
+  runAsUser: 1000
+
+resources:
+  limits:
+    cpu: 50m
+    memory: 64Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
 
 output:
   elasticsearch:
@@ -26,4 +39,3 @@ output:
     index: "findings"
     password: "" # Password in base64 encoded format
     ttlsecondsafterfinished: "10" # Amount of time to keep the pod around after job has been completed
-    

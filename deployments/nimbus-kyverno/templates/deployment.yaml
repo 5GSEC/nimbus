@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: DaemonSet
+kind: Deployment
 metadata:
   name: {{ include "nimbus-kyverno.fullname" . }}
   labels:
@@ -21,4 +21,5 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-      terminationGracePeriodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

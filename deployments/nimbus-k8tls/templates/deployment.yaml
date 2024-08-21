@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: DaemonSet
+kind: Deployment
 metadata:
   name: {{ include "nimbus-k8tls.fullname" . }}
   labels:
@@ -26,4 +26,5 @@ spec:
           - name: TTLSECONDSAFTERFINISHED
             value: "{{ .Values.output.elasticsearch.ttlsecondsafterfinished }}"
           {{- end }}
-      terminationGracePeriodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

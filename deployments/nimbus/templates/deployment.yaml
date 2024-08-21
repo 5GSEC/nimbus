@@ -26,4 +26,5 @@ spec:
             {{- toYaml .Values.livenessProbe | nindent 12 }}
           readinessProbe:
             {{- toYaml .Values.readinessProbe | nindent 12 }}
-      terminationGracePeriodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

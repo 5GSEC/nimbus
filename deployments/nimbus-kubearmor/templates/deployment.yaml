@@ -1,24 +1,25 @@
 apiVersion: apps/v1
-kind: DaemonSet
+kind: Deployment
 metadata:
-  name: {{ include "nimbus-netpol.fullname" . }}
+  name: {{ include "nimbus-kubearmor.fullname" . }}
   labels:
-    {{- include "nimbus-netpol.labels" . | nindent 4 }}
+    {{- include "nimbus-kubearmor.labels" . | nindent 4 }}
   namespace: {{ .Release.Namespace }}
 spec:
   selector:
     matchLabels:
-      {{- include "nimbus-netpol.selectorLabels" . | nindent 6 }}
+      {{- include "nimbus-kubearmor.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "nimbus-netpol.labels" . | nindent 8 }}
+        {{- include "nimbus-kubearmor.labels" . | nindent 8 }}
     spec:
-      serviceAccountName: {{ include "nimbus-netpol.serviceAccountName" . }}
+      serviceAccountName: {{ include "nimbus-kubearmor.serviceAccountName" . }}
       containers:
         - name: {{ .Values.fullnameOverride }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-      terminationGracePeriodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

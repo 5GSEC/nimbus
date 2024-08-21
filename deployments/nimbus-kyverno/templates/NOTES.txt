@@ -1,0 +1,3 @@
+Thank you for installing nimbus-kyverno.
+
+Your release is named '{{ include "nimbus-kyverno.fullname" . }}' and deployed in '{{ .Release.Namespace }}' namespace.

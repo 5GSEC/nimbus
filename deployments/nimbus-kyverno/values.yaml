@@ -1,7 +1,3 @@
-# Default values for nimbus-kyverno.
-
-autoDeploy: true
-
 image:
   repository: 5gsec/nimbus-kyverno
   pullPolicy: Always
@@ -20,6 +16,24 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: "nimbus-kyverno"
 
+podSecurityContext:
+  fsGroup: 2000
+
 securityContext:
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
   runAsNonRoot: true
-  runAsUser: 65535
+  runAsUser: 1000
+
+resources:
+  limits:
+    cpu: 50m
+    memory: 64Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+# Deploy engine
+autoDeploy: true
