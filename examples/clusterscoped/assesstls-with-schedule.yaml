@@ -4,10 +4,10 @@
 apiVersion: intent.security.nimbus.com/v1alpha1
 kind: SecurityIntent
 metadata:
-  name: ensure-tls-external-addresses
+  name: assess-tls-scheduled
 spec:
   intent:
-    id: ensureTLS
+    id: assessTLS
     action: Audit
     severity: "medium"
     description: |
@@ -15,16 +15,15 @@ spec:
       certificate validity and FIPS-140-3 approved cipher suites.
       Reference: MITRE ATT&CK Technique: FGT5011 https://fight.mitre.org/techniques/FGT5011
     params:
-      # Specify domain name with its port
-      external_addresses: [ "dh480.badssl.com:443", "google.com:443", "accuknox.com:443", "apigateway-fips.us-east-1.amazonaws.com:443" ]
+      schedule: [ "* * * * *" ]
 ---
 apiVersion: intent.security.nimbus.com/v1alpha1
 kind: ClusterSecurityIntentBinding
 metadata:
-  name: ensure-tls-external-addresses
+  name: assess-tls-scheduled
 spec:
   intents:
-    - name: ensure-tls-external-addresses
+    - name: assess-tls-scheduled
   selector:
     nsSelector:
       matchNames:

@@ -10,19 +10,20 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/5GSEC/nimbus/api/v1alpha1"
-	"github.com/5GSEC/nimbus/pkg/adapter/common"
-	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/5GSEC/nimbus/api/v1alpha1"
+	"github.com/5GSEC/nimbus/pkg/adapter/common"
+	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 )
 
 var (
 	DefaultSchedule = "@weekly"
-	backOffLimit    = int32(5)	
+	backOffLimit    = int32(5)
 )
 
 func BuildCronJob(ctx context.Context, cwnp v1alpha1.ClusterNimbusPolicy) (*batchv1.CronJob, *corev1.ConfigMap) {
@@ -45,29 +46,29 @@ func BuildCronJob(ctx context.Context, cwnp v1alpha1.ClusterNimbusPolicy) (*batc
 
 func cronJobFor(ctx context.Context, id string, rule v1alpha1.NimbusRules) (*batchv1.CronJob, *corev1.ConfigMap) {
 	switch id {
-	case idpool.EnsureTLS:
-		return ensureTlsCronJob(ctx, rule)
+	case idpool.AssessTLS:
+		return assessTlsCronJob(ctx, rule)
 	default:
 		return nil, nil
 	}
 }
 
-func ensureTlsCronJob(ctx context.Context, rule v1alpha1.NimbusRules) (*batchv1.CronJob, *corev1.ConfigMap) {
+func assessTlsCronJob(ctx context.Context, rule v1alpha1.NimbusRules) (*batchv1.CronJob, *corev1.ConfigMap) {
 	schedule, scheduleKeyExists := rule.Rule.Params["schedule"]
 	externalAddresses, addrKeyExists := rule.Rule.Params["external_addresses"]
 	if scheduleKeyExists && addrKeyExists {
-		return cronJobForEnsureTls(ctx, schedule[0], externalAddresses...)
+		return cronJobForAssessTls(ctx, schedule[0], externalAddresses...)
 	}
 	if scheduleKeyExists {
-		return cronJobForEnsureTls(ctx, schedule[0])
+		return cronJobForAssessTls(ctx, schedule[0])
 	}
 	if addrKeyExists {
-		return cronJobForEnsureTls(ctx, DefaultSchedule, externalAddresses...)
+		return cronJobForAssessTls(ctx, DefaultSchedule, externalAddresses...)
 	}
-	return cronJobForEnsureTls(ctx, DefaultSchedule)
+	return cronJobForAssessTls(ctx, DefaultSchedule)
 }
 
-func cronJobForEnsureTls(ctx context.Context, schedule string, externalAddresses ...string) (*batchv1.CronJob, *corev1.ConfigMap) {
+func cronJobForAssessTls(ctx context.Context, schedule string, externalAddresses ...string) (*batchv1.CronJob, *corev1.ConfigMap) {
 	logger := log.FromContext(ctx)
 	cj := &batchv1.CronJob{
 		Spec: batchv1.CronJobSpec{
@@ -183,7 +184,7 @@ func cronJobForEnsureTls(ctx context.Context, schedule string, externalAddresses
 	if len(externalAddresses) > 0 {
 		cm := buildConfigMap(externalAddresses)
 
-		cj.Spec.JobTemplate.Spec.Template.Spec.Containers[0].VolumeMounts = append(cj.Spec.JobTemplate.Spec.Template.Spec.Containers[0].VolumeMounts, corev1.VolumeMount{
+		cj.Spec.JobTemplate.Spec.Template.Spec.InitContainers[0].VolumeMounts = append(cj.Spec.JobTemplate.Spec.Template.Spec.InitContainers[0].VolumeMounts, corev1.VolumeMount{
 			Name:      cm.Name,
 			ReadOnly:  true,
 			MountPath: "/var/k8tls/",
@@ -199,10 +200,11 @@ func cronJobForEnsureTls(ctx context.Context, schedule string, externalAddresses
 			},
 		})
 
-		cj.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Command[0] = "./tlsscan"
-		cj.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Command = append(cj.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Command,
+		cj.Spec.JobTemplate.Spec.Template.Spec.InitContainers[0].Command[0] = "./tlsscan"
+		cj.Spec.JobTemplate.Spec.Template.Spec.InitContainers[0].Command = append(cj.Spec.JobTemplate.Spec.Template.Spec.InitContainers[0].Command,
 			"--infile",
-			cj.Spec.JobTemplate.Spec.Template.Spec.Containers[0].VolumeMounts[2].MountPath+"addresses",
+			cj.Spec.JobTemplate.Spec.Template.Spec.InitContainers[0].VolumeMounts[2].MountPath+"addresses",
+			"--compact-json",
 		)
 		return cj, cm
 	}

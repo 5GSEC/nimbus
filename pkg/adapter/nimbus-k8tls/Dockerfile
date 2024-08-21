@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2023 Authors of Nimbus
 
-FROM golang:1.22 as builder
+FROM golang:1.22 AS builder
 ARG TARGETOS
 ARG TARGETARCH
 
