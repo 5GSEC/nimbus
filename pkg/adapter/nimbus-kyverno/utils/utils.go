@@ -6,7 +6,6 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"reflect"
 	"strings"
@@ -126,27 +125,24 @@ func Title(input string) string {
     return toTitle.String(input)
 }
 
-func GetData[T any]()(T, error) {
+func GetVirtualPatchData[T any]()(T, error) {
 	var out T
 	// Open the JSON file
 	file, err := os.Open("../../../vp.json")
 	if err != nil {
 		return out, err
-		// fmt.Println(err)
 	}
 	defer file.Close()
 
 	// Read the file contents
-	bytes, err := ioutil.ReadAll(file)
+	bytes, err := os.ReadFile("../../../vp.json")
 	if err != nil {
 		return out, err
-		// fmt.Println(err)
 	}
 
 	err = json.Unmarshal(bytes, &out)
 	if err != nil {
 		return out, err
-		// fmt.Println(err)
 	}
 
 	return out, nil
@@ -159,4 +155,16 @@ func Contains(slice []string, value string) bool {
 		}
 	}
 	return false
+}
+
+func ParseImageString(imageString string) (string, string) {
+    parts := strings.SplitN(imageString, ":", 2)
+    repository := parts[0]
+    tag := "latest" // Default tag
+
+    if len(parts) > 1 {
+        tag = parts[1]
+    }
+
+    return repository, tag
 }

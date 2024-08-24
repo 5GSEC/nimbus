@@ -122,5 +122,3 @@ func WatchKps(ctx context.Context, updatedKpCh, deletedKpCh chan common.Request)
 	logger.Info("KyvernoPolicy watcher started")
 	informer.Run(ctx.Done())
 }
-
-

@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	v1alpha1 "github.com/5GSEC/nimbus/api/v1alpha1"
@@ -44,7 +45,7 @@ func BuildKpsFrom(logger logr.Logger, np *v1alpha1.NimbusPolicy) []kyvernov1.Pol
 				logger.Error(err, "error while building kyverno policies")
 			}
 			for _, kp := range kps {
-				if id != "cocoWorkload" {
+				if id != "cocoWorkload" && id != "virtualPatch" {
 					kp.Name = np.Name + "-" + strings.ToLower(id)
 				}
 				kp.Namespace = np.Namespace
@@ -110,7 +111,7 @@ func escapeToHost(np *v1alpha1.NimbusPolicy) kyvernov1.Policy {
 
 	if len(labels) > 0 {
 		for key, value := range labels {
-			resourceFilter := kyvernov1.ResourceFilter {
+			resourceFilter := kyvernov1.ResourceFilter{
 				ResourceDescription: kyvernov1.ResourceDescription{
 					Kinds: []string{
 						"v1/Pod",
@@ -318,46 +319,50 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy) ([]kyvernov1.Policy, error) 
 func virtualPatch(np *v1alpha1.NimbusPolicy) ([]kyvernov1.Policy, error) {
 	rule := np.Spec.NimbusRules[0].Rule
 	requiredCVES := rule.Params["cve_list"]
-	// cvePolicyMap := make(map[string]any)
+	//  tbd
 	// schedule := rule.Params["schedule"][0]
 	var kps []kyvernov1.Policy
-	resp, err := utils.GetData[[]map[string]any]()
+	resp, err := utils.GetVirtualPatchData[[]map[string]any]()
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch the response from knoxguard: %s", err.Error())
 	}
-	for _, currObj := range(resp) {
+	for _, currObj := range resp {
 		image := currObj["image"].(string)
 		fmt.Println(image)
 		fmt.Println("------------------------------------------------------------------")
 		cves := currObj["cves"].([]any)
-		for _, obj := range(cves) {
+		for _, obj := range cves {
 			cveData := obj.(map[string]any)
 			cve := cveData["cve"].(string)
 			if utils.Contains(requiredCVES, cve) {
 				fmt.Println(cveData["virtual_patch"])
 				// create generate kyverno policies which will generate the native virtual patch policies based on the CVE's
 				karmorPolCount := 1
-				kyPolCount := 1
+				kyvPolCount := 1
 				netPolCount := 1
 				virtual_patch := cveData["virtual_patch"].([]any)
-				for _, policy := range(virtual_patch) {
-					pol :=  policy.(map[string]any)
+				for _, policy := range virtual_patch {
+					pol := policy.(map[string]any)
 					policyData, ok := pol["karmor"].(map[string]any)
 					if ok {
 						kps = append(kps, generatePol("karmor", cve, image, np, policyData, karmorPolCount))
-						karmorPolCount +=1
+						karmorPolCount += 1
+					}
+					policyData, ok = pol["kyverno"].(map[string]any)
+					if ok {
+						kps = append(kps, generatePol("kyverno", cve, image, np, policyData, kyvPolCount))
+						kyvPolCount += 1
+					}
+					
+					policyData, ok = pol["netpol"].(map[string]any)
+					if ok {
+						kps = append(kps, generatePol("netpol", cve, image, np, policyData, netPolCount))
+						netPolCount += 1
 					}
 				}
 			}
 		}
 	}
-	// Marshal the data into YAML
-	// yamlData, err := yaml.Marshal(&resp)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("unable to parse the response to YAML: %s", err.Error())
-	// }
-	// Print the YAML data
-	// fmt.Println(string(yamlData))
 	return kps, nil
 }
 
@@ -365,47 +370,91 @@ func addManagedByAnnotation(kp *kyvernov1.Policy) {
 	kp.Annotations["app.kubernetes.io/managed-by"] = "nimbus-kyverno"
 }
 
-func generatePol(polengine string, cve string, image string, np *v1alpha1.NimbusPolicy, policyData map[string]any, count int) (kyvernov1.Policy) {
+func generatePol(polengine string, cve string, image string, np *v1alpha1.NimbusPolicy, policyData map[string]any, count int) kyvernov1.Policy {
 	var pol kyvernov1.Policy
 	labels := np.Spec.Selector.MatchLabels
-	cve  = strings.ToLower(cve)
+	cve = strings.ToLower(cve)
+	uid := np.ObjectMeta.GetUID()
 	// Marshal the data into YAML
 	yamlData, err := yaml.Marshal(&policyData)
 	if err != nil {
-		fmt.Println("unable to parse the response to YAML: ", err.Error()) 
+		fmt.Println("unable to parse the response to YAML: ", err.Error())
 		return pol
 	}
+	ownerShipList := []any{
+		map[string]any{
+			"apiVersion":         "intent.security.nimbus.com/v1alpha1",
+			"blockOwnerDeletion": true,
+			"controller":         true,
+			"kind":               "NimbusPolicy",
+			"name":               np.GetName(),
+			"uid":                uid,
+		},
+	}
 
-	preconditionJSON := `{
-        "all": [
-            {
-                "key": "${ image }",
-                "operator": "AnyIn",
-                "value": "{{ images.containers.*.name }}"
-            }
-        ]
-    }`
+	preConditionMap := map[string]any{
+		"all": []any{
+			map[string]any{
+				"key":  image,
+				"operator": "AnyIn",
+				"value": "{{ request.object.spec.containers[].image }}",
+			},
+		},
+	}
+	preconditionBytes, _ := json.Marshal(preConditionMap)
+	
 
-	// Convert JSON string to map
-    var preConditionMap map[string]interface{}
-    if err := json.Unmarshal([]byte(preconditionJSON), &preConditionMap); err != nil {
-        panic(err)
-    }
+	getPodName := kyvernov1.ContextEntry{
+		Name: "podName",
+		Variable: &kyvernov1.Variable{
+			JMESPath: "request.object.metadata.name",
+		},
+	}
 
-	// Convert map to apiextensions.JSON
-    apiextensionsJSON := v1.JSON{}
-    apiextensionsJSON.Raw, _ = json.MarshalIndent(preConditionMap, "", " ")
+	metadataMap := policyData["metadata"].(map[string]any)
+
+	// set OwnerShipRef for the generatedPol
+
+	metadataMap["ownerReferences"] = ownerShipList
+
+	specMap := policyData["spec"].(map[string]any)
+
+	jmesPathContainerNameQuery := "request.object.spec.containers[?(@.image=='" + image + "')].name | [0]"
+
+
+	delete(policyData, "apiVersion")
+	delete(policyData, "kind")
+
+	generatorPolicyName := np.Name + "-" + cve + "-"+ polengine + "-" + strconv.Itoa(count)
+
+
+	// kubearmor policy generation
 
 	if polengine == "karmor" {
-		pol = kyvernov1.Policy {
+		generatedPolicyName := metadataMap["name"].(string) + "-{{ podName }}"
+		selector := specMap["selector"].(map[string]any)
+		delete(selector, "matchLabels")
+		selectorLabels := make(map[string]any)
+		for key, value := range labels {
+			selectorLabels[key] = value
+		}
+		selectorLabels["kubearmor.io/container.name"] = "{{ containerName }}"
+		selector["matchLabels"] = selectorLabels
+
+		policyBytes, err := json.Marshal(policyData)
+
+		if err != nil {
+			panic(err.Error())
+		}
+		pol = kyvernov1.Policy{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: np.Name + cve + string(count),
+				Name: generatorPolicyName,
 			},
 			Spec: kyvernov1.Spec{
 				GenerateExisting: true,
 				Rules: []kyvernov1.Rule{
 					{
-						Name: cve+"virtual-patch-karmor",
+						Name: cve + "virtual-patch-karmor",
 						MatchResources: kyvernov1.MatchResources{
 							Any: kyvernov1.ResourceFilters{
 								{
@@ -420,13 +469,173 @@ func generatePol(polengine string, cve string, image string, np *v1alpha1.Nimbus
 								},
 							},
 						},
-						RawAnyAllConditions: kyvernov1.ToJSON(apiextensionsJSON.Raw),
-						
+						RawAnyAllConditions: &v1.JSON{Raw: preconditionBytes},
+						Context: []kyvernov1.ContextEntry{
+							{
+								Name: "containerName",
+								Variable: &kyvernov1.Variable{
+									JMESPath: jmesPathContainerNameQuery,
+								},
+							},
+							getPodName,
+						},
+						Generation: kyvernov1.Generation{
+							ResourceSpec: kyvernov1.ResourceSpec{
+								APIVersion: "security.kubearmor.com/v1",
+								Kind:       "KubeArmorPolicy",
+								Name:       generatedPolicyName,
+								Namespace:  np.GetNamespace(),
+							},
+							RawData: &v1.JSON{Raw: policyBytes},
+						},
 					},
 				},
 			},
 		}
 	}
+
+	// kyverno policy generation
+
+	if polengine == "kyverno" {
+
+		generatedPolicyName := metadataMap["name"].(string)
+		selectorMap := map[string]any{
+			"matchLabels": labels,
+		}
+
+		kindMap := map[string]any{
+			"kinds": []any{
+				"Pod",
+			},
+			"selector": selectorMap,
+		}
+
+		newMatchMap := map[string]any{
+			"any": []any{
+				map[string]any{
+					"resources": kindMap,
+				},
+			},
+		}
+		rulesMap := specMap["rules"].([]any)
+		rule := rulesMap[0].(map[string]any)
+
+		// adding resources as Pod and ommitting all the incoming resource types
+		delete(rule, "match")
+		rule["match"] = newMatchMap
+
+		fmt.Println("rule after modification: ", rule["match"])
+
+		// appending the image matching precondition to the existing preconditions
+		preCndMap := rule["preconditions"].(map[string]any)
+		conditionsList, ok := preCndMap["any"].([]any)
+		if ok {
+			preConditionMap["all"] = append(preConditionMap["all"].([]any), conditionsList...)
+		}
+
+		delete(rule, "preconditions")
+
+		rule["preconditions"] = preConditionMap
+
+		policyBytes, err := json.Marshal(policyData)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		pol = kyvernov1.Policy{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: generatorPolicyName,
+			},
+			Spec: kyvernov1.Spec{
+				GenerateExisting: true,
+				Rules: []kyvernov1.Rule{
+					{
+						Name: cve + "-virtual-patch-kyverno",
+						MatchResources: kyvernov1.MatchResources{
+							Any: kyvernov1.ResourceFilters{
+								{
+									ResourceDescription: kyvernov1.ResourceDescription{
+										Kinds: []string{
+											"v1/Pod",
+										},
+										Selector: &metav1.LabelSelector{
+											MatchLabels: labels,
+										},
+									},
+								},
+							},
+						},
+						Generation: kyvernov1.Generation{
+							ResourceSpec: kyvernov1.ResourceSpec{
+								APIVersion: "kyverno.io/v1",
+								Kind:       "Policy",
+								Name:       generatedPolicyName,
+								Namespace:  np.GetNamespace(),
+							},
+							RawData: &v1.JSON{Raw: policyBytes},
+						},
+					},
+				},
+			},
+		}
+	}
+
+	// network policy generation
+
+	if polengine == "netpol" {
+		generatedPolicyName := metadataMap["name"].(string)
+		selector := specMap["podSelector"].(map[string]any)
+		delete(selector, "matchLabels")
+		selector["matchLabels"] = labels
+
+		policyBytes, err := json.Marshal(policyData)
+
+		if err != nil {
+			panic(err.Error())
+		}
+		pol = kyvernov1.Policy{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: generatorPolicyName,
+			},
+			Spec: kyvernov1.Spec{
+				GenerateExisting: true,
+				Rules: []kyvernov1.Rule{
+					{
+						Name: cve + "virtual-patch-netpol",
+						MatchResources: kyvernov1.MatchResources{
+							Any: kyvernov1.ResourceFilters{
+								{
+									ResourceDescription: kyvernov1.ResourceDescription{
+										Kinds: []string{
+											"v1/Pod",
+										},
+										Selector: &metav1.LabelSelector{
+											MatchLabels: labels,
+										},
+									},
+								},
+							},
+						},
+						RawAnyAllConditions: &v1.JSON{Raw: preconditionBytes},
+						Context: []kyvernov1.ContextEntry{
+							getPodName,
+						},
+						Generation: kyvernov1.Generation{
+							ResourceSpec: kyvernov1.ResourceSpec{
+								APIVersion: "networking.k8s.io/v1",
+								Kind:       "NetworkPolicy",
+								Name:       generatedPolicyName,
+								Namespace:  np.GetNamespace(),
+							},
+							RawData: &v1.JSON{Raw: policyBytes},
+						},
+					},
+				},
+			},
+		}
+	}
+
+
 	// Print the YAML data
 	fmt.Println(string(yamlData))
 	return pol
