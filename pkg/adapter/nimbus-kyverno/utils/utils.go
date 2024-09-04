@@ -9,12 +9,16 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"sync"
 
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+var VirtualPatchData []map[string]any
+var mu sync.RWMutex
 
 func GetGVK(kind string) string {
 	// Map to store the mappings of kinds to their corresponding API versions
@@ -125,7 +129,7 @@ func Title(input string) string {
     return toTitle.String(input)
 }
 
-func GetVirtualPatchData[T any]()(T, error) {
+func FetchVirtualPatchData[T any]()(T, error) {
 	var out T
 	// Open the JSON file
 	file, err := os.Open("../../../vp.json")

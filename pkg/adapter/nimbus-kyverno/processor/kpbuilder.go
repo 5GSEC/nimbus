@@ -14,10 +14,10 @@ import (
 	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 	"github.com/5GSEC/nimbus/pkg/adapter/k8s"
 	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kyverno/utils"
+	"github.com/robfig/cron/v3"
 	"github.com/go-logr/logr"
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
 	"go.uber.org/multierr"
-	"gopkg.in/yaml.v2"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -87,8 +87,43 @@ func buildKpFor(id string, np *v1alpha1.NimbusPolicy) ([]kyvernov1.Policy, error
 			return kps, err
 		}
 		kps = append(kps, kpols...)
+		watchCVES(np)
 	}
 	return kps, nil
+}
+
+func watchCVES(np *v1alpha1.NimbusPolicy) {
+	rule := np.Spec.NimbusRules[0].Rule
+	schedule := "0 0 * * *"
+	if rule.Params["schedule"] != nil {
+		schedule = rule.Params["schedule"][0]
+	}
+    // Schedule the deletion of the Nimbus policy
+    c := cron.New()
+    _, err := c.AddFunc(schedule, func() {
+        fmt.Println("Checking for CVE updates and updation of policies")
+        err := deleteNimbusPolicy(np)
+        if err != nil {
+            fmt.Println(err)
+        }
+    })
+    if err != nil {
+        panic(err)
+    }
+    c.Start()
+
+}
+
+
+
+func deleteNimbusPolicy(np *v1alpha1.NimbusPolicy) error {
+    nimbusPolicyGVR := schema.GroupVersionResource{Group: "intent.security.nimbus.com", Version: "v1alpha1", Resource: "nimbuspolicies"}
+	err := client.Resource(nimbusPolicyGVR).Namespace(np.Namespace).Delete(context.TODO(), np.Name,metav1.DeleteOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to delete Nimbus Policy: %s", err.Error())
+	}
+	fmt.Println("Nimbus policy deleted successfully")
+    return nil
 }
 
 func escapeToHost(np *v1alpha1.NimbusPolicy) kyvernov1.Policy {
@@ -322,20 +357,17 @@ func virtualPatch(np *v1alpha1.NimbusPolicy) ([]kyvernov1.Policy, error) {
 	//  tbd
 	// schedule := rule.Params["schedule"][0]
 	var kps []kyvernov1.Policy
-	resp, err := utils.GetVirtualPatchData[[]map[string]any]()
+	resp, err := utils.FetchVirtualPatchData[[]map[string]any]()
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch the response from knoxguard: %s", err.Error())
+		return kps, err
 	}
 	for _, currObj := range resp {
 		image := currObj["image"].(string)
-		fmt.Println(image)
-		fmt.Println("------------------------------------------------------------------")
 		cves := currObj["cves"].([]any)
 		for _, obj := range cves {
 			cveData := obj.(map[string]any)
 			cve := cveData["cve"].(string)
 			if utils.Contains(requiredCVES, cve) {
-				fmt.Println(cveData["virtual_patch"])
 				// create generate kyverno policies which will generate the native virtual patch policies based on the CVE's
 				karmorPolCount := 1
 				kyvPolCount := 1
@@ -375,12 +407,6 @@ func generatePol(polengine string, cve string, image string, np *v1alpha1.Nimbus
 	labels := np.Spec.Selector.MatchLabels
 	cve = strings.ToLower(cve)
 	uid := np.ObjectMeta.GetUID()
-	// Marshal the data into YAML
-	yamlData, err := yaml.Marshal(&policyData)
-	if err != nil {
-		fmt.Println("unable to parse the response to YAML: ", err.Error())
-		return pol
-	}
 	ownerShipList := []any{
 		map[string]any{
 			"apiVersion":         "intent.security.nimbus.com/v1alpha1",
@@ -524,8 +550,6 @@ func generatePol(polengine string, cve string, image string, np *v1alpha1.Nimbus
 		delete(rule, "match")
 		rule["match"] = newMatchMap
 
-		fmt.Println("rule after modification: ", rule["match"])
-
 		// appending the image matching precondition to the existing preconditions
 		preCndMap := rule["preconditions"].(map[string]any)
 		conditionsList, ok := preCndMap["any"].([]any)
@@ -635,8 +659,5 @@ func generatePol(polengine string, cve string, image string, np *v1alpha1.Nimbus
 		}
 	}
 
-
-	// Print the YAML data
-	fmt.Println(string(yamlData))
 	return pol
 }

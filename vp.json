@@ -99,7 +99,8 @@
                 "spec": {
                     "podSelector": {
                         "matchLabels": {
-                            "role": "db"
+                            "role": "db",
+                            "app": "dsfsdf"
                         }
                     },
                     "policyTypes": [
