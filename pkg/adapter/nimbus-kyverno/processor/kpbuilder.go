@@ -14,9 +14,9 @@ import (
 	"github.com/5GSEC/nimbus/pkg/adapter/idpool"
 	"github.com/5GSEC/nimbus/pkg/adapter/k8s"
 	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kyverno/utils"
-	"github.com/robfig/cron/v3"
 	"github.com/go-logr/logr"
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
+	"github.com/robfig/cron/v3"
 	"go.uber.org/multierr"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,7 +40,7 @@ func BuildKpsFrom(logger logr.Logger, np *v1alpha1.NimbusPolicy) []kyvernov1.Pol
 	for _, nimbusRule := range np.Spec.NimbusRules {
 		id := nimbusRule.ID
 		if idpool.IsIdSupportedBy(id, "kyverno") {
-			kps, err := buildKpFor(id, np)
+			kps, err := buildKpFor(id, np, logger)
 			if err != nil {
 				logger.Error(err, "error while building kyverno policies")
 			}
@@ -70,7 +70,7 @@ func BuildKpsFrom(logger logr.Logger, np *v1alpha1.NimbusPolicy) []kyvernov1.Pol
 }
 
 // buildKpFor builds a KyvernoPolicy based on intent ID supported by Kyverno Policy Engine.
-func buildKpFor(id string, np *v1alpha1.NimbusPolicy) ([]kyvernov1.Policy, error) {
+func buildKpFor(id string, np *v1alpha1.NimbusPolicy, logger logr.Logger) ([]kyvernov1.Policy, error) {
 	var kps []kyvernov1.Policy
 	switch id {
 	case idpool.EscapeToHost:
@@ -82,17 +82,17 @@ func buildKpFor(id string, np *v1alpha1.NimbusPolicy) ([]kyvernov1.Policy, error
 		}
 		kps = append(kps, kpols...)
 	case idpool.VirtualPatch:
-		kpols, err := virtualPatch(np)
+		kpols, err := virtualPatch(np, logger)
 		if err != nil {
 			return kps, err
 		}
 		kps = append(kps, kpols...)
-		watchCVES(np)
+		watchCVES(np, logger)
 	}
 	return kps, nil
 }
 
-func watchCVES(np *v1alpha1.NimbusPolicy) {
+func watchCVES(np *v1alpha1.NimbusPolicy, logger logr.Logger) {
 	rule := np.Spec.NimbusRules[0].Rule
 	schedule := "0 0 * * *"
 	if rule.Params["schedule"] != nil {
@@ -101,14 +101,14 @@ func watchCVES(np *v1alpha1.NimbusPolicy) {
     // Schedule the deletion of the Nimbus policy
     c := cron.New()
     _, err := c.AddFunc(schedule, func() {
-        fmt.Println("Checking for CVE updates and updation of policies")
-        err := deleteNimbusPolicy(np)
+        logger.Info("Checking for CVE updates and updation of policies")
+        err := deleteNimbusPolicy(np, logger)
         if err != nil {
-            fmt.Println(err)
+            logger.Error(err, "error while updating policies")
         }
     })
     if err != nil {
-        panic(err)
+        logger.Error(err, "error while adding the schedule to update policies")
     }
     c.Start()
 
@@ -116,13 +116,13 @@ func watchCVES(np *v1alpha1.NimbusPolicy) {
 
 
 
-func deleteNimbusPolicy(np *v1alpha1.NimbusPolicy) error {
+func deleteNimbusPolicy(np *v1alpha1.NimbusPolicy, logger logr.Logger) error {
     nimbusPolicyGVR := schema.GroupVersionResource{Group: "intent.security.nimbus.com", Version: "v1alpha1", Resource: "nimbuspolicies"}
 	err := client.Resource(nimbusPolicyGVR).Namespace(np.Namespace).Delete(context.TODO(), np.Name,metav1.DeleteOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to delete Nimbus Policy: %s", err.Error())
 	}
-	fmt.Println("Nimbus policy deleted successfully")
+	logger.Info("Nimbus policy deleted successfully")
     return nil
 }
 
@@ -351,11 +351,9 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy) ([]kyvernov1.Policy, error) 
 	return kps, multierr.Combine(errs...)
 }
 
-func virtualPatch(np *v1alpha1.NimbusPolicy) ([]kyvernov1.Policy, error) {
+func virtualPatch(np *v1alpha1.NimbusPolicy, logger logr.Logger) ([]kyvernov1.Policy, error) {
 	rule := np.Spec.NimbusRules[0].Rule
 	requiredCVES := rule.Params["cve_list"]
-	//  tbd
-	// schedule := rule.Params["schedule"][0]
 	var kps []kyvernov1.Policy
 	resp, err := utils.FetchVirtualPatchData[[]map[string]any]()
 	if err != nil {
@@ -372,23 +370,23 @@ func virtualPatch(np *v1alpha1.NimbusPolicy) ([]kyvernov1.Policy, error) {
 				karmorPolCount := 1
 				kyvPolCount := 1
 				netPolCount := 1
-				virtual_patch := cveData["virtual_patch"].([]any)
-				for _, policy := range virtual_patch {
+				virtualPatch := cveData["virtual_patch"].([]any)
+				for _, policy := range virtualPatch {
 					pol := policy.(map[string]any)
 					policyData, ok := pol["karmor"].(map[string]any)
 					if ok {
-						kps = append(kps, generatePol("karmor", cve, image, np, policyData, karmorPolCount))
+						kps = append(kps, generatePol("karmor", cve, image, np, policyData, karmorPolCount, logger))
 						karmorPolCount += 1
 					}
 					policyData, ok = pol["kyverno"].(map[string]any)
 					if ok {
-						kps = append(kps, generatePol("kyverno", cve, image, np, policyData, kyvPolCount))
+						kps = append(kps, generatePol("kyverno", cve, image, np, policyData, kyvPolCount, logger))
 						kyvPolCount += 1
 					}
 					
 					policyData, ok = pol["netpol"].(map[string]any)
 					if ok {
-						kps = append(kps, generatePol("netpol", cve, image, np, policyData, netPolCount))
+						kps = append(kps, generatePol("netpol", cve, image, np, policyData, netPolCount, logger))
 						netPolCount += 1
 					}
 				}
@@ -402,7 +400,7 @@ func addManagedByAnnotation(kp *kyvernov1.Policy) {
 	kp.Annotations["app.kubernetes.io/managed-by"] = "nimbus-kyverno"
 }
 
-func generatePol(polengine string, cve string, image string, np *v1alpha1.NimbusPolicy, policyData map[string]any, count int) kyvernov1.Policy {
+func generatePol(polengine string, cve string, image string, np *v1alpha1.NimbusPolicy, policyData map[string]any, count int, logger logr.Logger) kyvernov1.Policy {
 	var pol kyvernov1.Policy
 	labels := np.Spec.Selector.MatchLabels
 	cve = strings.ToLower(cve)
@@ -563,7 +561,7 @@ func generatePol(polengine string, cve string, image string, np *v1alpha1.Nimbus
 
 		policyBytes, err := json.Marshal(policyData)
 		if err != nil {
-			panic(err.Error())
+			logger.V(2).Error(err, "error while marshalling the policies")
 		}
 
 		pol = kyvernov1.Policy{
