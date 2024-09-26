@@ -10,5 +10,6 @@ spec:
     - name: unauthorized-sa-token-access-multiple
     - name: dns-manipulation-multiple
   selector:
-    matchLabels:
-      app: nginx
+    workloadSelector:
+      matchLabels:
+        app: nginx
