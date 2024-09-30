@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-logr/logr"
 	netv1 "k8s.io/api/networking/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -36,6 +37,7 @@ var (
 func init() {
 	utilruntime.Must(v1alpha1.AddToScheme(scheme))
 	utilruntime.Must(netv1.AddToScheme(scheme))
+	utilruntime.Must(corev1.AddToScheme(scheme))
 	k8sClient = k8s.NewOrDie(scheme)
 }
 
@@ -104,7 +106,7 @@ func createOrUpdateNetworkPolicy(ctx context.Context, npName, npNamespace string
 	}
 
 	deleteDanglingNetpols(ctx, np, logger)
-	netPols := processor.BuildNetPolsFrom(logger, np)
+	netPols := processor.BuildNetPolsFrom(logger, np, k8sClient)
 	// Iterate using a separate index variable to avoid aliasing
 	for idx := range netPols {
 		netpol := netPols[idx]
