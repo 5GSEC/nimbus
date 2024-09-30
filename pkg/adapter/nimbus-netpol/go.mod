@@ -7,7 +7,7 @@ toolchain go1.22.1
 replace github.com/5GSEC/nimbus => ../../../../nimbus
 
 require (
-	github.com/5GSEC/nimbus v1.0.1
+	github.com/5GSEC/nimbus v0.0.0-20240503063208-5bd27400462f
 	github.com/go-logr/logr v1.4.2
 	k8s.io/api v0.30.3
 	k8s.io/apimachinery v0.30.3
