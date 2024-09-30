@@ -34,7 +34,6 @@ func BuildKpsFrom(logger logr.Logger, np *v1alpha1.NimbusPolicy) []kyvernov1.Pol
 	var allkps []kyvernov1.Policy
 	admission := true
 	background := true
-	skipBackgroundAdmissionReq := true
 	for _, nimbusRule := range np.Spec.NimbusRules {
 		id := nimbusRule.ID
 		if idpool.IsIdSupportedBy(id, "kyverno") {
@@ -51,8 +50,7 @@ func BuildKpsFrom(logger logr.Logger, np *v1alpha1.NimbusPolicy) []kyvernov1.Pol
 				kp.Annotations["policies.kyverno.io/description"] = nimbusRule.Description
 				kp.Spec.Admission = &admission
 				kp.Spec.Background = &background
-				kp.Spec.Rules[0].SkipBackgroundRequests = skipBackgroundAdmissionReq
-
+				
 				if nimbusRule.Rule.RuleAction == "Block" {
 					kp.Spec.ValidationFailureAction = kyvernov1.ValidationFailureAction("Enforce")
 				} else {
@@ -119,17 +117,17 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy) ([]kyvernov1.Policy, error) 
 	if err != nil {
 		errs = append(errs, err)
 	}
-	var markLabels = make(map[string]string)
+	var markLabels = make(map[string][]string)
 	for _, d := range deployments.Items {
 		for k, v := range d.GetLabels() {
 			key := k + ":" + v
-			markLabels[key] = d.GetName()
+			markLabels[key] = append(markLabels[key], d.GetName())
 		}
 	}
 	for k, v := range labels {
 		key := k + ":" + v
-		if markLabels[key] != "" {
-			deployNames = append(deployNames, markLabels[key])
+		if len(markLabels[key]) != 0 {
+			deployNames = append(deployNames, markLabels[key]...)
 		}
 	}
 
