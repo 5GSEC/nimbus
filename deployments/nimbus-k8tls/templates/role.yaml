@@ -2,66 +2,56 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: nimbus-k8tls-clusterrole
+  name: nimbus-k8tls
+  labels:
+    {{- include "nimbus-k8tls.labels" . | nindent 4 }}
 rules:
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  - namespaces
-  - serviceaccounts
-  verbs:
-  - create
-  - delete
-  - get
-  - update
-- apiGroups:
-  - ""
-  resources:
-  - services
-  verbs:
-  - get
-  - list
-- apiGroups:
-  - batch
-  resources:
-  - cronjobs
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - update
-  - watch
-- apiGroups:
-  - intent.security.nimbus.com
-  resources:
-  - clusternimbuspolicies
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - intent.security.nimbus.com
-  resources:
-  - clusternimbuspolicies/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - rbac.authorization.k8s.io
-  resources:
-  - clusterrolebindings
-  - clusterroles
-  verbs:
-  - create
-  - delete
-  - get
-  - update
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - create
+      - delete
+      - get
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+      - serviceaccounts
+    verbs:
+      - get
+  - apiGroups:
+      - batch
+    resources:
+      - cronjobs
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - update
+      - watch
+  - apiGroups:
+      - intent.security.nimbus.com
+    resources:
+      - clusternimbuspolicies
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - intent.security.nimbus.com
+    resources:
+      - clusternimbuspolicies/status
+    verbs:
+      - get
+      - patch
+      - update
 {{- if .Values.output.elasticsearch.enabled }}
-- apiGroups: [""]
-  resources: ["secrets"]
-  resourceNames: ["elasticsearch-password"]
-  verbs: ["get"]
+  - apiGroups: [ "" ]
+    resources: [ "secrets" ]
+    resourceNames: [ "elasticsearch-password" ]
+    verbs: [ "get" ]
 {{- end }}
