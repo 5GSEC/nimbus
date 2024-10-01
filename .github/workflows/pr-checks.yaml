@@ -172,6 +172,7 @@ jobs:
           working-directory: ./deployments/nimbus
           run: |
             helm upgrade --dependency-update --install nimbus-operator . -n nimbus --create-namespace \
+            --set image.tag=latest \
             --set image.pullPolicy=Never \
             --set autoDeploy.kubearmor=false \
             --set autoDeploy.kyverno=false \
@@ -232,6 +233,7 @@ jobs:
           working-directory: ./deployments/nimbus
           run: |
             helm upgrade --dependency-update --install nimbus-operator . -n nimbus --create-namespace \
+            --set image.tag=latest \
             --set image.pullPolicy=Never \
             --set autoDeploy.kubearmor=false \
             --set autoDeploy.kyverno=false \
@@ -245,7 +247,7 @@ jobs:
         - name: Install nimbus-netpol
           working-directory: deployments/nimbus-netpol/
           run: |
-            helm upgrade --install nimbus-netpol . -n nimbus --set image.pullPolicy=Never
+            helm upgrade --install nimbus-netpol . -n nimbus --set image.pullPolicy=Never --set image.tag=latest
 
         - name: Wait for nimbus-netpol to start
           run: |
@@ -255,7 +257,7 @@ jobs:
         - name: Install nimbus-kubearmor
           working-directory: deployments/nimbus-kubearmor/
           run: |
-            helm upgrade --dependency-update --install nimbus-kubearmor . -n nimbus --set image.pullPolicy=Never
+            helm upgrade --dependency-update --install nimbus-kubearmor . -n nimbus --set image.pullPolicy=Never --set image.tag=latest
 
         - name: Wait for nimbus-kubearmor to start
           run: |
@@ -265,7 +267,7 @@ jobs:
         - name: Install nimbus-kyverno
           working-directory: deployments/nimbus-kyverno/
           run: |
-            helm upgrade --dependency-update --install nimbus-kyverno . -n nimbus --set image.pullPolicy=Never
+            helm upgrade --dependency-update --install nimbus-kyverno . -n nimbus --set image.pullPolicy=Never --set image.tag=latest
 
         - name: Wait for nimbus-kyverno to start
           run: |

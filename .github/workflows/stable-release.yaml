@@ -3,7 +3,10 @@
 
 name: Stable release
 
-on: workflow_dispatch
+on:
+  create:
+    tags:
+      - "v*"
 
 permissions: read-all
 
@@ -33,8 +36,35 @@ jobs:
       NAME: ${{ matrix.adapters }}
     secrets: inherit
 
+  update-image-tags-in-helm-charts:
+    if: github.repository == '5GSEC/nimbus'
+    needs: [ release-nimbus-image, release-adapters-image ]
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Get tag
+        id: tag
+        run: |
+          if [ ${{ github.ref }} == "refs/heads/main" ]; then
+            echo "tag=latest" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update images tag
+        run: |
+          ./scripts/update-image-tag.sh ${{ steps.tag.outputs.tag }} 
+
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+
   release_helm_charts:
     if: github.repository == '5GSEC/nimbus'
+    needs: [ update-image-tags-in-helm-charts ]
     permissions:
       contents: write
     runs-on: ubuntu-latest

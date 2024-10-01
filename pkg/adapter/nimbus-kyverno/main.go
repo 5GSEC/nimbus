@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"github.com/5GSEC/nimbus/pkg/util"
 	"os"
 	"os/signal"
 	"syscall"
@@ -17,6 +18,7 @@ import (
 func main() {
 	ctrl.SetLogger(zap.New())
 	logger := ctrl.Log
+	util.LogBuildInfo(logger)
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	ctrl.LoggerInto(ctx, logger)

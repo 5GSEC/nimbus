@@ -5,11 +5,11 @@ package main
 
 import (
 	"flag"
-	"os"
-
-	"k8s.io/apimachinery/pkg/runtime"
+	"github.com/5GSEC/nimbus/pkg/util"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
@@ -24,7 +24,7 @@ import (
 
 // Global variables for scheme registration and setup logging.
 var (
-	scheme   = runtime.NewScheme()        // Scheme for registering API types for client and server.
+	scheme   = k8sruntime.NewScheme()     // Scheme for registering API types for client and server.
 	setupLog = ctrl.Log.WithName("setup") // Logger for setup process.
 )
 
@@ -51,6 +51,7 @@ func main() {
 
 	// Setting the logger with the provided options.
 	ctrl.SetLogger(zap.New())
+	util.LogBuildInfo(ctrl.Log)
 
 	// Creating a new manager which will manage all the controllers.
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
