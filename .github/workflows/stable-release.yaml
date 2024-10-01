@@ -61,6 +61,8 @@ jobs:
 
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          branch: main
 
   release_helm_charts:
     if: github.repository == '5GSEC/nimbus'
