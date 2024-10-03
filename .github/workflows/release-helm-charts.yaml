@@ -1,0 +1,44 @@
+name: Release Helm charts
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag which has to be updated"
+        type: "string"
+        required: true
+
+jobs:
+  release_helm_charts:
+    if: github.repository == '5GSEC/nimbus'
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Generate a token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.ACTIONS_APP_ID }}
+          private-key: ${{ secrets.ACTIONS_APP_PRIVATE_KEY }}
+          repositories: charts
+
+      - name: Publish Helm chart
+        uses: stefanprodan/helm-gh-pages@master
+        with:
+          # Access token which can push to a different repo in the same org
+          token: ${{ steps.generate-token.outputs.token }}
+          charts_dir: deployments/
+          # repo where charts would be published
+          owner: 5GSEC
+          repository: charts
+          branch: gh-pages
+          charts_url: https://5gsec.github.io/charts/
+          commit_username: "github-actions[bot]"
+          commit_email: "github-actions[bot]@users.noreply.github.com"

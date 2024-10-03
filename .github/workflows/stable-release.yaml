@@ -40,7 +40,7 @@ jobs:
     if: github.repository == '5GSEC/nimbus'
     needs: [ release-nimbus-image, release-adapters-image ]
     permissions:
-      contents: write
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source code
@@ -57,44 +57,16 @@ jobs:
 
       - name: Update images tag
         run: |
-          ./scripts/update-image-tag.sh ${{ steps.tag.outputs.tag }} 
+          ./scripts/update-image-tag.sh ${{ steps.tag.outputs.tag }}
 
-      - name: Commit changes
-        uses: stefanzweifel/git-auto-commit-action@v5
+      - name: Create PR to update images tag in Helm charts
+        uses: peter-evans/create-pull-request@v7
         with:
-          branch: main
-
-  release_helm_charts:
-    if: github.repository == '5GSEC/nimbus'
-    needs: [ update-image-tags-in-helm-charts ]
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
-
-      - name: Install Helm
-        uses: azure/setup-helm@v4
-
-      - name: Generate a token
-        id: generate-token
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ vars.ACTIONS_APP_ID }}
-          private-key: ${{ secrets.ACTIONS_APP_PRIVATE_KEY }}
-          repositories: charts
-
-      - name: Publish Helm chart
-        uses: stefanprodan/helm-gh-pages@master
-        with:
-          # Access token which can push to a different repo in the same org
-          token: ${{ steps.generate-token.outputs.token }}
-          charts_dir: deployments/
-          # repo where charts would be published
-          owner: 5GSEC
-          repository: charts
-          branch: gh-pages
-          charts_url: https://5gsec.github.io/charts/
-          commit_username: "github-actions[bot]"
-          commit_email: "github-actions[bot]@users.noreply.github.com"
+          branch: update-helm-${{ steps.tag.outputs.tag }}
+          commit-message: "[skip ci] Update Helm Chart To ${{ steps.update.outputs.STABLE_VERSION }}"
+          committer: "github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+          author: "github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+          title: "[skip ci] Update Helm Chart To ${{ steps.update.outputs.STABLE_VERSION }}"
+          base: main
+          signoff: true
+          delete-branch: true
