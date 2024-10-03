@@ -4,11 +4,9 @@ image:
   repository: 5gsec/nimbus-netpol
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "latest"
-
+  tag: "v0.4"
 nameOverride: ""
 fullnameOverride: "nimbus-netpol"
-
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
@@ -17,10 +15,8 @@ serviceAccount:
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
   name: "nimbus-netpol"
-
 podSecurityContext:
   fsGroup: 2000
-
 securityContext:
   capabilities:
     drop:
@@ -28,7 +24,6 @@ securityContext:
   readOnlyRootFilesystem: true
   runAsNonRoot: true
   runAsUser: 1000
-
 resources:
   limits:
     cpu: 50m
