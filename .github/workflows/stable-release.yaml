@@ -41,6 +41,7 @@ jobs:
     needs: [ release-nimbus-image, release-adapters-image ]
     permissions:
       pull-requests: write
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source code
