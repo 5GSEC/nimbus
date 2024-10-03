@@ -42,3 +42,4 @@ jobs:
           charts_url: https://5gsec.github.io/charts/
           commit_username: "github-actions[bot]"
           commit_email: "github-actions[bot]@users.noreply.github.com"
+          dependencies: nimbus-kubearmor,https://5gsec.github.io/charts/;nimbus-netpol,https://5gsec.github.io/charts/;nimbus-kyverno,https://5gsec.github.io/charts/;nimbus-k8tls,https://5gsec.github.io/charts/
