@@ -1,19 +1,15 @@
 image:
   repository: 5gsec/nimbus-k8tls
   pullPolicy: Always
-  tag: "latest"
-
+  tag: "v0.4"
 nameOverride: ""
 fullnameOverride: "nimbus-k8tls"
-
 serviceAccount:
   create: true
   automount: true
   name: "nimbus-k8tls"
-
 podSecurityContext:
   fsGroup: 2000
-
 securityContext:
   capabilities:
     drop:
@@ -21,7 +17,6 @@ securityContext:
   readOnlyRootFilesystem: true
   runAsNonRoot: true
   runAsUser: 1000
-
 resources:
   limits:
     cpu: 50m
@@ -29,10 +24,9 @@ resources:
   requests:
     cpu: 50m
     memory: 64Mi
-
 output:
   elasticsearch:
-    enabled: false  
+    enabled: false
     host: "localhost"
     user: elastic
     port: 9200
