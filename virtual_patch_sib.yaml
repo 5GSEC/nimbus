@@ -1,0 +1,11 @@
+apiVersion: intent.security.nimbus.com/v1alpha1
+kind: SecurityIntentBinding
+metadata:
+  name: virtual-patch-binding
+spec:
+  intents:
+    - name: virtual-patch
+  selector:
+    workloadSelector:
+      matchLabels:
+        app: prod

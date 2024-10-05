@@ -59,6 +59,7 @@ func Run(ctx context.Context) {
 	deletedKpCh := make(chan common.Request)
 	go watcher.WatchKps(ctx, updatedKpCh, deletedKpCh)
 
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -431,6 +432,9 @@ func createTriggerForKp(ctx context.Context, nameNamespace common.Request) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      nameNamespace.Name + "-trigger-configmap",
 			Namespace: nameNamespace.Namespace,
+			Labels: map[string]string {
+				"trigger" : "configmap",
+			},
 		},
 		Data: map[string]string{
 			"data": "dummy",

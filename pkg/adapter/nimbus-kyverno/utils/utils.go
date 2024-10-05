@@ -4,15 +4,21 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"reflect"
 	"strings"
+	"sync"
 
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+var VirtualPatchData []map[string]any
+var mu sync.RWMutex
 
 func GetGVK(kind string) string {
 	// Map to store the mappings of kinds to their corresponding API versions
@@ -121,4 +127,48 @@ func Title(input string) string {
     toTitle := cases.Title(language.Und)
 
     return toTitle.String(input)
+}
+
+func FetchVirtualPatchData[T any]()(T, error) {
+	var out T
+	// Open the JSON file
+	file, err := os.Open("../../../vp.json")
+	if err != nil {
+		return out, err
+	}
+	defer file.Close()
+
+	// Read the file contents
+	bytes, err := os.ReadFile("../../../vp.json")
+	if err != nil {
+		return out, err
+	}
+
+	err = json.Unmarshal(bytes, &out)
+	if err != nil {
+		return out, err
+	}
+
+	return out, nil
+}
+
+func Contains(slice []string, value string) bool {
+	for _, item := range slice {
+		if item == value {
+			return true
+		}
+	}
+	return false
+}
+
+func ParseImageString(imageString string) (string, string) {
+    parts := strings.SplitN(imageString, ":", 2)
+    repository := parts[0]
+    tag := "latest" // Default tag
+
+    if len(parts) > 1 {
+        tag = parts[1]
+    }
+
+    return repository, tag
 }

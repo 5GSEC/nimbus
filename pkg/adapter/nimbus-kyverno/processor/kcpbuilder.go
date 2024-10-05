@@ -121,7 +121,7 @@ func clusterCocoRuntimeAddition(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1
 			}
 			matchFilters = append(matchFilters, resourceFilter)
 		}
-	} else if namespaces[0] == "*" && len(labels) == 0  {
+	} else if namespaces[0] == "*" && len(labels) == 0 {
 		if len(excludeNamespaces) > 0 {
 			resourceFilter = kyvernov1.ResourceFilter{
 				ResourceDescription: kyvernov1.ResourceDescription{
@@ -167,7 +167,7 @@ func clusterCocoRuntimeAddition(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1
 					},
 					Mutation: kyvernov1.Mutation{
 						Targets: []kyvernov1.TargetResourceSpec{
-							kyvernov1.TargetResourceSpec{
+							{
 								ResourceSpec: kyvernov1.ResourceSpec{
 									APIVersion: "apps/v1",
 									Kind:       "Deployment",
@@ -241,7 +241,7 @@ func clusterEscapeToHost(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1.Rule) 
 	} else if namespaces[0] == "*" && len(labels) > 0 {
 		if len(excludeNamespaces) > 0 {
 			resourceFilter = kyvernov1.ResourceFilter{
-				ResourceDescription: kyvernov1.ResourceDescription {
+				ResourceDescription: kyvernov1.ResourceDescription{
 					Namespaces: excludeNamespaces,
 				},
 			}
