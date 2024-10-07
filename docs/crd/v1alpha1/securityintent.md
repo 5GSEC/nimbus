@@ -17,7 +17,7 @@ spec:
     id: [supported intent ID]                    # ID from the predefined pool
     action: [Audit|Block]                        # Block by default.
     params:                                      # Optional. Parameters allows fine-tuning of intents to specific requirements.
-     key: [value]
+     key: ["value1", "value2"]
 ```
 
 ### Explanation of Fields

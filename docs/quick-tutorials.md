@@ -265,5 +265,5 @@ No resources found
 
 ## Next steps
 
-- Try out other [SecurityIntents](../examples/namespaced) and review the policy generation.
+- Try out [detailed examples](intents) and review the policy generation.
 - Checkout [Security Intents](https://github.com/5GSEC/security-intents).

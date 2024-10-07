@@ -52,7 +52,7 @@ metadata:
 ...
 spec:
   intents:
-    - name: assess-tls-scheduled
+    - name: dns-manipulation
 ...
 ```
 
