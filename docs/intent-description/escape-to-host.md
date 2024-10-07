@@ -6,7 +6,7 @@
 
 - The escapeToHost intent is also focused on preventing attackers from breaching container boundaries and gaining access to the host machine. This is a critical aspect of securing containerized environments, as it helps maintain the isolation provided by containers, thereby protecting the host and other workloads from potential compromises.
 
-**Note** : For the escapeToHost intent one needs to have either [nimbus-kyverno](../../deployments/nimbus-kyverno/.Readme.md) adapter or [nimbus-kubearmor](../../deployments/nimbus-kubrarmor/Readme.md) or both adapters running in their cluster. (it is recommended to have both the adapters in place to make sure that the intent work with its full potential)
+**Note** : For the escapeToHost intent one needs to have either [nimbus-kyverno](../../deployments/nimbus-kyverno/Readme.md) adapter or [nimbus-kubearmor](../../deployments/nimbus-kubrarmor/Readme.md) or both adapters running in their cluster. (it is recommended to have both the adapters in place to make sure that the intent work with its full potential)
 
 ## Policy Creation
 
