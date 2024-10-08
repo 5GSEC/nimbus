@@ -3,7 +3,7 @@
 The coco-workload intent likely aims to enhance security by ensuring that sensitive workloads are executed in environments that provide confidentiality and isolation. This could involve leveraging technologies like Confidential VMs, which are designed to protect data in use, thereby reducing the risk of data exposure or leakage.
 
 
-**Note** : For the escapeToHost intent one needs to have either [nimbus-kyverno](../../deployments/nimbus-kyverno/Readme.md) adapter running in their cluster.
+**Note** : For the escapeToHost intent one needs to have either [nimbus-kyverno](../../deployments/nimbus-kyverno/Readme.md) adapter running in their cluster. To install the complete suite with all the adapters pls follow the steps mentioned [here](../getting-started.md#nimbus)
 
 ## Policy Creation
 

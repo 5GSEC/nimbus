@@ -4,7 +4,7 @@
 
 - The goal of the denyExternalNetworkAccess intent is to create a secure environment for the application by limiting both ingress and egress traffic. This is critical for minimizing the attack surface and protecting sensitive data from external threats.
 
-**Note** : For the denyExternalNetworkAccess intent one needs to have  [nimbus-netpol](../../deployments/nimbus-netpol/Readme.md) adapter running in their cluster
+**Note** : For the denyExternalNetworkAccess intent one needs to have  [nimbus-netpol](../../deployments/nimbus-netpol/Readme.md) adapter running in their cluster. To install the complete suite with all the adapters pls follow the steps mentioned [here](../getting-started.md#nimbus)
 
 ## Policy Creation
 
