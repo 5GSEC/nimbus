@@ -10,36 +10,42 @@ repo: github.com/5GSEC/nimbus
 resources:
 - api:
     crdVersion: v1
-    namespaced: true
   controller: true
   domain: security.nimbus.com
   group: intent
   kind: SecurityIntent
-  path: github.com/5GSEC/nimbus/api/v1
-  version: v1
+  path: github.com/5GSEC/nimbus/api/v1alpha1
+  version: v1alpha1
 - api:
     crdVersion: v1
     namespaced: true
   controller: true
   domain: security.nimbus.com
   group: intent
-  kind: NimbusPolicy
-  path: github.com/5GSEC/nimbus/api/v1
-  version: v1
+  kind: SecurityIntentBinding
+  path: github.com/5GSEC/nimbus/api/v1alpha1
+  version: v1alpha1
 - api:
     crdVersion: v1
-  controller: true
+    namespaced: true
+  domain: security.nimbus.com
+  group: intent
+  kind: NimbusPolicy
+  path: github.com/5GSEC/nimbus/api/v1alpha1
+  version: v1alpha1
+- api:
+    crdVersion: v1
   domain: security.nimbus.com
   group: intent
   kind: ClusterNimbusPolicy
-  path: github.com/5GSEC/nimbus/api/v1
-  version: v1
+  path: github.com/5GSEC/nimbus/api/v1alpha1
+  version: v1alpha1
 - api:
     crdVersion: v1
   controller: true
   domain: security.nimbus.com
   group: intent
   kind: ClusterSecurityIntentBinding
-  path: github.com/5GSEC/nimbus/api/v1
-  version: v1
+  path: github.com/5GSEC/nimbus/api/v1alpha1
+  version: v1alpha1
 version: "3"
