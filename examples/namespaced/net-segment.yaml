@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Authors of Nimbus
+
+apiVersion: intent.security.nimbus.com/v1alpha1
+kind: SecurityIntent
+metadata:
+  name: network-segmentation
+spec:
+  intent:
+    id: netSegment
+    action: Block # Audit action has no effect here
+    severity: Medium
+    tags:
+      - 5G
+---
+apiVersion: intent.security.nimbus.com/v1alpha1
+kind: SecurityIntentBinding
+metadata:
+  name: network-segmentation-for-ns
+spec:
+  intents:
+    - name: network-segmentation
+  selector:
+    workloadSelector:
+      matchLabels:
+        app: httpd

@@ -19,6 +19,7 @@ const (
 	CocoWorkload              = "cocoWorkload"
 	AssessTLS                 = "assessTLS"
 	DenyENAccess              = "denyExternalNetworkAccess"
+	NetworkSegmentation       = "netSegment"
 )
 
 // KaIds are IDs supported by KubeArmor.
