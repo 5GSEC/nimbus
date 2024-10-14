@@ -9,9 +9,10 @@ Before you begin, set up the following:
 
 - [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) version 1.26 or later.
 - A Kubernetes cluster running version 1.26 or later.
-- In case of kind clusters, bpf-lsm module needs to be installed ([bpf-lsm](https://docs.kubearmor.io/kubearmor/documentation/faq#how-to-enable-kubearmorhostpolicy-for-k8s-cluster)).
+- Make sure that the bpf-lsm module needs is installed ([bpf-lsm](https://docs.kubearmor.io/kubearmor/documentation/faq#how-to-enable-kubearmorhostpolicy-for-k8s-cluster)).
 - The Kubernetes clusters should be configured with a CNI that supports network policy.
-  - For kind clusters, this reference ([kind-calico](https://docs.tigera.io/calico/latest/getting-started/kubernetes/kind)) has the details.
+  - For kind clusters, this reference ([calico-kind](https://docs.tigera.io/calico/latest/getting-started/kubernetes/kind)) has the details.
+  - For on-prem clusters, this reference ([calico-onprem](https://docs.tigera.io/calico/latest/getting-started/kubernetes/self-managed-onprem/onpremises)) has the details.
   - For AWS EKS clusters, the VPC CNI supports kubernetes network policies ([vpc-cni-policy](https://aws.amazon.com/blogs/containers/amazon-vpc-cni-now-supports-kubernetes-network-policies/)).
 - K8s cluster nodes need to have nested virtualization enabled for the confidential containers intent. Additionally kvm needs to be installed ([ubuntu-kvm](https://help.ubuntu.com/community/KVM/Installation)). 
   - For GCP VMs, nested virtualization can be enabled at create time using below command. The machine types which support nested virtualization are listed here ([cpu-virt](https://cloud.google.com/compute/docs/machine-resource#machine_type_comparison)).
