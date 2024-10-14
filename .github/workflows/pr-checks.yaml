@@ -113,7 +113,7 @@ jobs:
         run: make docker-build
 
       - name: Scan image
-        uses: anchore/scan-action@v4
+        uses: anchore/scan-action@v5
         with:
           image: '5gsec/nimbus:latest'
           severity-cutoff: critical
@@ -137,7 +137,7 @@ jobs:
         run: make docker-build
 
       - name: Scan image
-        uses: anchore/scan-action@v4
+        uses: anchore/scan-action@v5
         with:
           image: '5gsec/${{ matrix.adapters }}:latest'
           severity-cutoff: critical
