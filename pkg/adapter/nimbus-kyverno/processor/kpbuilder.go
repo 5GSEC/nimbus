@@ -375,18 +375,30 @@ func virtualPatch(np *v1alpha1.NimbusPolicy, logger logr.Logger) ([]kyvernov1.Po
 					pol := policy.(map[string]any)
 					policyData, ok := pol["karmor"].(map[string]any)
 					if ok {
-						kps = append(kps, generatePol("karmor", cve, image, np, policyData, karmorPolCount, logger))
+						karmorPol, err := generatePol("karmor", cve, image, np, policyData, karmorPolCount, logger)
+						if err != nil {
+							logger.V(2).Error(err, "Error while  generating karmor policy")
+						}
+						kps = append(kps, karmorPol)
 						karmorPolCount += 1
 					}
 					policyData, ok = pol["kyverno"].(map[string]any)
 					if ok {
-						kps = append(kps, generatePol("kyverno", cve, image, np, policyData, kyvPolCount, logger))
+						kyvernoPol, err := generatePol("kyverno", cve, image, np, policyData, kyvPolCount, logger)
+						if err != nil {
+							logger.V(2).Error(err, "Error while  generating kyverno policy")
+						}
+						kps = append(kps, kyvernoPol)
 						kyvPolCount += 1
 					}
 					
 					policyData, ok = pol["netpol"].(map[string]any)
 					if ok {
-						kps = append(kps, generatePol("netpol", cve, image, np, policyData, netPolCount, logger))
+						netPol, err := generatePol("netpol", cve, image, np, policyData, netPolCount, logger)
+						if err != nil {
+							logger.V(2).Error(err, "Error while  generating network policy")
+						}
+						kps = append(kps, netPol)
 						netPolCount += 1
 					}
 				}
@@ -400,7 +412,7 @@ func addManagedByAnnotation(kp *kyvernov1.Policy) {
 	kp.Annotations["app.kubernetes.io/managed-by"] = "nimbus-kyverno"
 }
 
-func generatePol(polengine string, cve string, image string, np *v1alpha1.NimbusPolicy, policyData map[string]any, count int, logger logr.Logger) kyvernov1.Policy {
+func generatePol(polengine string, cve string, image string, np *v1alpha1.NimbusPolicy, policyData map[string]any, count int, logger logr.Logger) (kyvernov1.Policy, error) {
 	var pol kyvernov1.Policy
 	labels := np.Spec.Selector.MatchLabels
 	cve = strings.ToLower(cve)
@@ -466,9 +478,8 @@ func generatePol(polengine string, cve string, image string, np *v1alpha1.Nimbus
 		selector["matchLabels"] = selectorLabels
 
 		policyBytes, err := json.Marshal(policyData)
-
 		if err != nil {
-			panic(err.Error())
+			return pol, err
 		}
 		pol = kyvernov1.Policy{
 			ObjectMeta: metav1.ObjectMeta{
@@ -561,7 +572,7 @@ func generatePol(polengine string, cve string, image string, np *v1alpha1.Nimbus
 
 		policyBytes, err := json.Marshal(policyData)
 		if err != nil {
-			logger.V(2).Error(err, "error while marshalling the policies")
+			return pol, err
 		}
 
 		pol = kyvernov1.Policy{
@@ -613,7 +624,7 @@ func generatePol(polengine string, cve string, image string, np *v1alpha1.Nimbus
 		policyBytes, err := json.Marshal(policyData)
 
 		if err != nil {
-			panic(err.Error())
+			return pol, err
 		}
 		pol = kyvernov1.Policy{
 			ObjectMeta: metav1.ObjectMeta{

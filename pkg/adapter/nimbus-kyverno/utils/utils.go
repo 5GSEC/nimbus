@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"slices"
 	"strings"
 	"sync"
 
@@ -153,12 +154,7 @@ func FetchVirtualPatchData[T any]()(T, error) {
 }
 
 func Contains(slice []string, value string) bool {
-	for _, item := range slice {
-		if item == value {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(slice, value)
 }
 
 func ParseImageString(imageString string) (string, string) {
