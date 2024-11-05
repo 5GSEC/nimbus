@@ -668,5 +668,5 @@ func generatePol(polengine string, cve string, image string, np *v1alpha1.Nimbus
 		}
 	}
 
-	return pol
+	return pol, nil
 }
