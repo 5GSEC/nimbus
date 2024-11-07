@@ -10,7 +10,6 @@ import (
 	"reflect"
 	"slices"
 	"strings"
-	"sync"
 
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
 	"golang.org/x/text/cases"
@@ -19,7 +18,6 @@ import (
 )
 
 var VirtualPatchData []map[string]any
-var mu sync.RWMutex
 
 func GetGVK(kind string) string {
 	// Map to store the mappings of kinds to their corresponding API versions

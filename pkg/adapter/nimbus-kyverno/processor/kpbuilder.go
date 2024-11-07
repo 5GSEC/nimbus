@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 
@@ -52,7 +53,7 @@ func BuildKpsFrom(logger logr.Logger, np *v1alpha1.NimbusPolicy) []kyvernov1.Pol
 				kp.Annotations = make(map[string]string)
 				kp.Annotations["policies.kyverno.io/description"] = nimbusRule.Description
 				kp.Spec.Background = &background
-				
+
 				if nimbusRule.Rule.RuleAction == "Block" {
 					kp.Spec.ValidationFailureAction = kyvernov1.ValidationFailureAction("Enforce")
 				} else {
@@ -98,47 +99,46 @@ func watchCVES(np *v1alpha1.NimbusPolicy, logger logr.Logger) {
 	if rule.Params["schedule"] != nil {
 		schedule = rule.Params["schedule"][0]
 	}
-    // Schedule the deletion of the Nimbus policy
-    c := cron.New()
-    _, err := c.AddFunc(schedule, func() {
-        logger.Info("Checking for CVE updates and updation of policies")
-        err := deleteNimbusPolicy(np, logger)
-        if err != nil {
-            logger.Error(err, "error while updating policies")
-        }
-    })
-    if err != nil {
-        logger.Error(err, "error while adding the schedule to update policies")
-    }
-    c.Start()
+	// Schedule the deletion of the Nimbus policy
+	c := cron.New()
+	_, err := c.AddFunc(schedule, func() {
+		logger.Info("Checking for CVE updates and updation of policies")
+		err := deleteNimbusPolicy(np, logger)
+		if err != nil {
+			logger.Error(err, "error while updating policies")
+		}
+	})
+	if err != nil {
+		logger.Error(err, "error while adding the schedule to update policies")
+		os.Exit(1)
+	}
+	c.Start()
 
 }
 
-
-
 func deleteNimbusPolicy(np *v1alpha1.NimbusPolicy, logger logr.Logger) error {
-    nimbusPolicyGVR := schema.GroupVersionResource{Group: "intent.security.nimbus.com", Version: "v1alpha1", Resource: "nimbuspolicies"}
-	err := client.Resource(nimbusPolicyGVR).Namespace(np.Namespace).Delete(context.TODO(), np.Name,metav1.DeleteOptions{})
+	nimbusPolicyGVR := schema.GroupVersionResource{Group: "intent.security.nimbus.com", Version: "v1alpha1", Resource: "nimbuspolicies"}
+	err := client.Resource(nimbusPolicyGVR).Namespace(np.Namespace).Delete(context.TODO(), np.Name, metav1.DeleteOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to delete Nimbus Policy: %s", err.Error())
 	}
 	logger.Info("Nimbus policy deleted successfully")
-    return nil
+	return nil
 }
 
 func escapeToHost(np *v1alpha1.NimbusPolicy) kyvernov1.Policy {
 	rule := np.Spec.NimbusRules[0].Rule
-	var psa_level api.Level = api.LevelBaseline
+	var psaLevel api.Level = api.LevelBaseline
 	var matchResourceFilters []kyvernov1.ResourceFilter
 
-	if rule.Params["psa_level"] != nil {
+	if rule.Params["psaLevel"] != nil {
 
-		switch rule.Params["psa_level"][0] {
+		switch rule.Params["psaLevel"][0] {
 		case "restricted":
-			psa_level = api.LevelRestricted
+			psaLevel = api.LevelRestricted
 
 		default:
-			psa_level = api.LevelBaseline
+			psaLevel = api.LevelBaseline
 		}
 	}
 
@@ -183,7 +183,7 @@ func escapeToHost(np *v1alpha1.NimbusPolicy) kyvernov1.Policy {
 					},
 					Validation: kyvernov1.Validation{
 						PodSecurity: &kyvernov1.PodSecurity{
-							Level:   psa_level,
+							Level:   psaLevel,
 							Version: "latest",
 						},
 					},
@@ -205,7 +205,7 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy) ([]kyvernov1.Policy, error) 
 	runtimeClass := "kata-clh"
 	params := np.Spec.NimbusRules[0].Rule.Params["runtimeClass"]
 	if params != nil {
-		runtimeClass = params[0] 
+		runtimeClass = params[0]
 	}
 	patchStrategicMerge := map[string]interface{}{
 		"spec": map[string]interface{}{
@@ -353,7 +353,7 @@ func cocoRuntimeAddition(np *v1alpha1.NimbusPolicy) ([]kyvernov1.Policy, error) 
 
 func virtualPatch(np *v1alpha1.NimbusPolicy, logger logr.Logger) ([]kyvernov1.Policy, error) {
 	rule := np.Spec.NimbusRules[0].Rule
-	requiredCVES := rule.Params["cve_list"]
+	requiredCVES := rule.Params["cveList"]
 	var kps []kyvernov1.Policy
 	resp, err := utils.FetchVirtualPatchData[[]map[string]any]()
 	if err != nil {
@@ -378,28 +378,32 @@ func virtualPatch(np *v1alpha1.NimbusPolicy, logger logr.Logger) ([]kyvernov1.Po
 						karmorPol, err := generatePol("karmor", cve, image, np, policyData, karmorPolCount, logger)
 						if err != nil {
 							logger.V(2).Error(err, "Error while  generating karmor policy")
+						} else {
+							kps = append(kps, karmorPol)
+							karmorPolCount += 1
 						}
-						kps = append(kps, karmorPol)
-						karmorPolCount += 1
+
 					}
 					policyData, ok = pol["kyverno"].(map[string]any)
 					if ok {
 						kyvernoPol, err := generatePol("kyverno", cve, image, np, policyData, kyvPolCount, logger)
 						if err != nil {
 							logger.V(2).Error(err, "Error while  generating kyverno policy")
+						} else {
+							kps = append(kps, kyvernoPol)
+							kyvPolCount += 1
 						}
-						kps = append(kps, kyvernoPol)
-						kyvPolCount += 1
 					}
-					
+
 					policyData, ok = pol["netpol"].(map[string]any)
 					if ok {
 						netPol, err := generatePol("netpol", cve, image, np, policyData, netPolCount, logger)
 						if err != nil {
 							logger.V(2).Error(err, "Error while  generating network policy")
+						} else {
+							kps = append(kps, netPol)
+							netPolCount += 1
 						}
-						kps = append(kps, netPol)
-						netPolCount += 1
 					}
 				}
 			}
@@ -431,14 +435,13 @@ func generatePol(polengine string, cve string, image string, np *v1alpha1.Nimbus
 	preConditionMap := map[string]any{
 		"all": []any{
 			map[string]any{
-				"key":  image,
+				"key":      image,
 				"operator": "AnyIn",
-				"value": "{{ request.object.spec.containers[].image }}",
+				"value":    "{{ request.object.spec.containers[].image }}",
 			},
 		},
 	}
 	preconditionBytes, _ := json.Marshal(preConditionMap)
-	
 
 	getPodName := kyvernov1.ContextEntry{
 		Name: "podName",
@@ -457,12 +460,10 @@ func generatePol(polengine string, cve string, image string, np *v1alpha1.Nimbus
 
 	jmesPathContainerNameQuery := "request.object.spec.containers[?(@.image=='" + image + "')].name | [0]"
 
-
 	delete(policyData, "apiVersion")
 	delete(policyData, "kind")
 
-	generatorPolicyName := np.Name + "-" + cve + "-"+ polengine + "-" + strconv.Itoa(count)
-
+	generatorPolicyName := np.Name + "-" + cve + "-" + polengine + "-" + strconv.Itoa(count)
 
 	// kubearmor policy generation
 
@@ -667,6 +668,5 @@ func generatePol(polengine string, cve string, image string, np *v1alpha1.Nimbus
 			},
 		}
 	}
-
 	return pol, nil
 }

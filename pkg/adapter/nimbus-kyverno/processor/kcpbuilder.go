@@ -185,16 +185,16 @@ func clusterCocoRuntimeAddition(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1
 }
 
 func clusterEscapeToHost(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1.Rule) kyvernov1.ClusterPolicy {
-	var psa_level api.Level = api.LevelBaseline
+	var psaLevel api.Level = api.LevelBaseline
 
-	if rule.Params["psa_level"] != nil {
+	if rule.Params["psaLevel"] != nil {
 
-		switch rule.Params["psa_level"][0] {
+		switch rule.Params["psaLevel"][0] {
 		case "restricted":
-			psa_level = api.LevelRestricted
+			psaLevel = api.LevelRestricted
 
 		default:
-			psa_level = api.LevelBaseline
+			psaLevel = api.LevelBaseline
 		}
 
 	}
@@ -296,7 +296,7 @@ func clusterEscapeToHost(cnp *v1alpha1.ClusterNimbusPolicy, rule v1alpha1.Rule) 
 					},
 					Validation: kyvernov1.Validation{
 						PodSecurity: &kyvernov1.PodSecurity{
-							Level:   psa_level,
+							Level:   psaLevel,
 							Version: "latest",
 						},
 					},

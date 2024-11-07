@@ -11,7 +11,7 @@ spec:
     description: "A attacker can breach container boundaries and can gain access to the host machine"
     action: Block
     params:
-      psa_level: ["restricted"]
+      psaLevel: ["restricted"]
 ---
 apiVersion: intent.security.nimbus.com/v1alpha1
 kind: SecurityIntentBinding

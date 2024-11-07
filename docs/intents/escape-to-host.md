@@ -30,7 +30,7 @@ The escapeToHost intent results in `KyvernoPolicy` and a couple of `KubearmorPol
 
    ```
     params:
-      psa_level: ["restricted"]
+      psaLevel: ["restricted"]
    ```
 
 - The `escapeToHost` intent and corresponding policy work together to establish a strong security posture for the application. By enforcing pod security standards, the policy reduces the risk of container escape, which is critical for maintaining the integrity of the host system.
