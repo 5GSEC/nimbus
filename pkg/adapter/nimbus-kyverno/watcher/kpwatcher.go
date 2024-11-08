@@ -11,6 +11,7 @@ import (
 	"github.com/5GSEC/nimbus/pkg/adapter/common"
 	"github.com/5GSEC/nimbus/pkg/adapter/k8s"
 	"github.com/5GSEC/nimbus/pkg/adapter/nimbus-kyverno/utils"
+
 	adapterutil "github.com/5GSEC/nimbus/pkg/adapter/util"
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -122,5 +123,3 @@ func WatchKps(ctx context.Context, updatedKpCh, deletedKpCh chan common.Request)
 	logger.Info("KyvernoPolicy watcher started")
 	informer.Run(ctx.Done())
 }
-
-

@@ -1,0 +1,13 @@
+apiVersion: intent.security.nimbus.com/v1alpha1
+kind: SecurityIntent
+metadata:
+  name: virtual-patch
+spec: 
+  intent:
+    id: virtualPatch
+    description: "Check and apply virtual patch for a given set of CVEs as per a schedule"
+    action: Block
+    params: 
+      cve_list:
+        - "CVE-2024-4439"
+        - "CVE-2024-27268"
