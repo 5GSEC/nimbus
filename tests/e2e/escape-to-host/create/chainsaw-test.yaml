@@ -48,5 +48,16 @@ spec:
           content: kubectl get np -n $NAMESPACE escape-to-host-binding -o=jsonpath='{.status.adapterPolicies}'
           check: 
             (contains($stdout, 'KyvernoPolicy/escape-to-host-binding-escapetohost')): true
+
+    - name: "verify the error in creation of nginx pod with hostpath mount"
+      try:
+        - script:
+            content: kubectl create -f https://raw.githubusercontent.com/5GSEC/nimbus/main/docs/attack-emulation/pod.yaml
+            check:
+            ($error != null): true
+            (contains($stderr, 'escape-to-host-binding-escapetohost')): true
+
+
+      
     
     

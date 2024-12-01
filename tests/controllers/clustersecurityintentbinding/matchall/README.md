@@ -1,6 +1,12 @@
-# Test: `multiple-ns-add-csib`
+# Test: `csib-matchall-ns-add-csib`
 
-1. Create prod, dev, staging ns 2. Add security intent 3. Add csib  4. Delete prod namespace 5. Create prod namespace again
+Multiple scenarios are tested here 1. Three namespaces are created - prod, dev, staging - and we create a csib with a 
+  matchAll condition (*). This is supposed to create nimbus policies in all namespaces
+  except kube-system. 
+2. Then we delete the prod namespace, and verify that the nimbus policy no longer exists
+   in that namespace. The nimbus policies in the other namespaces should not be affected.
+3. The we create the prod namespace again, and verify that the nimbus policy in prod
+  namespace is created again. Additionally, the existing nimbus policies are unaffected
 
 
 ## Steps

@@ -4,11 +4,29 @@
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: Test
 metadata:
-  name: netpol-kubearmor-adapter-policy-creation
+  name: netpol-kubearmor-adapter-policy-creation and policy testing
 spec:
   description: >
-   This test validates that creating a `dns-manipulation` SecurityIntent with SecurityIntentBinding generates the expected Network Policy and KubeArmor policy.
+   This test validates that creating a `dns-manipulation` SecurityIntent with SecurityIntentBinding generates the expected Network Policy and KubeArmor policy and verifies its effect on a sample test workload.
   steps:
+
+    - name: "create nginx pod"
+      try:
+        - script:
+            content: kubectl run nginx --image=nginx --labels="app=nginx"
+      
+    - name: "verify creation of nginx pod"
+      try:
+      - script:
+          content: kubectl get pods -l app=nginx -o name
+          check:
+            (contains($stdout, 'pod/nginx')): true
+
+    - name: "install nslookup utility"
+      try:
+      - script:
+          content: kubectl exec nginx -- bash  -c "apt-get update && apt-get install dnsutils -y"
+
     - name: "Create a SecurityIntent"
       try:
         - apply:
@@ -60,6 +78,24 @@ spec:
           content: kubectl get np -n $NAMESPACE dns-manipulation-binding -o=jsonpath='{.status.adapterPolicies}'
           check: 
             (contains($stdout, 'KubeArmorPolicy/dns-manipulation-binding-dnsmanipulation')): true
+
+    
+    - name: "Verify the failure of alter of resolv.conf in nginx pod"
+      try:
+      - script:
+          content: kubectl get pods -l app=nginx -o name | head -n 1 | xargs -I {} kubectl exec {} -- bash -c "echo 'nameserver 10.96.' > /etc/resolv.conf && cat /etc/resolv.conf"
+          check:
+            ($error != null): true
+            (contains($stderr, 'Permission denied')): true
+    
+    - name: "Verify that failure of nslookup to example.com through public DNS due to netpol"
+      try:
+      - script:
+          content: kubectl exec nginx -- bash  -c "nslookup example.com  8.8.8.8"
+          check:
+          ($error != null): true
+            
+   
 
     
     
