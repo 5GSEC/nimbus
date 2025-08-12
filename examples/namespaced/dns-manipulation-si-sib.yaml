@@ -12,13 +12,13 @@ spec:
     action: Block
 ---
 apiVersion: intent.security.nimbus.com/v1alpha1
-kind: SecurityIntentBinding
+kind: ClusterSecurityIntentBinding
 metadata:
   name: dns-manipulation-binding
 spec:
   intents:
     - name: dns-manipulation
   selector:
-    workloadSelector:
-      matchLabels:
-        app: nginx
+    nsSelector:
+      matchNames:
+      - 'oai-core'

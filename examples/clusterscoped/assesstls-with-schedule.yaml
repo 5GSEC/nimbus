@@ -27,4 +27,4 @@ spec:
   selector:
     nsSelector:
       matchNames:
-        - '*'
+        - 'oai-core'
